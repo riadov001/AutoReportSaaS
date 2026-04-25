@@ -49,7 +49,7 @@ export default function ReportDisplay({ report }: { report: GeneratedReport }) {
         const proceed = window.confirm(
           "Le téléchargement PDF est réservé aux membres inscrits.\n\nCréer un compte gratuit maintenant ?"
         );
-        if (proceed) window.location.href = "/login";
+        if (proceed) window.location.href = "/signup";
         return;
       }
       if (!res.ok) throw new Error();

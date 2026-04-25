@@ -451,6 +451,20 @@ export default function Landing() {
             </nav>
             <div className="flex items-center gap-2">
               <ThemeToggle />
+              <a
+                href="/signin"
+                data-testid="link-header-signin"
+                className="hidden sm:inline-flex items-center px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white/70 hover:text-white transition-colors"
+              >
+                Connexion
+              </a>
+              <a
+                href="/signup"
+                data-testid="link-header-signup"
+                className="hidden sm:inline-flex items-center px-3 py-1.5 border border-white/15 hover:border-white/30 text-white text-xs font-bold uppercase tracking-wider rounded-md transition-colors"
+              >
+                Inscription
+              </a>
               <button
                 onClick={() => scrollTo("generator")}
                 data-testid="button-cta-header"
@@ -700,7 +714,7 @@ export default function Landing() {
                         <p className="text-sm font-bold text-white mb-0.5">Rapport gratuit épuisé</p>
                         <p className="text-xs text-white/50 mb-2">Créez un compte pour générer plus de rapports et télécharger vos diagnostics en PDF.</p>
                         <a
-                          href="/login"
+                          href="/signup"
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#CE1126] hover:bg-[#b8101f] text-white text-xs font-bold rounded transition-colors"
                         >
                           S'inscrire gratuitement

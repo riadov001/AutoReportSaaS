@@ -17,6 +17,8 @@ import { LifeBuoy, MessageCircle, Home, FileText, Receipt } from "lucide-react";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
+import AuthSignIn from "@/pages/auth-signin";
+import AuthSignUp from "@/pages/auth-signup";
 import ClientDashboard from "@/pages/client-dashboard";
 import ClientQuotes from "@/pages/client-quotes";
 import ClientInvoices from "@/pages/client-invoices";
@@ -115,6 +117,8 @@ function Router() {
           <Route path="/legal" component={Legal} />
           <Route path="/privacy" component={PrivacyPolicy} />
           <Route path="/login" component={Login} />
+          <Route path="/signin" component={AuthSignIn} />
+          <Route path="/signup" component={AuthSignUp} />
           <Route path="/devis/:token" component={PublicQuoteView} />
           <Route path="/facture/:token" component={PublicInvoiceView} />
           <Route path="/avis/:token" component={PublicReview} />
@@ -124,7 +128,7 @@ function Router() {
           <Route path="/payment/success" component={PaymentSuccess} />
           <Route path="/payment/cancel" component={PaymentCancel} />
           <Route>
-            <Redirect to="/login" />
+            <Redirect to="/signin" />
           </Route>
         </Switch>
       </>
@@ -273,7 +277,13 @@ function Router() {
               <Route path="/dashboard/invoices" component={DashboardInvoices} />
               <Route path="/dashboard/support" component={DashboardSupport} />
               <Route path="/login">
-                <Redirect to="/" />
+                <Redirect to="/dashboard" />
+              </Route>
+              <Route path="/signin">
+                <Redirect to="/dashboard" />
+              </Route>
+              <Route path="/signup">
+                <Redirect to="/dashboard" />
               </Route>
               <Route>
                 <Redirect to="/" />
