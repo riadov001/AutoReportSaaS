@@ -26,44 +26,55 @@ export interface GeneratedReport {
   generatedAt: string;
 }
 
-const SYSTEM_PROMPT = `Tu es un EXPERT MASTER en diagnostic automobile chez AutoReport, avec 25 ans d'expérience en mécanique multi-marques (constructeurs européens, asiatiques, américains), spécialiste OBD-II, électronique embarquée, motorisation thermique/hybride/électrique, et expert en pathologies récurrentes par modèle/millésime.
+const SYSTEM_PROMPT = `Tu es ALEXIS, expert senior en diagnostic automobile chez AutoReport — ingénieur mécanicien avec 30 ans d'expérience, certifié multi-constructeurs (VW Group, PSA, Stellantis, BMW Group, Mercedes, Renault-Nissan, Toyota, Ford), spécialiste OBD-II/OBD-III, électronique embarquée, CAN bus, motorisations thermiques/hybrides/électriques (HV/BEV/PHEV). Tu connais par cœur les TSB (Technical Service Bulletins), les rappels constructeur, les défauts de série documentés, et les statistiques de sinistralité par modèle/millésime.
 
-Ton rôle : produire un rapport de diagnostic ULTRA-DÉTAILLÉ, technique et NON-GÉNÉRIQUE, calibré sur le véhicule exact (marque, modèle, année, motorisation présumée, kilométrage). Tu dois mobiliser ta connaissance des défauts de série, rappels constructeur, points faibles connus, intervalles d'entretien constructeur, et coûts réels du marché français 2025-2026.
+## TON MANDAT
+Produire un rapport de diagnostic ULTRA-PERSONNALISÉ, aussi précis qu'un vrai compte-rendu d'atelier. Chaque rapport doit être unique et calibré sur le véhicule EXACT fourni. Interdit de copier-coller des phrases génériques.
 
-Tu DOIS répondre UNIQUEMENT en JSON valide (pas de markdown, pas de texte autour) avec cette structure :
+## INTELLIGENCE CONTEXTUELLE REQUISE
+Pour chaque véhicule analysé, tu DOIS mobiliser :
+- Les **défauts de série connus** (ex: EGR encrassé sur les 2.0 TDI EA189, vanos défaillant sur les N47, boîte DSG7 DQ200 sèche, distribution 1.6 e-HDi fragile, etc.)
+- Les **codes défaut OBD spécifiques** (P0XXX, P1XXX, C0XXX, B0XXX, U0XXX) probables selon le symptôme ET la motorisation
+- Les **intervalles d'entretien constructeur** et leur respect probable selon le kilométrage
+- L'**âge électronique** du véhicule (calculateurs, capteurs, faisceaux électriques)
+- Les **coûts réels 2026** : différencier garage indépendant / concession / spécialiste marque
+
+## FORMAT DE RÉPONSE — JSON STRICT
+Réponds UNIQUEMENT en JSON valide (zéro markdown, zéro texte hors JSON) :
 {
-  "summary": "Synthèse experte 4-6 phrases : véhicule + interprétation technique du symptôme + hypothèses prioritaires hiérarchisées + criticité + horizon d'intervention recommandé.",
+  "summary": "Synthèse experte en 5-7 phrases : identifie précisément le véhicule et sa motorisation probable, interprète techniquement le symptôme, hiérarchise les 2-3 hypothèses les plus probables avec justification, donne le niveau de criticité et l'horizon d'intervention recommandé. Cite le modèle exact et l'année.",
   "sections": [
     {
-      "title": "Titre technique précis (ex: 'Hypothèse 1 — Capteur PMH (vilebrequin) défaillant', 'Système d'injection haute-pression', 'Défaut récurrent boîte DSG7 sur ce millésime')",
-      "content": "Explication technique APPROFONDIE en 4-8 phrases : mécanisme de la panne, organes concernés avec références techniques (capteur, calculateur, codes défaut OBD-II probables type P0XXX), symptômes corrélés à surveiller, causes racines (usure, défaut série, manque entretien, environnement), tests de validation à faire (multimètre, oscilloscope, valise diag, contrôle visuel), conséquences si non traité (casse moteur, immobilisation, surcoût). Mentionne les pathologies CONNUES de ce modèle/année quand pertinent.",
+      "title": "Titre technique précis et spécifique (NON générique) — ex: 'Vanne EGR encrassée — défaut récurrent sur 2.0 TDI EA288 (2015-2019)' ou 'Pompe à eau défaillante — point faible documenté sur BMW N47 de cette génération'",
+      "content": "Analyse approfondie en 5-8 phrases : mécanisme physique de la panne, organes précis concernés avec leur référence ou désignation technique, codes OBD probables (ex: P0401, P0087), symptômes corrélés à surveiller, cause racine (usure mécanique/thermique, défaut série, entretien insuffisant, corrosion, vieillissement), procédure de test précise (ex: mesure au multimètre tension alimentation capteur, test pression rampe injection, scan valise OBD paramètre XX), conséquences si non traité (ex: casse turbo, immobilisation, dépollution catalyseur). Mobilise tes connaissances des pathologies DOCUMENTÉES de ce modèle/millésime.",
       "severity": "low|medium|high|critical"
     }
   ],
   "recommendations": [
-    "Action concrète et chiffrée n°1 avec organe précis, méthode et fourchette de coût (ex: 'Remplacer le capteur de position vilebrequin (PMH) — référence type 0261210XXX — coût pièce 35-80 € + main d'œuvre 0.8h ≈ 90-160 € TTC')",
-    "Action n°2 avec priorité (immédiate / sous 500 km / au prochain entretien)",
-    "Action préventive long terme adaptée au kilométrage"
+    "Action n°1 — PRIORITÉ IMMÉDIATE : [organe exact] à [action] — coût estimé : [X-Y €] pièce + [Z €] MO ≈ [total] € TTC (garage indépendant) / [total] € TTC (concession)",
+    "Action n°2 — SOUS 500 KM : ...",
+    "Action n°3 — AU PROCHAIN ENTRETIEN : ...",
+    "Vérification préventive liée au kilométrage et à l'âge..."
   ],
-  "estimatedCost": "Fourchette globale TTC marché France 2026 (ex: '180-450 € TTC selon hypothèse confirmée')",
+  "estimatedCost": "Fourchette globale selon hypothèse confirmée : XXX-YYY € TTC (garage indépendant) / XXX-YYY € TTC (concession ou spécialiste marque)",
   "urgencyLevel": "low|medium|high|critical"
 }
 
-RÈGLES IMPÉRATIVES :
-- Réponds en FRANÇAIS technique professionnel (vocabulaire mécanicien : PMH, EGR, FAP, AdBlue, calculateur moteur, distribution, BV, etc.)
-- Fournir 5 à 7 sections d'analyse (pas moins de 5), chacune avec un angle TECHNIQUE DIFFÉRENT (jamais de doublon)
-- Au moins UNE section doit explorer les "défauts récurrents connus" du modèle/millésime
-- Au moins UNE section doit lister les codes défaut OBD-II probables (Pxxxx, Cxxxx, Bxxxx) liés au symptôme
-- Au moins UNE section doit aborder les CONTRÔLES de validation (procédure de test précise)
-- Fournir 5 à 8 recommandations CONCRÈTES, chiffrées et hiérarchisées par priorité
-- Coûts en EUROS TTC, alignés marché France 2026 (concession vs garage indépendant quand pertinent)
-- Tenir compte du kilométrage : usure pièces (distribution, embrayage, amortisseurs, batterie), entretiens dus
-- Tenir compte de l'âge du véhicule (corrosion, vieillissement caoutchouc/durites/joints, électronique)
-- Si la marque/modèle est haut de gamme/sport (Ferrari, Porsche, AMG, M, RS…), adapte coûts × 2-4 et précise « atelier spécialisé requis »
-- Si véhicule électrique ou hybride : intégrer batterie HT, onduleur, recharge, trains roulants spécifiques
-- INTERDIT : phrases génériques type "vérifier les niveaux", "consulter un garage", "système de freinage à contrôler" sans précision technique. Chaque conseil doit être actionnable et spécifique.
-- INTERDIT : recommander "diagnostic OBD-II" comme première étape vague — préciser quels codes/paramètres scruter
-- Sois PRÉCIS, TECHNIQUE, EXPERT. Pas de blabla.`;
+## RÈGLES NON NÉGOCIABLES
+1. **5 à 7 sections obligatoires**, chacune avec un angle technique DIFFÉRENT :
+   - Section 1 : Hypothèse principale (la plus probable) avec mécanisme détaillé
+   - Section 2 : Hypothèse alternative (seconde cause probable)
+   - Section 3 : Défauts de série / TSB connus sur ce modèle/millésime spécifique
+   - Section 4 : Codes OBD-II/III probables et procédure de scan à réaliser
+   - Section 5 : Procédures de validation et tests mécaniques/électroniques
+   - Section 6 : Impact du kilométrage / âge sur ce composant et usures connexes
+   - Section 7 (optionnelle) : Point spécifique motorisation (diesel/essence/hybride/électrique)
+2. **5 à 8 recommandations** chiffrées, hiérarchisées par priorité, avec délai d'intervention
+3. **Coûts en euros TTC 2026** — garage indépendant ET concession quand pertinent
+4. **Jamais de conseil vague** : "vérifier les niveaux" → interdit. À la place : "Vérifier le niveau d'huile moteur et sa viscosité (5W-30 ou 5W-40 selon préconisation constructeur) — signe de consommation anormale > 0,5L/1000km sur ce moteur indique usure segments ou joints de queues de soupapes"
+5. **Véhicules premium/sportifs** (Ferrari, Porsche, Maserati, AMG, M, RS, F-Sport) : coûts × 2-5, mentionner "atelier agréé constructeur requis"
+6. **Véhicules électriques/hybrides** : analyser batterie HT (dégradation SOH, cellules défaillantes), BMS, onduleur, pompe de refroidissement HT, recharge AC/DC
+7. **Réponds toujours en FRANÇAIS technique professionnel**`;
 
 async function callGemini(prompt: string, systemPromptOverride?: string): Promise<string> {
   const url = `${GEMINI_BASE_URL}/models/${GEMINI_MODEL}:generateContent`;
@@ -72,9 +83,10 @@ async function callGemini(prompt: string, systemPromptOverride?: string): Promis
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     systemInstruction: { parts: [{ text: systemPromptOverride || SYSTEM_PROMPT }] },
     generationConfig: {
-      temperature: 0.55,
+      temperature: 0.6,
       maxOutputTokens: 8192,
-      topP: 0.9,
+      topP: 0.92,
+      topK: 40,
     },
   };
 
@@ -102,61 +114,121 @@ async function callGemini(prompt: string, systemPromptOverride?: string): Promis
   return text;
 }
 
+function inferMotorization(make: string, model: string, year: string): string {
+  const y = parseInt(year, 10);
+  const m = model.toLowerCase();
+  const mk = make.toLowerCase();
+
+  if (m.includes("tdi") || m.includes("hdi") || m.includes("cdti") || m.includes("dci") || m.includes("bluehdI") || m.includes("d ") || m.includes(" d") || m.includes("diesel")) return "diesel";
+  if (m.includes("tsi") || m.includes("tfsi") || m.includes("gti") || m.includes("turbo") || m.includes("t5") || m.includes("t6")) return "essence turbo";
+  if (m.includes("hybrid") || m.includes("hybride") || m.includes("phev") || m.includes("e-power") || m.includes("prius")) return "hybride";
+  if (m.includes("electric") || m.includes("électrique") || m.includes("ev") || m.includes("bev") || m.includes("ioniq") || m.includes("model ") || mk.includes("tesla")) return "électrique";
+  if ((mk.includes("bmw") || mk.includes("mercedes") || mk.includes("audi") || mk.includes("volkswagen")) && m.includes("d")) return "diesel";
+  return "essence";
+}
+
+function categorizeProblem(issue: string): string {
+  const i = issue.toLowerCase();
+  if (i.includes("démarr") || i.includes("start") || i.includes("batterie") || i.includes("départ")) return "démarrage/électrique";
+  if (i.includes("frein") || i.includes("brake") || i.includes("abs") || i.includes("pédale")) return "freinage";
+  if (i.includes("vitesse") || i.includes("boîte") || i.includes("embrayage") || i.includes("transmission") || i.includes("passage")) return "transmission";
+  if (i.includes("chauff") || i.includes("refroid") || i.includes("températ") || i.includes("surchauff") || i.includes("radiateur")) return "refroidissement";
+  if (i.includes("huile") || i.includes("consomm") || i.includes("fuite") || i.includes("goutte")) return "lubrification/étanchéité";
+  if (i.includes("voyant") || i.includes("lumière") || i.includes("tableau") || i.includes("check") || i.includes("défaut")) return "électronique/capteurs";
+  if (i.includes("bruit") || i.includes("vibr") || i.includes("claque") || i.includes("grince") || i.includes("craque")) return "mécanique/bruit";
+  if (i.includes("turbo") || i.includes("puissance") || i.includes("accélér") || i.includes("cloque")) return "motorisation/performances";
+  if (i.includes("direction") || i.includes("suspension") || i.includes("amort") || i.includes("train")) return "train roulant/direction";
+  if (i.includes("carburant") || i.includes("injection") || i.includes("essence") || i.includes("gazole")) return "alimentation/injection";
+  return "général";
+}
+
 function buildPrompt(vehicleInfo: VehicleInfo): string {
   const ageYears = Math.max(0, new Date().getFullYear() - parseInt(vehicleInfo.year || "0", 10));
   const km = vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/\D/g, ""), 10) : null;
+  const motorization = inferMotorization(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year);
+  const problemCategory = categorizeProblem(vehicleInfo.issue);
 
-  let prompt = `### CONTEXTE VÉHICULE\n`;
-  prompt += `- Marque : ${vehicleInfo.make}\n`;
-  prompt += `- Modèle : ${vehicleInfo.model}\n`;
-  prompt += `- Année : ${vehicleInfo.year}${ageYears ? ` (≈ ${ageYears} ans)` : ""}\n`;
+  let prompt = `## VÉHICULE À ANALYSER\n`;
+  prompt += `- **Marque** : ${vehicleInfo.make}\n`;
+  prompt += `- **Modèle** : ${vehicleInfo.model}\n`;
+  prompt += `- **Année** : ${vehicleInfo.year}`;
+  if (ageYears > 0) prompt += ` (véhicule de ${ageYears} an${ageYears > 1 ? "s" : ""})`;
+  prompt += `\n`;
+  prompt += `- **Motorisation détectée** : ${motorization}\n`;
+
   if (km !== null && !isNaN(km)) {
-    prompt += `- Kilométrage : ${km.toLocaleString("fr-FR")} km`;
-    if (km < 50000) prompt += ` (faible kilométrage)\n`;
-    else if (km < 120000) prompt += ` (kilométrage moyen)\n`;
-    else if (km < 200000) prompt += ` (kilométrage élevé — attention pièces d'usure)\n`;
-    else prompt += ` (très haut kilométrage — vigilance moteur/transmission)\n`;
+    prompt += `- **Kilométrage** : ${km.toLocaleString("fr-FR")} km`;
+    if (km < 30000) prompt += ` → très faible kilométrage, privilégier vieillissement/stockage sur usure mécanique`;
+    else if (km < 80000) prompt += ` → kilométrage faible à moyen, surveillance entretiens préventifs`;
+    else if (km < 150000) prompt += ` → kilométrage moyen-élevé, pièces d'usure à vérifier (distribution, embrayage, amortisseurs)`;
+    else if (km < 250000) prompt += ` → kilométrage élevé, vigilance sur moteur/transmission/électronique vieillie`;
+    else prompt += ` → très haut kilométrage, véhicule en fin de vie de certains composants majeurs`;
+    prompt += `\n`;
   }
-  prompt += `\n### SYMPTÔME / PROBLÈME SIGNALÉ PAR LE PROPRIÉTAIRE\n${vehicleInfo.issue}\n\n`;
-  prompt += `### MISSION\n`;
-  prompt += `Produis un rapport de diagnostic EXPERT et SPÉCIFIQUE à ce ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.year}.\n`;
-  prompt += `- Mobilise tes connaissances des PATHOLOGIES CONNUES de ce modèle/millésime (rappels, défauts série, points faibles documentés).\n`;
-  prompt += `- Hiérarchise les hypothèses techniques de la plus probable à la moins probable, en justifiant.\n`;
-  prompt += `- Indique les CODES OBD-II (P0xxx, P1xxx) probables liés au symptôme.\n`;
-  prompt += `- Donne des fourchettes de coût RÉALISTES marché France 2026 (pièce + main d'œuvre TTC).\n`;
-  prompt += `- 5 à 7 sections, 5 à 8 recommandations CHIFFRÉES.\n`;
-  prompt += `- Réponds STRICTEMENT en JSON valide selon le schéma imposé.`;
+
+  prompt += `- **Catégorie du problème** : ${problemCategory}\n`;
+  prompt += `\n## PROBLÈME SIGNALÉ PAR LE PROPRIÉTAIRE\n`;
+  prompt += `"${vehicleInfo.issue}"\n\n`;
+
+  prompt += `## INSTRUCTIONS SPÉCIFIQUES POUR CE RAPPORT\n`;
+  prompt += `1. Mobilise tes connaissances approfondies sur les **${vehicleInfo.make} ${vehicleInfo.model}** de génération ${vehicleInfo.year} — défauts de série, TSB, rappels constructeur documentés sur cette motorisation ${motorization}.\n`;
+  prompt += `2. Le problème est catégorisé comme **${problemCategory}** — concentre tes hypothèses sur cette famille de composants en premier.\n`;
+
+  if (motorization === "diesel") {
+    prompt += `3. Motorisation diesel : analyse EGR, FAP/DPF, système d'injection haute pression, turbocompresseur, capteurs NOx/lambda, circuit AdBlue si applicable.\n`;
+  } else if (motorization === "hybride") {
+    prompt += `3. Motorisation hybride : analyse batterie HT (dégradation SOH, BMS), onduleur, DCDC converter, gestion thermique hybride, récupération d'énergie.\n`;
+  } else if (motorization === "électrique") {
+    prompt += `3. Véhicule électrique : analyse batterie HT (capacité, équilibrage cellules, BMS), chargeur embarqué, onduleur de traction, pompe de refroidissement HT, câblage haute tension.\n`;
+  } else {
+    prompt += `3. Motorisation essence : analyse circuit d'allumage, injection directe/indirecte, capteurs (MAP, MAF, lambda), distribution, refroidissement moteur.\n`;
+  }
+
+  if (km && km > 100000) {
+    prompt += `4. À ${km.toLocaleString("fr-FR")} km : intègre obligatoirement l'état probable de la distribution (courroie/chaîne), des joints moteur, des amortisseurs, et de l'embrayage (si thermique).\n`;
+  }
+
+  if (ageYears >= 8) {
+    prompt += `5. Véhicule de ${ageYears} ans : intègre le vieillissement des durites, joints caoutchouc, capteurs électroniques, et la corrosion des connecteurs/faisceaux.\n`;
+  }
+
+  prompt += `\nProduis le rapport JSON complet selon le schéma imposé. Sois PRÉCIS, SPÉCIFIQUE, EXPERT. Aucune phrase générique.`;
+
   return prompt;
 }
 
 function generateFallbackReport(vehicleInfo: VehicleInfo): GeneratedReport {
+  const motorization = inferMotorization(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year);
+  const km = vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/\D/g, ""), 10) : null;
+  const ageYears = Math.max(0, new Date().getFullYear() - parseInt(vehicleInfo.year || "0", 10));
+
   return {
     vehicleInfo,
-    summary: `Rapport de diagnostic préliminaire pour ${vehicleInfo.make} ${vehicleInfo.model} (${vehicleInfo.year}). L'analyse automatique a identifié plusieurs points d'attention basés sur la description du problème.`,
+    summary: `Rapport de diagnostic préliminaire pour ${vehicleInfo.make} ${vehicleInfo.model} (${vehicleInfo.year}${km ? `, ${km.toLocaleString("fr-FR")} km` : ""}) — motorisation ${motorization}. Le symptôme décrit ("${vehicleInfo.issue}") nécessite un diagnostic approfondi en atelier avec valise OBD-II.`,
     sections: [
       {
-        title: "Analyse du problème signalé",
-        content: `Le propriétaire signale le problème suivant sur son ${vehicleInfo.make} ${vehicleInfo.model} : ${vehicleInfo.issue}. Une inspection visuelle et un diagnostic électronique sont recommandés pour confirmer l'origine exacte du problème.`,
+        title: `Analyse préliminaire du symptôme — ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.year}`,
+        content: `Le problème signalé "${vehicleInfo.issue}" sur ce ${vehicleInfo.make} ${vehicleInfo.model} de motorisation ${motorization}${km ? ` à ${km.toLocaleString("fr-FR")} km` : ""} requiert un diagnostic en atelier. Les symptômes doivent être reproduits à froid et à chaud. Un scan OBD-II complet (codes défaut actifs et passés, données temps réel) est la première étape indispensable.`,
         severity: "medium",
       },
       {
-        title: "Points de contrôle recommandés",
-        content: "Il est conseillé de vérifier les éléments suivants : système de freinage, niveaux de fluides, état des filtres, courroie de distribution, système de refroidissement, et état général de la suspension.",
+        title: "Priorités d'inspection selon kilométrage et âge",
+        content: `${ageYears >= 5 ? `Véhicule de ${ageYears} ans : vérifier l'état des durites de refroidissement, joints, capteurs. ` : ""}${km && km > 100000 ? `À ${km.toLocaleString("fr-FR")} km : contrôler la distribution, l'embrayage, les amortisseurs. ` : ""}Un contrôle visuel complet des niveaux (huile moteur, liquide de refroidissement, liquide de frein) et de l'état des courroies s'impose avant tout diagnostic électronique.`,
         severity: "low",
       },
       {
-        title: "Historique véhicule",
-        content: `Le ${vehicleInfo.make} ${vehicleInfo.model} de ${vehicleInfo.year}${vehicleInfo.mileage ? ` avec ${vehicleInfo.mileage} km` : ""} nécessite un suivi régulier des points d'usure courants pour ce modèle. Consultez le carnet d'entretien constructeur.`,
-        severity: "low",
+        title: "Diagnostic électronique recommandé",
+        content: `Connexion à la valise OBD-II : lecture des codes défaut (DTCs) actifs et mémorisés sur tous les calculateurs (moteur, boîte, ABS/ESP, habitacle). Analyse des données temps réel : température moteur, pression d'admission, débitmètre d'air, tensions batterie/alternateur, régimes moteur. Ces données permettront d'orienter précisément le diagnostic.`,
+        severity: "medium",
       },
     ],
     recommendations: [
-      "Effectuer un diagnostic électronique complet (OBD-II) pour identifier les codes défaut",
-      "Vérifier l'état des pièces d'usure (plaquettes, disques, amortisseurs)",
-      "Contrôler les niveaux de tous les fluides (huile, liquide de refroidissement, liquide de frein)",
-      "Planifier un rendez-vous chez un mécanicien qualifié pour une inspection approfondie",
+      "Scan OBD-II complet (tous calculateurs) — lire codes défaut actifs ET mémorisés — coût : 40-80 € en garage indépendant",
+      "Contrôle visuel des niveaux : huile moteur (quantité + couleur), liquide refroidissement, liquide de frein",
+      "Planifier un rendez-vous en atelier avec description précise du symptôme (conditions d'apparition, température, régime)",
+      "Ne pas ignorer un voyant moteur allumé — risque d'aggravation et de dommages secondaires coûteux",
     ],
-    estimatedCost: "50-200 EUR (diagnostic initial)",
+    estimatedCost: "80-250 € (diagnostic initial complet)",
     urgencyLevel: "medium",
     generatedAt: new Date().toISOString(),
   };
@@ -171,6 +243,12 @@ export async function generateAiReport(vehicleInfo: VehicleInfo, customSystemPro
     const jsonMatch = cleanJson.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) {
       cleanJson = jsonMatch[1].trim();
+    }
+    // Remove leading/trailing non-JSON characters
+    const firstBrace = cleanJson.indexOf("{");
+    const lastBrace = cleanJson.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      cleanJson = cleanJson.slice(firstBrace, lastBrace + 1);
     }
 
     const parsed = JSON.parse(cleanJson);
@@ -219,7 +297,7 @@ export function generateReportHtml(report: GeneratedReport): string {
     .join("");
 
   const recsHtml = report.recommendations
-    .map((r) => `<li style="margin-bottom: 8px; color: #333; font-size: 13px;">${r}</li>`)
+    .map((r, i) => `<li style="margin-bottom: 10px; color: #333; font-size: 13px; line-height:1.6;"><strong style="color:#dc2626;">#${i + 1}</strong> ${r}</li>`)
     .join("");
 
   return `<!DOCTYPE html>
@@ -300,7 +378,7 @@ export function generateReportHtml(report: GeneratedReport): string {
 
     <!-- Footer -->
     <div style="border-top: 2px solid #e5e5e5; padding-top: 20px; margin-top: 40px; text-align: center;">
-      <p style="font-size: 11px; color: #999; margin-bottom: 4px;">Ce rapport a été généré automatiquement par AutoReport - Intelligence Artificielle</p>
+      <p style="font-size: 11px; color: #999; margin-bottom: 4px;">Ce rapport a été généré automatiquement par AutoReport — Intelligence Artificielle Automobile</p>
       <p style="font-size: 11px; color: #999;">support@autoreport.com | +33 (0)1 21 40 80 80 | www.autoreport.com</p>
     </div>
   </div>
