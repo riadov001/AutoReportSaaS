@@ -14,7 +14,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
-import Login from "@/pages/login";
 import AuthSignIn from "@/pages/auth-signin";
 import AuthSignUp from "@/pages/auth-signup";
 import ClientDashboard from "@/pages/client-dashboard";
