@@ -212,13 +212,10 @@ function Router() {
                   <Route path="/admin/notification-settings" component={AdminNotificationSettings} />
                   <Route path="/privacy" component={PrivacyPolicy} />
                   <Route path="/support" component={SupportPage} />
-                  <Route path="/site">{() => <Landing isAdmin={true} />}</Route>
                   <Route path="/login">
                     <Redirect to="/admin" />
                   </Route>
-                  <Route path="/">
-                    <Redirect to="/admin" />
-                  </Route>
+                  <Route path="/">{() => <Landing isAdmin={true} />}</Route>
                   <Route>
                     <Redirect to="/admin" />
                   </Route>

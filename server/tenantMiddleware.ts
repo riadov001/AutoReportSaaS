@@ -1,9 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { pool } from "./db";
 import { getSchemaName } from "./tenantContext";
+import type { User as DbUser } from "@shared/schema";
 
 declare global {
   namespace Express {
+    interface User extends DbUser {}
     interface Request {
       tenantSchema?: string;
       tenantGarageId?: string;

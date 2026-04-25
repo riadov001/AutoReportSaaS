@@ -592,8 +592,8 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
         return res.status(400).json({ message: "Marque, modèle, année et description requises" });
       }
 
-      const userId = req.user?.id || null;
-      const userRole = (req.user as any)?.role as string | undefined;
+      const userId = req.user?.id ?? null;
+      const userRole = req.user?.role;
       const isAdminUser = !!userRole && ["admin", "superadmin", "rootadmin", "employe"].includes(userRole);
       const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
 
