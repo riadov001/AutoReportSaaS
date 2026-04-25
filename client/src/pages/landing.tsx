@@ -511,7 +511,7 @@ export default function Landing() {
                   className="flex items-center justify-center gap-2 px-6 py-3 bg-[#CE1126] hover:bg-[#b8101f] text-white font-bold rounded-md transition-colors neon-red-glow text-sm"
                 >
                   <Zap className="h-4 w-4" />
-                  Analyser mon véhicule
+                  Renseigner mon véhicule
                 </button>
                 <button
                   onClick={() => scrollTo("features")}
@@ -552,10 +552,13 @@ export default function Landing() {
             <div className="text-center max-w-xl mx-auto mb-14">
               <p className="text-[10px] font-mono text-[#CE1126] uppercase tracking-[0.3em] mb-3">// MODULES_SYSTÈME</p>
               <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
-                La puissance de l'IA
+                Tout ce que vous devez savoir
                 <br />
-                <span className="text-white/40">au service de l'automobile</span>
+                <span className="text-white/40">avant d'acheter un véhicule</span>
               </h2>
+              <p className="text-sm text-white/50 leading-relaxed">
+                Gagnez du temps et évitez les erreurs avant d'acheter votre véhicule
+              </p>
             </div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -608,9 +611,12 @@ export default function Landing() {
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
             <div className="text-center max-w-xl mx-auto mb-12">
               <p className="text-[10px] font-mono text-[#CE1126] uppercase tracking-[0.3em] mb-3">// DIAGNOSTIC_ENGINE_v2</p>
-              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                Générer un rapport
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
+                Renseigner mon véhicule
               </h2>
+              <p className="text-sm text-white/50 leading-relaxed">
+                Nous vous indiquons immédiatement les points à vérifier et les risques à connaître
+              </p>
             </div>
 
             <div className="grid lg:grid-cols-2 gap-6 max-w-5xl mx-auto">

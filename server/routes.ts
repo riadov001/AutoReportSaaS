@@ -5842,6 +5842,243 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
     }
   });
 
+  // ========== USER DASHBOARD API ==========
+
+  app.get("/api/user/dashboard-stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const reports = await storage.getAiReports({ userId });
+      const subs = await storage.getUserSubscriptions(userId);
+      const active = subs.find(s => s.status === "active");
+      let planName: string | undefined;
+      if (active?.planId) {
+        const plan = await storage.getSubscriptionPlan(active.planId);
+        planName = plan?.name;
+      }
+      res.json({
+        totalReports: reports.length,
+        recentReports: reports.slice(0, 5).map(r => ({
+          id: r.id,
+          make: r.make,
+          model: r.model,
+          year: r.year,
+          createdAt: r.createdAt,
+          severity: (r.metadata as any)?.report?.urgencyLevel,
+        })),
+        subscription: active ? {
+          status: active.status,
+          planName,
+          reportsUsed: active.reportsUsed,
+          reportsIncluded: active.reportsIncluded,
+          periodEnd: active.currentPeriodEnd,
+        } : null,
+      });
+    } catch (error: any) {
+      console.error("[user/dashboard-stats]", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/user/reports", isAuthenticated, async (req: any, res) => {
+    try {
+      const reports = await storage.getAiReports({ userId: req.user.id });
+      res.json(reports.map(r => ({
+        id: r.id,
+        make: r.make,
+        model: r.model,
+        year: r.year,
+        mileage: r.mileage,
+        issue: r.issue,
+        content: r.content,
+        createdAt: r.createdAt,
+        severity: (r.metadata as any)?.report?.urgencyLevel,
+        metadata: r.metadata,
+      })));
+    } catch (error: any) {
+      console.error("[user/reports]", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/user/reports/:id/excel", isAuthenticated, async (req: any, res) => {
+    try {
+      const report = await storage.getAiReport(req.params.id);
+      if (!report || report.userId !== req.user.id) {
+        return res.status(404).json({ message: "Rapport introuvable" });
+      }
+      const XLSX = await import("xlsx");
+      const wb = XLSX.utils.book_new();
+      const data: any = (report.metadata as any)?.report || {};
+      const summary = [
+        ["Marque", report.make],
+        ["Modèle", report.model],
+        ["Année", report.year],
+        ["Kilométrage", report.mileage || ""],
+        ["Problème", report.issue],
+        ["Urgence", data.urgencyLevel || ""],
+        ["Coût estimé", data.estimatedCost || ""],
+        ["Résumé", data.summary || ""],
+        ["Date", new Date(report.createdAt!).toLocaleString("fr-FR")],
+      ];
+      const wsSummary = XLSX.utils.aoa_to_sheet(summary);
+      XLSX.utils.book_append_sheet(wb, wsSummary, "Résumé");
+      if (Array.isArray(data.sections) && data.sections.length) {
+        const sectionsRows = [["Titre", "Sévérité", "Contenu"], ...data.sections.map((s: any) => [s.title, s.severity || "", s.content])];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sectionsRows), "Points de vigilance");
+      }
+      if (Array.isArray(data.recommendations) && data.recommendations.length) {
+        const recRows = [["#", "Action"], ...data.recommendations.map((r: string, i: number) => [i + 1, r])];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(recRows), "Checklist");
+      }
+      const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-Disposition", `attachment; filename="diagnostic-${report.make}-${Date.now()}.xlsx"`);
+      res.send(buf);
+    } catch (error: any) {
+      console.error("[user/reports/excel]", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/user/payments", isAuthenticated, async (req: any, res) => {
+    try {
+      const subs = await storage.getUserSubscriptions(req.user.id);
+      const planIds = [...new Set(subs.map(s => s.planId).filter(Boolean))] as string[];
+      const planMap = new Map<string, string>();
+      for (const id of planIds) {
+        const plan = await storage.getSubscriptionPlan(id);
+        if (plan) planMap.set(id, plan.name);
+      }
+      res.json(subs.map(s => ({
+        id: s.id,
+        planId: s.planId,
+        planName: s.planId ? planMap.get(s.planId) : undefined,
+        status: s.status,
+        reportsUsed: s.reportsUsed,
+        reportsIncluded: s.reportsIncluded,
+        currentPeriodEnd: s.currentPeriodEnd,
+        createdAt: s.createdAt,
+      })));
+    } catch (error: any) {
+      console.error("[user/payments]", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/user/invoices", isAuthenticated, async (req: any, res) => {
+    try {
+      const subs = await storage.getUserSubscriptions(req.user.id);
+      const paid = subs.filter(s => s.status === "active" || s.status === "completed");
+      const planIds = [...new Set(paid.map(s => s.planId).filter(Boolean))] as string[];
+      const planMap = new Map<string, any>();
+      for (const id of planIds) {
+        const plan = await storage.getSubscriptionPlan(id);
+        if (plan) planMap.set(id, plan);
+      }
+      res.json(paid.map(s => {
+        const plan = s.planId ? planMap.get(s.planId) : null;
+        return {
+          id: s.id,
+          number: `INV-${s.id.slice(0, 8).toUpperCase()}`,
+          amount: plan?.price || "0",
+          currency: plan?.currency || "eur",
+          status: "paid",
+          createdAt: s.createdAt,
+          description: plan?.name || "Pack rapports",
+        };
+      }));
+    } catch (error: any) {
+      console.error("[user/invoices]", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/user/invoices/:id/pdf", isAuthenticated, async (req: any, res) => {
+    try {
+      const subs = await storage.getUserSubscriptions(req.user.id);
+      const sub = subs.find(s => s.id === req.params.id);
+      if (!sub) return res.status(404).json({ message: "Facture introuvable" });
+      const plan = sub.planId ? await storage.getSubscriptionPlan(sub.planId) : null;
+      const user = await storage.getUser(req.user.id);
+      const settings = await storage.getApplicationSettings();
+      const number = `INV-${sub.id.slice(0, 8).toUpperCase()}`;
+      const date = sub.createdAt ? new Date(sub.createdAt).toLocaleDateString("fr-FR") : "";
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${number}</title>
+<style>body{font-family:Arial,sans-serif;padding:40px;color:#333}h1{color:#CE1126}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:10px;text-align:left}.total{font-size:1.2em;font-weight:bold;text-align:right;margin-top:20px}</style>
+</head><body>
+<h1>${settings?.companyName || "AutoReport"}</h1>
+<p>${settings?.companyEmail || ""}</p>
+<hr/>
+<h2>Facture ${number}</h2>
+<p><strong>Date :</strong> ${date}</p>
+<p><strong>Client :</strong> ${user?.firstName || ""} ${user?.lastName || ""} (${user?.email || ""})</p>
+<table><thead><tr><th>Description</th><th>Quantité</th><th>Prix</th></tr></thead>
+<tbody><tr><td>${plan?.name || "Pack rapports"}</td><td>${plan?.reportsIncluded || 1} rapports</td><td>${Number(plan?.price || 0).toFixed(2)} €</td></tr></tbody></table>
+<p class="total">Total TTC : ${Number(plan?.price || 0).toFixed(2)} €</p>
+<p style="margin-top:40px;font-size:0.9em;color:#666">Statut : Payée · Merci pour votre confiance.</p>
+</body></html>`;
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.setHeader("Content-Disposition", `inline; filename="${number}.html"`);
+      res.send(html);
+    } catch (error: any) {
+      console.error("[user/invoice/pdf]", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/user/support", isAuthenticated, async (req: any, res) => {
+    try {
+      const tickets = await storage.getSupportTicketsByUser(req.user.id);
+      res.json(tickets);
+    } catch (error: any) {
+      console.error("[user/support GET]", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/user/support", isAuthenticated, async (req: any, res) => {
+    try {
+      const { subject, message } = req.body;
+      if (!subject || !message) {
+        return res.status(400).json({ message: "Sujet et message requis" });
+      }
+      const user = await storage.getUser(req.user.id);
+      const ticket = await storage.createSupportTicket({
+        userId: req.user.id,
+        email: user?.email || "",
+        subject: String(subject).slice(0, 255),
+        message: String(message),
+        status: "open",
+      });
+      try {
+        const { sendEmail } = await import("./emailService");
+        const settings = await storage.getApplicationSettings();
+        const to = settings?.companyEmail || "support@autoreport.com";
+        const clientName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || user?.email || req.user.id;
+        await sendEmail({
+          to,
+          subject: `[Support #${ticket.id.slice(0, 8)}] ${subject}`,
+          html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
+<h2 style="color:#CE1126">Nouvelle demande de support</h2>
+<p><strong>Client :</strong> ${clientName}</p>
+<p><strong>Email :</strong> ${user?.email || ""}</p>
+<p><strong>Sujet :</strong> ${subject}</p>
+<hr/>
+<div style="background:#f5f5f5;padding:15px;border-radius:6px;white-space:pre-wrap">${String(message).replace(/</g, "&lt;")}</div>
+<p style="color:#888;font-size:0.85em;margin-top:20px">Ticket ID : ${ticket.id}</p>
+</div>`,
+          replyTo: user?.email || undefined,
+        } as any);
+      } catch (e) {
+        console.error("[support email]", e);
+      }
+      res.json(ticket);
+    } catch (error: any) {
+      console.error("[user/support POST]", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.post("/api/user/delete-request", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -10012,7 +10249,25 @@ echo "=== Restauration terminée ==="`;
         case "checkout.session.completed": {
           const session = event.data.object as any;
           const invoiceId = session.metadata?.invoiceId;
-          
+          const planId = session.metadata?.planId;
+          const subUserId = session.metadata?.userId;
+
+          // Subscription / plan checkout (AutoReport AI report packs)
+          if (planId && session.payment_status === "paid") {
+            try {
+              const sub = await storage.getSubscriptionBySessionId(session.id);
+              if (sub) {
+                await storage.updateUserSubscription(sub.id, {
+                  status: "active",
+                  stripeSubscriptionId: session.subscription || undefined,
+                });
+                console.log(`[Stripe Webhook] Subscription ${sub.id} activated (plan ${planId})`);
+              }
+            } catch (e) {
+              console.error("[Stripe Webhook] subscription activation error:", e);
+            }
+          }
+
           if (invoiceId && session.payment_status === "paid") {
             await db.update(invoices)
               .set({

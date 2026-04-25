@@ -71,6 +71,12 @@ import AdminGallery from "@/pages/admin-gallery";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import Legal from "@/pages/legal";
 import { AutoReportLogo } from "@/components/autoreport-logo";
+import { lazy, Suspense } from "react";
+const DashboardHome = lazy(() => import("@/pages/dashboard/DashboardHome"));
+const DashboardReports = lazy(() => import("@/pages/dashboard/MyReports"));
+const DashboardSubscriptions = lazy(() => import("@/pages/dashboard/Subscriptions"));
+const DashboardInvoices = lazy(() => import("@/pages/dashboard/Invoices"));
+const DashboardSupport = lazy(() => import("@/pages/dashboard/Support"));
 
 
 function Router() {
@@ -249,24 +255,31 @@ function Router() {
           </div>
         </header>
         <main className="flex-1 overflow-auto pb-16 sm:pb-0">
-          <Switch>
-            <Route path="/" component={ClientDashboard} />
-            <Route path="/services" component={Services} />
-            <Route path="/quotes" component={ClientQuotes} />
-            <Route path="/invoices" component={ClientInvoices} />
-            <Route path="/messages" component={ClientChat} />
-            <Route path="/privacy" component={PrivacyPolicy} />
-            <Route path="/support" component={SupportPage} />
-            <Route path="/payment/checkout" component={PaymentCheckout} />
-            <Route path="/payment/success" component={PaymentSuccess} />
-            <Route path="/payment/cancel" component={PaymentCancel} />
-            <Route path="/login">
-              <Redirect to="/" />
-            </Route>
-            <Route>
-              <Redirect to="/" />
-            </Route>
-          </Switch>
+          <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Chargement…</div>}>
+            <Switch>
+              <Route path="/" component={ClientDashboard} />
+              <Route path="/services" component={Services} />
+              <Route path="/quotes" component={ClientQuotes} />
+              <Route path="/invoices" component={ClientInvoices} />
+              <Route path="/messages" component={ClientChat} />
+              <Route path="/privacy" component={PrivacyPolicy} />
+              <Route path="/support" component={SupportPage} />
+              <Route path="/payment/checkout" component={PaymentCheckout} />
+              <Route path="/payment/success" component={PaymentSuccess} />
+              <Route path="/payment/cancel" component={PaymentCancel} />
+              <Route path="/dashboard" component={DashboardHome} />
+              <Route path="/dashboard/reports" component={DashboardReports} />
+              <Route path="/dashboard/subscriptions" component={DashboardSubscriptions} />
+              <Route path="/dashboard/invoices" component={DashboardInvoices} />
+              <Route path="/dashboard/support" component={DashboardSupport} />
+              <Route path="/login">
+                <Redirect to="/" />
+              </Route>
+              <Route>
+                <Redirect to="/" />
+              </Route>
+            </Switch>
+          </Suspense>
         </main>
 
         <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border flex items-center" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>

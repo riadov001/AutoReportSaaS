@@ -98,9 +98,16 @@ export default function ReportDisplay({ report }: { report: GeneratedReport }) {
       </div>
 
       <div className="hud-card rounded-md p-4">
-        <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2 font-mono">// RÉSUMÉ_DIAGNOSTIC</p>
+        <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2 font-mono">// RÉSUMÉ</p>
         <p className="text-sm text-white/80 leading-relaxed">{report.summary}</p>
       </div>
+
+      {report.estimatedCost && (
+        <div className="hud-card rounded-md p-4">
+          <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2 font-mono">// COÛTS</p>
+          <p className="text-base font-mono font-bold" style={{ color: "#C9A656" }}>{report.estimatedCost}</p>
+        </div>
+      )}
 
       {chartData.length > 1 && (
         <div className="hud-card rounded-md p-4 flex flex-col sm:flex-row items-center gap-4">
@@ -115,7 +122,7 @@ export default function ReportDisplay({ report }: { report: GeneratedReport }) {
             </ResponsiveContainer>
           </div>
           <div className="flex-1">
-            <p className="text-[10px] text-white/30 uppercase tracking-wider mb-3 font-mono">// DISTRIBUTION_SÉVÉRITÉ</p>
+            <p className="text-[10px] text-white/30 uppercase tracking-wider mb-3 font-mono">// ANALYSE_GLOBALE</p>
             <div className="space-y-1.5">
               {chartData.map((d) => (
                 <div key={d.name} className="flex items-center gap-2">
@@ -130,7 +137,7 @@ export default function ReportDisplay({ report }: { report: GeneratedReport }) {
       )}
 
       <div className="space-y-3">
-        <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// ANALYSE_DÉTAILLÉE</p>
+        <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// POINTS_DE_VIGILANCE</p>
         {(report.sections || []).map((section, i) => {
           const sev = section.severity || "medium";
           return (
@@ -151,7 +158,7 @@ export default function ReportDisplay({ report }: { report: GeneratedReport }) {
 
       {(report.recommendations || []).length > 0 && (
         <div className="hud-card rounded-md p-4">
-          <p className="text-[10px] text-white/30 uppercase tracking-wider mb-3 font-mono">// RECOMMANDATIONS</p>
+          <p className="text-[10px] text-white/30 uppercase tracking-wider mb-3 font-mono">// CHECKLIST</p>
           <ol className="space-y-2">
             {report.recommendations.map((rec, i) => (
               <li key={i} className="flex items-start gap-3">

@@ -127,6 +127,9 @@ import {
   userSubscriptions,
   type UserSubscription,
   type InsertUserSubscription,
+  supportTickets,
+  type SupportTicket,
+  type InsertSupportTicket,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, inArray } from "drizzle-orm";
@@ -373,6 +376,13 @@ export interface IStorage {
   updateUserSubscription(id: string, data: Partial<InsertUserSubscription>): Promise<UserSubscription>;
   getSubscriptionBySessionId(sessionId: string): Promise<UserSubscription | undefined>;
   getAllSubscriptions(): Promise<(UserSubscription & { plan: SubscriptionPlan | null })[]>;
+
+  // Support Tickets
+  createSupportTicket(data: InsertSupportTicket): Promise<SupportTicket>;
+  getSupportTicketsByUser(userId: string): Promise<SupportTicket[]>;
+  getAllSupportTickets(): Promise<SupportTicket[]>;
+  updateSupportTicket(id: string, data: Partial<InsertSupportTicket>): Promise<SupportTicket>;
+
   getLandingSettings(): Promise<LandingSettings>;
   updateLandingSettings(data: Partial<InsertLandingSettings>): Promise<LandingSettings>;
   getPanelUserByEmail(email: string): Promise<PanelUser | undefined>;
@@ -2067,6 +2077,30 @@ export class DatabaseStorage implements IStorage {
       : [];
     const planMap = new Map(plans.map(p => [p.id, p]));
     return subs.map(s => ({ ...s, plan: s.planId ? (planMap.get(s.planId) ?? null) : null }));
+  }
+
+  async createSupportTicket(data: InsertSupportTicket): Promise<SupportTicket> {
+    const [ticket] = await db.insert(supportTickets).values(data).returning();
+    return ticket;
+  }
+
+  async getSupportTicketsByUser(userId: string): Promise<SupportTicket[]> {
+    return await db.select().from(supportTickets)
+      .where(eq(supportTickets.userId, userId))
+      .orderBy(desc(supportTickets.createdAt));
+  }
+
+  async getAllSupportTickets(): Promise<SupportTicket[]> {
+    return await db.select().from(supportTickets)
+      .orderBy(desc(supportTickets.createdAt));
+  }
+
+  async updateSupportTicket(id: string, data: Partial<InsertSupportTicket>): Promise<SupportTicket> {
+    const [ticket] = await db.update(supportTickets)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(supportTickets.id, id))
+      .returning();
+    return ticket;
   }
 }
 

@@ -1449,3 +1449,24 @@ export type UserSubscription = typeof userSubscriptions.$inferSelect;
 export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
 
+// ========== SUPPORT TICKETS ==========
+
+export const supportTickets = pgTable("support_tickets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'set null' }),
+  email: varchar("email", { length: 255 }).notNull(),
+  subject: varchar("subject", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("open"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const supportTicketsRelations = relations(supportTickets, ({ one }) => ({
+  user: one(users, { fields: [supportTickets.userId], references: [users.id] }),
+}));
+
+export type SupportTicket = typeof supportTickets.$inferSelect;
+export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
+
