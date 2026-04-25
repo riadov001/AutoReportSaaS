@@ -152,7 +152,7 @@ export default function AdminClients() {
         <div className="flex gap-2 flex-wrap">
           <Button
             variant="outline"
-            onClick={() => setLocation("/admin/users")}
+            onClick={() => setLocation("/dashboard/users")}
             data-testid="button-go-to-users"
           >
             <Users className="h-4 w-4 mr-2" />
@@ -445,7 +445,7 @@ export default function AdminClients() {
                     className="flex-1"
                     onClick={() => {
                       setSelectedClient(null);
-                      setLocation(`/admin/quotes`);
+                      setLocation(`/dashboard/quotes`);
                     }}
                     data-testid="button-view-client-quotes"
                   >
@@ -457,7 +457,7 @@ export default function AdminClients() {
                     className="flex-1"
                     onClick={() => {
                       setSelectedClient(null);
-                      setLocation(`/admin/invoices`);
+                      setLocation(`/dashboard/invoices`);
                     }}
                     data-testid="button-view-client-invoices"
                   >
@@ -469,7 +469,7 @@ export default function AdminClients() {
                     className="flex-1"
                     onClick={() => {
                       setSelectedClient(null);
-                      setLocation(`/admin/chat`);
+                      setLocation(`/dashboard/chat`);
                     }}
                     data-testid="button-chat-client"
                   >
@@ -481,7 +481,7 @@ export default function AdminClients() {
                     variant="outline"
                     onClick={() => {
                       setSelectedClient(null);
-                      setLocation(`/admin/users`);
+                      setLocation(`/dashboard/users`);
                     }}
                     data-testid="button-edit-client-user"
                   >

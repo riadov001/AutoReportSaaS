@@ -43,37 +43,37 @@ export function NotificationBell() {
     switch (notification.type) {
       case "quote":
         if (notification.relatedId) {
-          setLocation(`/admin/quotes/${notification.relatedId}/edit`);
+          setLocation(`/dashboard/quotes/${notification.relatedId}/edit`);
         } else {
-          setLocation("/admin/quotes");
+          setLocation("/dashboard/quotes");
         }
         break;
       case "invoice":
         if (notification.relatedId) {
-          setLocation(`/admin/invoices/${notification.relatedId}/edit`);
+          setLocation(`/dashboard/invoices/${notification.relatedId}/edit`);
         } else {
-          setLocation("/admin/invoices");
+          setLocation("/dashboard/invoices");
         }
         break;
       case "reservation":
         if (notification.relatedId) {
-          setLocation(`/admin/reservations?highlight=${notification.relatedId}`);
+          setLocation(`/dashboard/reservations?highlight=${notification.relatedId}`);
         } else {
-          setLocation("/admin/reservations");
+          setLocation("/dashboard/reservations");
         }
         break;
       case "service":
         if (notification.relatedId) {
-          setLocation(`/admin/services?highlight=${notification.relatedId}`);
+          setLocation(`/dashboard/services?highlight=${notification.relatedId}`);
         } else {
-          setLocation("/admin/services");
+          setLocation("/dashboard/services");
         }
         break;
       case "chat":
         if (notification.relatedId) {
-          setLocation(`/admin/chat?conversation=${notification.relatedId}`);
+          setLocation(`/dashboard/chat?conversation=${notification.relatedId}`);
         } else {
-          setLocation("/admin/chat");
+          setLocation("/dashboard/chat");
         }
         break;
       default:

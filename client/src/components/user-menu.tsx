@@ -158,8 +158,7 @@ export function UserMenu() {
       console.error("Logout error:", error);
     }
     queryClient.clear();
-    const target = isClient ? "/signin" : "/login";
-    window.location.href = target;
+    window.location.href = "/signin";
   };
 
   const getRoleLabel = (role?: string) => {

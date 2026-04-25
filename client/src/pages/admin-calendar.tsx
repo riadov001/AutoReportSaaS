@@ -231,7 +231,7 @@ export default function AdminCalendar() {
   const handleClickTimeSlot = (date: Date, hour: number) => {
     const pad = (n: number) => n.toString().padStart(2, "0");
     const dateStr = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(hour)}:00`;
-    setLocation(`/admin/reservations?openDialog=true&scheduledDate=${encodeURIComponent(dateStr)}`);
+    setLocation(`/dashboard/reservations?openDialog=true&scheduledDate=${encodeURIComponent(dateStr)}`);
   };
 
   // Scroll to current hour on mount for week/day views
@@ -936,7 +936,7 @@ export default function AdminCalendar() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setLocation("/admin/reservations?openDialog=true")}
+            onClick={() => setLocation("/dashboard/reservations?openDialog=true")}
             data-testid="button-new-reservation-cal"
           >
             <Plus className="h-4 w-4 mr-1" />
@@ -1146,7 +1146,7 @@ export default function AdminCalendar() {
                   onClick={() => {
                     const clientId = selectedReservation.clientId;
                     setSelectedReservation(null);
-                    setLocation(`/admin/engagements?clientId=${clientId}`);
+                    setLocation(`/dashboard/engagements?clientId=${clientId}`);
                   }}
                   className="flex-1"
                   data-testid="button-modal-view-prestation"
@@ -1159,7 +1159,7 @@ export default function AdminCalendar() {
                   size="sm"
                   onClick={() => {
                     setSelectedReservation(null);
-                    setLocation(`/admin/reservations?highlight=${selectedReservation.id}`);
+                    setLocation(`/dashboard/reservations?highlight=${selectedReservation.id}`);
                   }}
                   className="flex-1"
                   data-testid="button-modal-view-reservation"

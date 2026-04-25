@@ -106,34 +106,34 @@ const menuGroups: MenuGroup[] = [
     label: "Tableau de bord",
     icon: Home,
     items: [
-      { title: "Tableau de bord", url: "/admin", icon: Home },
-      { title: "Analyses avancées", url: "/admin/advanced-analytics", icon: BarChart3 },
+      { title: "Tableau de bord", url: "/dashboard", icon: Home },
+      { title: "Analyses avancées", url: "/dashboard/advanced-analytics", icon: BarChart3 },
     ],
   },
   {
     label: "Activité",
     icon: Briefcase,
     items: [
-      { title: "Prestations", url: "/admin/engagements", icon: Briefcase },
-      { title: "Atelier", url: "/admin/workshop", icon: Wrench },
-      { title: "Catalogue", url: "/admin/services-catalog", icon: ClipboardList },
-      { title: "Services", url: "/admin/services", icon: Package },
-      { title: "Réservations", url: "/admin/reservations", icon: Calendar },
-      { title: "Planning", url: "/admin/calendar", icon: CalendarCheck },
-      { title: "Livraisons", url: "/admin/delivery-notes", icon: Truck },
-      { title: "Workflows", url: "/admin/service-workflows", icon: GitBranch },
-      { title: "Scanner OCR", url: "/admin/scanner", icon: ScanLine },
-      { title: "Galerie", url: "/admin/gallery", icon: Images },
+      { title: "Prestations", url: "/dashboard/engagements", icon: Briefcase },
+      { title: "Atelier", url: "/dashboard/workshop", icon: Wrench },
+      { title: "Catalogue", url: "/dashboard/services-catalog", icon: ClipboardList },
+      { title: "Services", url: "/dashboard/services", icon: Package },
+      { title: "Réservations", url: "/dashboard/reservations", icon: Calendar },
+      { title: "Planning", url: "/dashboard/calendar", icon: CalendarCheck },
+      { title: "Livraisons", url: "/dashboard/delivery-notes", icon: Truck },
+      { title: "Workflows", url: "/dashboard/service-workflows", icon: GitBranch },
+      { title: "Scanner OCR", url: "/dashboard/scanner", icon: ScanLine },
+      { title: "Galerie", url: "/dashboard/gallery", icon: Images },
     ],
   },
   {
     label: "Ventes",
     icon: ShoppingBag,
     items: [
-      { title: "Devis", url: "/admin/quotes", icon: FileText },
-      { title: "Factures", url: "/admin/invoices", icon: DollarSign },
-      { title: "Paiements", url: "/admin/payments", icon: CreditCard },
-      { title: "Banque", url: "/admin/bank-connection", icon: Landmark },
+      { title: "Devis", url: "/dashboard/quotes", icon: FileText },
+      { title: "Factures", url: "/dashboard/invoices", icon: DollarSign },
+      { title: "Paiements", url: "/dashboard/payments", icon: CreditCard },
+      { title: "Banque", url: "/dashboard/bank-connection", icon: Landmark },
     ],
   },
     {
@@ -141,36 +141,36 @@ const menuGroups: MenuGroup[] = [
     icon: Calculator,
     hideForEmployee: true,
     items: [
-      { title: "Vue d'ensemble", url: "/admin/accounting", icon: BookOpen },
-      { title: "Dépenses", url: "/admin/expenses", icon: Receipt },
-      { title: "Avoirs", url: "/admin/credit-notes", icon: FileText },
+      { title: "Vue d'ensemble", url: "/dashboard/accounting", icon: BookOpen },
+      { title: "Dépenses", url: "/dashboard/expenses", icon: Receipt },
+      { title: "Avoirs", url: "/dashboard/credit-notes", icon: FileText },
     ],
   },
   {
     label: "Clients",
     icon: UserCircle,
     items: [
-      { title: "Liste clients", url: "/admin/clients", icon: Users },
-      { title: "Avis clients", url: "/admin/reviews", icon: Star },
+      { title: "Liste clients", url: "/dashboard/clients", icon: Users },
+      { title: "Avis clients", url: "/dashboard/reviews", icon: Star },
     ],
   },
   {
     label: "Équipe",
     icon: UsersRound,
     items: [
-      { title: "Membres", url: "/admin/team", icon: UsersRound },
-      { title: "Chat interne", url: "/admin/chat", icon: MessageCircle },
-      { title: "Historique", url: "/admin/audit-logs", icon: History },
-      { title: "Journal SMS", url: "/admin/sms-logs", icon: MessageSquare },
+      { title: "Membres", url: "/dashboard/team", icon: UsersRound },
+      { title: "Chat interne", url: "/dashboard/chat", icon: MessageCircle },
+      { title: "Historique", url: "/dashboard/audit-logs", icon: History },
+      { title: "Journal SMS", url: "/dashboard/sms-logs", icon: MessageSquare },
     ],
   },
   {
     label: "Gestion",
     icon: Cog,
     items: [
-      { title: "Utilisateurs", url: "/admin/users", icon: UserCircle },
-      { title: "Paramètres", url: "/admin/settings", icon: Settings },
-      { title: "Rappels & Notifications", url: "/admin/notification-settings", icon: Bell },
+      { title: "Utilisateurs", url: "/dashboard/users", icon: UserCircle },
+      { title: "Paramètres", url: "/dashboard/settings", icon: Settings },
+      { title: "Rappels & Notifications", url: "/dashboard/notification-settings", icon: Bell },
       { title: "Confidentialité", url: "/privacy", icon: Shield },
     ],
   },
@@ -179,8 +179,8 @@ const menuGroups: MenuGroup[] = [
     icon: ShieldCheck,
     superadminOnly: true,
     items: [
-      { title: "Garages", url: "/admin/garages", icon: Building2 },
-      { title: "Sauvegardes", url: "/admin/backups", icon: Archive },
+      { title: "Garages", url: "/dashboard/garages", icon: Building2 },
+      { title: "Sauvegardes", url: "/dashboard/backups", icon: Archive },
     ],
   },
   {
@@ -188,8 +188,8 @@ const menuGroups: MenuGroup[] = [
     icon: Shield,
     rootadminOnly: true,
     items: [
-      { title: "Logs Applicatifs", url: "/admin/app-logs", icon: History },
-      { title: "Imports", url: "/admin/imports", icon: Upload },
+      { title: "Logs Applicatifs", url: "/dashboard/app-logs", icon: History },
+      { title: "Imports", url: "/dashboard/imports", icon: Upload },
       { title: "API Swagger", url: "/api/swagger", icon: FileCode, external: true },
     ],
   },
@@ -257,7 +257,7 @@ export function AppSidebar() {
   });
 
   useEffect(() => {
-    if (location && location.startsWith("/admin")) {
+    if (location && location.startsWith("/dashboard")) {
       setRecentlyViewed(prev => {
         const filtered = prev.filter(url => url !== location);
         const next = [location, ...filtered].slice(0, 5);
@@ -271,7 +271,7 @@ export function AppSidebar() {
     const allItems = menuGroups.flatMap(g => g.items);
     return recentlyViewed
       .map(url => allItems.find(item => item.url === url))
-      .filter((item): item is MenuItem => !!item && item.url !== "/admin");
+      .filter((item): item is MenuItem => !!item && item.url !== "/dashboard");
   }, [recentlyViewed]);
 
   return (

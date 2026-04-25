@@ -942,7 +942,7 @@ L'équipe AutoReport`;
                               size="icon"
                               variant="ghost"
                               title="Éditer"
-                              onClick={() => setLocation(`/admin/quotes/${quote.id}/edit`)}
+                              onClick={() => setLocation(`/dashboard/quotes/${quote.id}/edit`)}
                               data-testid={`button-edit-quote-${quote.id}`}
                             >
                               <Pencil className="h-4 w-4" />
@@ -1101,7 +1101,7 @@ L'équipe AutoReport`;
                           size="icon"
                           variant="ghost"
                           title="Éditer"
-                          onClick={() => setLocation(`/admin/quotes/${quote.id}/edit`)}
+                          onClick={() => setLocation(`/dashboard/quotes/${quote.id}/edit`)}
                           data-testid={`button-edit-quote-${quote.id}`}
                         >
                           <Pencil className="h-4 w-4" />

@@ -26,7 +26,7 @@ interface QuoteMedia {
 }
 
 export default function AdminQuoteEdit() {
-  const [, params] = useRoute("/admin/quotes/:id/edit");
+  const [, params] = useRoute("/dashboard/quotes/:id/edit");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -195,7 +195,7 @@ export default function AdminQuoteEdit() {
         title: "Succès",
         description: "Devis supprimé définitivement",
       });
-      setLocation("/admin/quotes");
+      setLocation("/dashboard/quotes");
     },
     onError: (error: Error) => {
       toast({
@@ -387,7 +387,7 @@ export default function AdminQuoteEdit() {
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
-          onClick={() => setLocation("/admin/quotes")}
+          onClick={() => setLocation("/dashboard/quotes")}
           data-testid="button-back-to-quotes"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />

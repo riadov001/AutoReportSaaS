@@ -451,7 +451,7 @@ export default function InternalChat() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/login";
+        window.location.href = "/signin";
       }, 500);
     }
   }, [isAuthenticated, authLoading, toast]);
@@ -473,7 +473,7 @@ export default function InternalChat() {
       if (exists) {
         setSelectedConversation(conversationId);
         setHasAutoSelected(true);
-        setLocation("/admin/chat", { replace: true });
+        setLocation("/dashboard/chat", { replace: true });
       }
     }
   }, [conversations, conversationsLoading, searchString, hasAutoSelected, setLocation]);

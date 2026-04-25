@@ -114,7 +114,7 @@ export default function ResetPassword() {
                 Demander un nouveau lien
               </Button>
             </Link>
-            <Link href="/login" className="w-full">
+            <Link href="/signin" className="w-full">
               <Button variant="ghost" className="w-full" data-testid="link-back-to-login">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Retour à la connexion
@@ -140,7 +140,7 @@ export default function ResetPassword() {
             </CardDescription>
           </CardHeader>
           <CardFooter>
-            <Link href="/login" className="w-full">
+            <Link href="/signin" className="w-full">
               <Button className="w-full" data-testid="button-go-to-login">
                 Se connecter
               </Button>
@@ -214,7 +214,7 @@ export default function ResetPassword() {
           </Form>
         </CardContent>
         <CardFooter>
-          <Link href="/login" className="w-full">
+          <Link href="/signin" className="w-full">
             <Button variant="ghost" className="w-full" data-testid="link-back-to-login">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Retour à la connexion

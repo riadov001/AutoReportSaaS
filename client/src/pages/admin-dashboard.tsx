@@ -796,7 +796,7 @@ export default function AdminDashboard() {
       })()}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="stat-card-gradient glow-card hover-elevate transition-all cursor-pointer" data-testid="card-global-revenue" onClick={() => setLocation('/admin/invoices?status=paid')}>
+        <Card className="stat-card-gradient glow-card hover-elevate transition-all cursor-pointer" data-testid="card-global-revenue" onClick={() => setLocation('/dashboard/invoices?status=paid')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 gap-2">
             <CardTitle className="text-sm font-medium">CA Global</CardTitle>
             <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10">
@@ -814,7 +814,7 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="stat-card-gradient glow-card hover-elevate transition-all cursor-pointer" data-testid="card-pending-revenue" onClick={() => setLocation('/admin/invoices?status=pending')}>
+        <Card className="stat-card-gradient glow-card hover-elevate transition-all cursor-pointer" data-testid="card-pending-revenue" onClick={() => setLocation('/dashboard/invoices?status=pending')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 gap-2">
             <CardTitle className="text-sm font-medium">En attente</CardTitle>
             <div className="flex items-center justify-center w-8 h-8 rounded-md bg-amber-500/10">
@@ -829,7 +829,7 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="stat-card-gradient glow-card hover-elevate transition-all cursor-pointer" data-testid="card-avg-invoice" onClick={() => setLocation('/admin/invoices')}>
+        <Card className="stat-card-gradient glow-card hover-elevate transition-all cursor-pointer" data-testid="card-avg-invoice" onClick={() => setLocation('/dashboard/invoices')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 gap-2">
             <CardTitle className="text-sm font-medium">Panier moyen</CardTitle>
             <div className="flex items-center justify-center w-8 h-8 rounded-md bg-blue-500/10">
@@ -844,7 +844,7 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="stat-card-gradient glow-card hover-elevate transition-all cursor-pointer" data-testid="card-conversion-rate" onClick={() => setLocation('/admin/quotes')}>
+        <Card className="stat-card-gradient glow-card hover-elevate transition-all cursor-pointer" data-testid="card-conversion-rate" onClick={() => setLocation('/dashboard/quotes')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 gap-2">
             <CardTitle className="text-sm font-medium">Taux conversion</CardTitle>
             <div className="flex items-center justify-center w-8 h-8 rounded-md bg-emerald-500/10">
@@ -1215,16 +1215,16 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-2">
             <Button variant="outline" size="sm" asChild className="justify-start" data-testid="link-quotes-pending">
-              <Link href="/admin/quotes?status=pending">En attente</Link>
+              <Link href="/dashboard/quotes?status=pending">En attente</Link>
             </Button>
             <Button variant="outline" size="sm" asChild className="justify-start" data-testid="link-quotes-approved">
-              <Link href="/admin/quotes?status=accepted">Acceptés</Link>
+              <Link href="/dashboard/quotes?status=accepted">Acceptés</Link>
             </Button>
             <Button variant="outline" size="sm" asChild className="justify-start" data-testid="link-quotes-newest">
-              <Link href="/admin/quotes?sort=newest">Nouveaux</Link>
+              <Link href="/dashboard/quotes?sort=newest">Nouveaux</Link>
             </Button>
             <Button variant="outline" size="sm" asChild className="justify-start" data-testid="link-quotes-all">
-              <Link href="/admin/quotes">Tout voir</Link>
+              <Link href="/dashboard/quotes">Tout voir</Link>
             </Button>
           </CardContent>
         </Card>
@@ -1235,16 +1235,16 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-2">
             <Button variant="outline" size="sm" asChild className="justify-start" data-testid="link-invoices-pending">
-              <Link href="/admin/invoices?status=pending">Impayées</Link>
+              <Link href="/dashboard/invoices?status=pending">Impayées</Link>
             </Button>
             <Button variant="outline" size="sm" asChild className="justify-start" data-testid="link-invoices-overdue">
-              <Link href="/admin/invoices?status=overdue">En retard</Link>
+              <Link href="/dashboard/invoices?status=overdue">En retard</Link>
             </Button>
             <Button variant="outline" size="sm" asChild className="justify-start" data-testid="link-invoices-month">
-              <Link href="/admin/invoices?month=current">Ce mois-ci</Link>
+              <Link href="/dashboard/invoices?month=current">Ce mois-ci</Link>
             </Button>
             <Button variant="outline" size="sm" asChild className="justify-start" data-testid="link-invoices-all">
-              <Link href="/admin/invoices">Tout voir</Link>
+              <Link href="/dashboard/invoices">Tout voir</Link>
             </Button>
           </CardContent>
         </Card>
@@ -1255,7 +1255,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="space-y-2">
             <Button variant="ghost" asChild className="w-full justify-between hover:bg-primary/5" data-testid="link-users">
-              <Link href="/admin/users">
+              <Link href="/dashboard/users">
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-primary" />
                   <span>Gestion des Clients</span>
@@ -1264,7 +1264,7 @@ export default function AdminDashboard() {
               </Link>
             </Button>
             <Button variant="ghost" asChild className="w-full justify-between hover:bg-primary/5" data-testid="link-reservations">
-              <Link href="/admin/reservations">
+              <Link href="/dashboard/reservations">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-primary" />
                   <span>Réservations ({analytics?.totalReservations || 0})</span>

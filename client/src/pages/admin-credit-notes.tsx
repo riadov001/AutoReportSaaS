@@ -193,7 +193,7 @@ export default function AdminCreditNotes() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/admin/scanner">
+          <Link href="/dashboard/scanner">
             <Button variant="outline" data-testid="button-ocr-scanner">
               <ScanLine className="h-4 w-4 mr-2" />
               Scanner OCR

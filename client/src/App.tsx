@@ -114,7 +114,9 @@ function Router() {
           <Route path="/">{() => <Landing isAdmin={isAdmin || isSuperAdmin} />}</Route>
           <Route path="/legal" component={Legal} />
           <Route path="/privacy" component={PrivacyPolicy} />
-          <Route path="/login" component={Login} />
+          <Route path="/login">
+            <Redirect to="/signin" />
+          </Route>
           <Route path="/signin" component={AuthSignIn} />
           <Route path="/signup" component={AuthSignUp} />
           <Route path="/devis/:token" component={PublicQuoteView} />
@@ -158,66 +160,72 @@ function Router() {
                   <Route path="/devis/:token" component={PublicQuoteView} />
                   <Route path="/facture/:token" component={PublicInvoiceView} />
                   <Route path="/avis/:token" component={PublicReview} />
-                  <Route path="/admin/dashboard" component={AdminDashboard} />
-                  <Route path="/admin" component={AdminDashboard} />
-                  <Route path="/admin/engagements" component={AdminEngagements} />
-                  <Route path="/admin/service-workflows" component={AdminServiceWorkflows} />
-                  <Route path="/admin/services" component={AdminServices} />
-                  <Route path="/admin/quotes/:id/edit" component={AdminQuoteEdit} />
-                  <Route path="/admin/quotes" component={AdminQuotes} />
-                  <Route path="/admin/invoices/:id/edit" component={AdminInvoiceEdit} />
-                  <Route path="/admin/invoices" component={AdminInvoices} />
+                  <Route path="/dashboard/dashboard" component={AdminDashboard} />
+                  <Route path="/dashboard" component={AdminDashboard} />
+                  <Route path="/dashboard/engagements" component={AdminEngagements} />
+                  <Route path="/dashboard/service-workflows" component={AdminServiceWorkflows} />
+                  <Route path="/dashboard/services" component={AdminServices} />
+                  <Route path="/dashboard/quotes/:id/edit" component={AdminQuoteEdit} />
+                  <Route path="/dashboard/quotes" component={AdminQuotes} />
+                  <Route path="/dashboard/invoices/:id/edit" component={AdminInvoiceEdit} />
+                  <Route path="/dashboard/invoices" component={AdminInvoices} />
                   <Route path="/payment/checkout" component={PaymentCheckout} />
                   <Route path="/payment/success" component={PaymentSuccess} />
                   <Route path="/payment/cancel" component={PaymentCancel} />
-                  <Route path="/admin/delivery-notes" component={AdminDeliveryNotes} />
-                  <Route path="/admin/reservations" component={AdminReservations} />
-                  <Route path="/admin/calendar" component={AdminCalendar} />
-                  <Route path="/admin/workshop" component={WorkshopManagement} />
-                  <Route path="/admin/services-catalog" component={EmployeeServices} />
-                  <Route path="/admin/users" component={AdminUsers} />
-                  <Route path="/admin/audit-logs" component={AdminAuditLogs} />
-                  <Route path="/admin/sms-logs" component={AdminSmsLogs} />
-                  <Route path="/admin/settings" component={AdminSettings} />
-                  <Route path="/admin/chat" component={InternalChat} />
-                  <Route path="/admin/backups" component={AdminBackups} />
-                  <Route path="/admin/garages" component={AdminGarages} />
-                  <Route path="/admin/reviews" component={AdminReviews} />
-                  <Route path="/admin/clients" component={AdminClients} />
-                  <Route path="/admin/team" component={AdminTeam} />
+                  <Route path="/dashboard/delivery-notes" component={AdminDeliveryNotes} />
+                  <Route path="/dashboard/reservations" component={AdminReservations} />
+                  <Route path="/dashboard/calendar" component={AdminCalendar} />
+                  <Route path="/dashboard/workshop" component={WorkshopManagement} />
+                  <Route path="/dashboard/services-catalog" component={EmployeeServices} />
+                  <Route path="/dashboard/users" component={AdminUsers} />
+                  <Route path="/dashboard/audit-logs" component={AdminAuditLogs} />
+                  <Route path="/dashboard/sms-logs" component={AdminSmsLogs} />
+                  <Route path="/dashboard/settings" component={AdminSettings} />
+                  <Route path="/dashboard/chat" component={InternalChat} />
+                  <Route path="/dashboard/backups" component={AdminBackups} />
+                  <Route path="/dashboard/garages" component={AdminGarages} />
+                  <Route path="/dashboard/reviews" component={AdminReviews} />
+                  <Route path="/dashboard/clients" component={AdminClients} />
+                  <Route path="/dashboard/team" component={AdminTeam} />
                   
-                  <Route path="/admin/payments" component={AdminPayments} />
-                  <Route path="/admin/bank-connection" component={AdminBankConnection} />
-                  <Route path="/admin/advanced-analytics" component={AdminAdvancedAnalytics} />
+                  <Route path="/dashboard/payments" component={AdminPayments} />
+                  <Route path="/dashboard/bank-connection" component={AdminBankConnection} />
+                  <Route path="/dashboard/advanced-analytics" component={AdminAdvancedAnalytics} />
 
                   {/* Accounting routes restricted for employees */}
                   {!isEmployee && (
                     <>
-                      <Route path="/admin/accounting" component={AdminAccounting} />
-                      <Route path="/admin/expenses" component={AdminExpenses} />
-                      <Route path="/admin/credit-notes" component={AdminCreditNotes} />
+                      <Route path="/dashboard/accounting" component={AdminAccounting} />
+                      <Route path="/dashboard/expenses" component={AdminExpenses} />
+                      <Route path="/dashboard/credit-notes" component={AdminCreditNotes} />
                     </>
                   )}
 
-                  <Route path="/admin/scanner" component={AdminScanner} />
-                  <Route path="/admin/gallery" component={AdminGallery} />
-                  <Route path="/admin/engagements/:id/gallery" component={AdminGallery} />
-                  <Route path="/admin/import-csv" component={AdminCSVImport} />
+                  <Route path="/dashboard/scanner" component={AdminScanner} />
+                  <Route path="/dashboard/gallery" component={AdminGallery} />
+                  <Route path="/dashboard/engagements/:id/gallery" component={AdminGallery} />
+                  <Route path="/dashboard/import-csv" component={AdminCSVImport} />
                   {isRootAdmin && (
                     <>
-                      <Route path="/admin/app-logs" component={AdminAppLogs} />
-                      <Route path="/admin/imports" component={AdminImports} />
+                      <Route path="/dashboard/app-logs" component={AdminAppLogs} />
+                      <Route path="/dashboard/imports" component={AdminImports} />
                     </>
                   )}
-                  <Route path="/admin/notification-settings" component={AdminNotificationSettings} />
+                  <Route path="/dashboard/notification-settings" component={AdminNotificationSettings} />
                   <Route path="/privacy" component={PrivacyPolicy} />
                   <Route path="/support" component={SupportPage} />
                   <Route path="/login">
-                    <Redirect to="/admin" />
+                    <Redirect to="/signin" />
+                  </Route>
+                  <Route path="/admin">
+                    <Redirect to="/dashboard" />
+                  </Route>
+                  <Route path="/admin/:rest*">
+                    <Redirect to="/dashboard" />
                   </Route>
                   <Route path="/">{() => <Landing isAdmin={true} />}</Route>
                   <Route>
-                    <Redirect to="/admin" />
+                    <Redirect to="/dashboard" />
                   </Route>
                 </Switch>
               </main>
@@ -245,7 +253,7 @@ function Router() {
               <Route path="/dashboard/support" component={DashboardSupport} />
               <Route path="/">{() => <Landing />}</Route>
               <Route path="/login">
-                <Redirect to="/dashboard" />
+                <Redirect to="/signin" />
               </Route>
               <Route path="/signin">
                 <Redirect to="/dashboard" />

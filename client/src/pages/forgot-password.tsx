@@ -90,7 +90,7 @@ export default function ForgotPassword() {
             >
               Utiliser une autre adresse
             </Button>
-            <Link href="/login" className="w-full">
+            <Link href="/signin" className="w-full">
               <Button variant="ghost" className="w-full" data-testid="link-back-to-login">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Retour à la connexion
@@ -147,7 +147,7 @@ export default function ForgotPassword() {
           </Form>
         </CardContent>
         <CardFooter>
-          <Link href="/login" className="w-full">
+          <Link href="/signin" className="w-full">
             <Button variant="ghost" className="w-full" data-testid="link-back-to-login">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Retour à la connexion

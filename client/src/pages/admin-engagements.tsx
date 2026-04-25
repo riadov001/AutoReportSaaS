@@ -204,7 +204,7 @@ export default function AdminEngagements() {
                           variant="outline"
                           asChild
                         >
-                          <Link href={`/admin/engagements/${selectedClientId}/gallery`}>
+                          <Link href={`/dashboard/engagements/${selectedClientId}/gallery`}>
                             <Image className="h-4 w-4 mr-2" />
                             Voir Galerie
                           </Link>
@@ -278,7 +278,7 @@ export default function AdminEngagements() {
                           variant="outline"
                           asChild
                         >
-                          <Link href={`/admin/engagements/${selectedClientId}/gallery`}>
+                          <Link href={`/dashboard/engagements/${selectedClientId}/gallery`}>
                             <Image className="h-4 w-4 mr-2" />
                             Voir Galerie
                           </Link>
@@ -339,7 +339,7 @@ export default function AdminEngagements() {
               <CardContent>
                 <div className="space-y-2">
                   {engagementData.quotes.map((quote) => (
-                    <Link key={quote.id} href={`/admin/quotes/${quote.id}/edit`}>
+                    <Link key={quote.id} href={`/dashboard/quotes/${quote.id}/edit`}>
                       <div
                         className="flex items-center justify-between p-3 border border-border rounded-md hover-elevate cursor-pointer"
                         data-testid={`row-quote-${quote.id}`}
@@ -384,7 +384,7 @@ export default function AdminEngagements() {
               <CardContent>
                 <div className="space-y-2">
                   {engagementData.invoices.map((invoice) => (
-                    <Link key={invoice.id} href={`/admin/invoices/${invoice.id}/edit`}>
+                    <Link key={invoice.id} href={`/dashboard/invoices/${invoice.id}/edit`}>
                       <div
                         className="flex items-center justify-between p-3 border border-border rounded-md hover-elevate cursor-pointer"
                         data-testid={`row-invoice-${invoice.id}`}

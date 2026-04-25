@@ -136,7 +136,7 @@ export default function PaymentCheckout() {
         title: "Erreur",
         description: "Aucune facture spécifiée pour le paiement.",
       });
-      setLocation("/admin/invoices");
+      setLocation("/dashboard/invoices");
       return;
     }
     setInvoiceId(id);
@@ -191,7 +191,7 @@ export default function PaymentCheckout() {
             <p className="text-sm text-muted-foreground text-center" data-testid="text-payment-init-error">
               {(error as Error)?.message || "Stripe n'est pas configuré ou la facture est invalide."}
             </p>
-            <Button variant="outline" onClick={() => setLocation("/admin/invoices")} data-testid="button-back-from-error">
+            <Button variant="outline" onClick={() => setLocation("/dashboard/invoices")} data-testid="button-back-from-error">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Retour aux factures
             </Button>
@@ -211,7 +211,7 @@ export default function PaymentCheckout() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setLocation("/admin/invoices")}
+              onClick={() => setLocation("/dashboard/invoices")}
               data-testid="button-back-to-invoices"
             >
               <ArrowLeft className="h-4 w-4" />

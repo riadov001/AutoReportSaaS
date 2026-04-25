@@ -404,7 +404,7 @@ export default function AdminUsers() {
                           size="sm"
                           variant="ghost"
                           className="px-1 h-auto text-primary"
-                          onClick={() => setLocation(`/admin/engagements?clientId=${user.id}`)}
+                          onClick={() => setLocation(`/dashboard/engagements?clientId=${user.id}`)}
                           data-testid={`link-user-engagements-${user.id}`}
                         >
                           Voir les prestations

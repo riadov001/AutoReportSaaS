@@ -460,7 +460,7 @@ export default function AdminInvoices() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => setLocation(`/admin/invoices/${invoice.id}/edit`)}
+                                onClick={() => setLocation(`/dashboard/invoices/${invoice.id}/edit`)}
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>

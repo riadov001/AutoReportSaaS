@@ -26,7 +26,7 @@ interface InvoiceMedia {
 }
 
 export default function AdminInvoiceEdit() {
-  const [, params] = useRoute("/admin/invoices/:id/edit");
+  const [, params] = useRoute("/dashboard/invoices/:id/edit");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -195,7 +195,7 @@ export default function AdminInvoiceEdit() {
         title: "Succès",
         description: "Facture supprimée définitivement",
       });
-      setLocation("/admin/invoices");
+      setLocation("/dashboard/invoices");
     },
     onError: (error: Error) => {
       toast({
@@ -388,7 +388,7 @@ export default function AdminInvoiceEdit() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setLocation("/admin/invoices")}
+          onClick={() => setLocation("/dashboard/invoices")}
           data-testid="button-back"
         >
           <ArrowLeft className="h-5 w-5" />

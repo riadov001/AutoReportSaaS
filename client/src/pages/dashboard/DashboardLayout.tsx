@@ -36,7 +36,7 @@ export default function DashboardLayout({ children, title }: { children: ReactNo
           <div className="flex items-center gap-2">
             {isAdmin && (
               <a
-                href="/admin"
+                href="/dashboard"
                 data-testid="link-dashboard-admin"
                 className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 border border-amber-400/40 hover:border-amber-300/60 hover:bg-amber-400/[0.06] text-amber-200 text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-md transition-colors"
               >

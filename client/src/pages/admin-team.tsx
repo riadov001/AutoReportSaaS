@@ -195,7 +195,7 @@ export default function AdminTeam() {
             <CardContent className="p-6 text-center space-y-3">
               <MessageCircle className="h-12 w-12 mx-auto text-muted-foreground/50" />
               <p className="text-muted-foreground">Accédez au chat interne de l'équipe</p>
-              <Button onClick={() => setLocation("/admin/chat")} data-testid="button-open-chat">
+              <Button onClick={() => setLocation("/dashboard/chat")} data-testid="button-open-chat">
                 <MessageCircle className="h-4 w-4 mr-2" />
                 Ouvrir le chat
               </Button>
@@ -243,7 +243,7 @@ export default function AdminTeam() {
                 <div className="text-center pt-2">
                   <Button
                     variant="outline"
-                    onClick={() => setLocation("/admin/audit-logs")}
+                    onClick={() => setLocation("/dashboard/audit-logs")}
                     data-testid="button-view-all-logs"
                   >
                     Voir tout l'historique
