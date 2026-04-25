@@ -49,6 +49,7 @@ import {
   Upload,
   Clock,
   Images,
+  Globe,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -93,6 +94,14 @@ interface MenuGroup {
 }
 
 const menuGroups: MenuGroup[] = [
+  {
+    label: "Site AutoReport",
+    icon: Globe,
+    collapsible: false,
+    items: [
+      { title: "Site AutoReport", url: "/", icon: Globe },
+    ],
+  },
   {
     label: "Tableau de bord",
     icon: Home,

@@ -1,5 +1,6 @@
 import { useState, lazy, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { AutoReportLogo } from "@/components/autoreport-logo";
 import { CookieConsent } from "@/components/cookie-consent";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -7,7 +8,7 @@ import {
   Zap, FileText, CheckCircle2, Mail, Phone, MapPin,
   Shield, Gauge, Brain, ChevronDown, X, Download, Send,
   Activity, Clock, Star, Lock, Cpu, Database, Server, Code2,
-  Globe, Layers, Wind, Boxes, Trash2, Check, LogIn,
+  Globe, Layers, Wind, Boxes, Trash2, Check, LogIn, ShieldCheck,
 } from "lucide-react";
 import { SiGoogle, SiPostgresql, SiTypescript, SiReact, SiNodedotjs, SiExpress, SiHostinger } from "react-icons/si";
 import type { GeneratedReport } from "@/components/report-display";
@@ -390,6 +391,7 @@ function ContactModal({ onClose }: { onClose: () => void }) {
 
 export default function Landing() {
   const { toast } = useToast();
+  const isAdmin = false;
   const [vehicleInfo, setVehicleInfo] = useState({ make: "", model: "", year: "", mileage: "", issue: "" });
   const [guestEmail, setGuestEmail] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -451,6 +453,16 @@ export default function Landing() {
             </nav>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <ThemeToggle />
+              {isAdmin && (
+                <a
+                  href="/admin"
+                  data-testid="link-header-admin"
+                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 border border-amber-400/40 hover:border-amber-300/60 hover:bg-amber-400/[0.06] text-amber-200 text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-md transition-colors"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <span>Espace Admin</span>
+                </a>
+              )}
               <a
                 href="/signin"
                 data-testid="link-header-signin"

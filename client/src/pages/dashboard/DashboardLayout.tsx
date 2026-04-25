@@ -1,8 +1,9 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, FileText, CreditCard, Receipt, LifeBuoy, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, CreditCard, Receipt, LifeBuoy, LogOut, ShieldCheck } from "lucide-react";
 import { AutoReportLogo } from "@/components/autoreport-logo";
 import { queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard, exact: true },
@@ -14,6 +15,7 @@ const navItems = [
 
 export default function DashboardLayout({ children, title }: { children: ReactNode; title: string }) {
   const [location] = useLocation();
+  const { isAdmin } = useAuth();
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? location === href : location === href || location.startsWith(href + "/");
@@ -29,15 +31,27 @@ export default function DashboardLayout({ children, title }: { children: ReactNo
   return (
     <div className="min-h-screen bg-[#05050A] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 gap-3">
           <AutoReportLogo />
-          <button
-            onClick={handleLogout}
-            data-testid="button-logout"
-            className="inline-flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors"
-          >
-            <LogOut className="h-3.5 w-3.5" /> Déconnexion
-          </button>
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <a
+                href="/admin"
+                data-testid="link-dashboard-admin"
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 border border-amber-400/40 hover:border-amber-300/60 hover:bg-amber-400/[0.06] text-amber-200 text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-md transition-colors"
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>Espace Admin</span>
+              </a>
+            )}
+            <button
+              onClick={handleLogout}
+              data-testid="button-logout"
+              className="inline-flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors"
+            >
+              <LogOut className="h-3.5 w-3.5" /> Déconnexion
+            </button>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-[260px_1fr] gap-6">

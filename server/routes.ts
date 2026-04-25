@@ -593,10 +593,12 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       }
 
       const userId = req.user?.id || null;
+      const userRole = (req.user as any)?.role as string | undefined;
+      const isAdminUser = !!userRole && ["admin", "superadmin", "rootadmin", "employe"].includes(userRole);
       const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
 
-      // Check free report limit
-      if (userId) {
+      // Check free report limit (admins are exempt from all quotas)
+      if (userId && !isAdminUser) {
         // Authenticated user: check if they have a free report already, or an active subscription
         const freeCount = await storage.countFreeReportsByUser(userId);
         const activeSub = await storage.getActiveSubscription(userId);
@@ -617,7 +619,7 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
           // Increment usage
           await storage.updateUserSubscription(activeSub.id, { reportsUsed: activeSub.reportsUsed + 1 });
         }
-      } else {
+      } else if (!userId) {
         // Guest: limit by IP and email
         const ipCount = await storage.countFreeReportsByIp(ip);
         if (ipCount >= 1) {
@@ -646,7 +648,7 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       const report = await generateAiReport({ make, model, year, mileage, issue }, customPrompt);
 
       const garageId = (req as any).tenantGarageId || null;
-      const isSubscribed = userId ? !!(await storage.getActiveSubscription(userId)) : false;
+      const isSubscribed = userId && !isAdminUser ? !!(await storage.getActiveSubscription(userId)) : false;
 
       try {
         const contentStr = typeof report === 'object' ? JSON.stringify(report) : String(report);
@@ -660,10 +662,15 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
           issue,
           content: contentStr,
           status: "generated",
-          metadata: { urgencyLevel: report.urgencyLevel, estimatedCost: report.estimatedCost },
+          metadata: {
+            urgencyLevel: report.urgencyLevel,
+            estimatedCost: report.estimatedCost,
+            ...(isAdminUser ? { generatedByAdmin: true, adminRole: userRole } : {}),
+          },
           guestEmail: guestEmail ? guestEmail.toLowerCase() : null,
           ipAddress: ip,
-          isFree: !isSubscribed,
+          // Admin-generated reports are NOT counted as "free" so they don't pollute quota counters
+          isFree: isAdminUser ? false : !isSubscribed,
         });
       } catch (dbErr) {
         console.error("[AIReport] Failed to persist report:", dbErr);
