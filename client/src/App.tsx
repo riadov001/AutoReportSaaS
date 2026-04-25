@@ -243,9 +243,7 @@ function Router() {
               <Route path="/dashboard/subscriptions" component={DashboardSubscriptions} />
               <Route path="/dashboard/invoices" component={DashboardInvoices} />
               <Route path="/dashboard/support" component={DashboardSupport} />
-              <Route path="/">
-                <Redirect to="/dashboard" />
-              </Route>
+              <Route path="/">{() => <Landing />}</Route>
               <Route path="/login">
                 <Redirect to="/dashboard" />
               </Route>

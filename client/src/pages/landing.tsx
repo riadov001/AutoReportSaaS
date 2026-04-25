@@ -410,6 +410,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
     try {
       const res = await fetch("/api/reports/generate", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...vehicleInfo, guestEmail: guestEmail.trim() || undefined }),
       });

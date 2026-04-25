@@ -619,24 +619,6 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
           // Increment usage
           await storage.updateUserSubscription(activeSub.id, { reportsUsed: activeSub.reportsUsed + 1 });
         }
-      } else if (!userId) {
-        // Guest: limit by IP and email
-        const ipCount = await storage.countFreeReportsByIp(ip);
-        if (ipCount >= 1) {
-          return res.status(429).json({
-            message: "Un seul rapport gratuit par personne. Inscrivez-vous pour accéder à plus de rapports.",
-            code: "FREE_LIMIT_REACHED",
-          });
-        }
-        if (guestEmail) {
-          const emailCount = await storage.countFreeReportsByEmail(guestEmail);
-          if (emailCount >= 1) {
-            return res.status(429).json({
-              message: "Un seul rapport gratuit par adresse email. Inscrivez-vous pour accéder à plus de rapports.",
-              code: "FREE_LIMIT_REACHED",
-            });
-          }
-        }
       }
 
       const { generateAiReport } = await import('./aiReportService');
