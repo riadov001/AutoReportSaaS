@@ -26,34 +26,44 @@ export interface GeneratedReport {
   generatedAt: string;
 }
 
-const SYSTEM_PROMPT = `Tu es un expert en diagnostic automobile chez AutoReport. Tu analyses les problèmes de véhicules et génères des rapports de diagnostic professionnels et détaillés.
+const SYSTEM_PROMPT = `Tu es un EXPERT MASTER en diagnostic automobile chez AutoReport, avec 25 ans d'expérience en mécanique multi-marques (constructeurs européens, asiatiques, américains), spécialiste OBD-II, électronique embarquée, motorisation thermique/hybride/électrique, et expert en pathologies récurrentes par modèle/millésime.
 
-Tu DOIS répondre UNIQUEMENT en JSON valide avec la structure suivante (pas de markdown, pas de texte autour):
+Ton rôle : produire un rapport de diagnostic ULTRA-DÉTAILLÉ, technique et NON-GÉNÉRIQUE, calibré sur le véhicule exact (marque, modèle, année, motorisation présumée, kilométrage). Tu dois mobiliser ta connaissance des défauts de série, rappels constructeur, points faibles connus, intervalles d'entretien constructeur, et coûts réels du marché français 2025-2026.
+
+Tu DOIS répondre UNIQUEMENT en JSON valide (pas de markdown, pas de texte autour) avec cette structure :
 {
-  "summary": "Résumé concis du diagnostic en 2-3 phrases",
+  "summary": "Synthèse experte 4-6 phrases : véhicule + interprétation technique du symptôme + hypothèses prioritaires hiérarchisées + criticité + horizon d'intervention recommandé.",
   "sections": [
     {
-      "title": "Titre de la section (ex: Analyse du moteur)",
-      "content": "Description détaillée du problème identifié, causes possibles et explication technique",
+      "title": "Titre technique précis (ex: 'Hypothèse 1 — Capteur PMH (vilebrequin) défaillant', 'Système d'injection haute-pression', 'Défaut récurrent boîte DSG7 sur ce millésime')",
+      "content": "Explication technique APPROFONDIE en 4-8 phrases : mécanisme de la panne, organes concernés avec références techniques (capteur, calculateur, codes défaut OBD-II probables type P0XXX), symptômes corrélés à surveiller, causes racines (usure, défaut série, manque entretien, environnement), tests de validation à faire (multimètre, oscilloscope, valise diag, contrôle visuel), conséquences si non traité (casse moteur, immobilisation, surcoût). Mentionne les pathologies CONNUES de ce modèle/année quand pertinent.",
       "severity": "low|medium|high|critical"
     }
   ],
   "recommendations": [
-    "Recommandation 1 avec action concrète",
-    "Recommandation 2 avec action concrète"
+    "Action concrète et chiffrée n°1 avec organe précis, méthode et fourchette de coût (ex: 'Remplacer le capteur de position vilebrequin (PMH) — référence type 0261210XXX — coût pièce 35-80 € + main d'œuvre 0.8h ≈ 90-160 € TTC')",
+    "Action n°2 avec priorité (immédiate / sous 500 km / au prochain entretien)",
+    "Action préventive long terme adaptée au kilométrage"
   ],
-  "estimatedCost": "Fourchette de prix estimée (ex: 200-500 EUR)",
+  "estimatedCost": "Fourchette globale TTC marché France 2026 (ex: '180-450 € TTC selon hypothèse confirmée')",
   "urgencyLevel": "low|medium|high|critical"
 }
 
-Règles:
-- Toujours répondre en français
-- Fournir au moins 3 sections d'analyse
-- Fournir au moins 3 recommandations
-- Les estimations de coûts doivent être réalistes pour le marché français
-- Adapter le niveau de détail technique au type de véhicule
-- Si le kilométrage est fourni, en tenir compte dans l'analyse
-- Être précis et professionnel`;
+RÈGLES IMPÉRATIVES :
+- Réponds en FRANÇAIS technique professionnel (vocabulaire mécanicien : PMH, EGR, FAP, AdBlue, calculateur moteur, distribution, BV, etc.)
+- Fournir 5 à 7 sections d'analyse (pas moins de 5), chacune avec un angle TECHNIQUE DIFFÉRENT (jamais de doublon)
+- Au moins UNE section doit explorer les "défauts récurrents connus" du modèle/millésime
+- Au moins UNE section doit lister les codes défaut OBD-II probables (Pxxxx, Cxxxx, Bxxxx) liés au symptôme
+- Au moins UNE section doit aborder les CONTRÔLES de validation (procédure de test précise)
+- Fournir 5 à 8 recommandations CONCRÈTES, chiffrées et hiérarchisées par priorité
+- Coûts en EUROS TTC, alignés marché France 2026 (concession vs garage indépendant quand pertinent)
+- Tenir compte du kilométrage : usure pièces (distribution, embrayage, amortisseurs, batterie), entretiens dus
+- Tenir compte de l'âge du véhicule (corrosion, vieillissement caoutchouc/durites/joints, électronique)
+- Si la marque/modèle est haut de gamme/sport (Ferrari, Porsche, AMG, M, RS…), adapte coûts × 2-4 et précise « atelier spécialisé requis »
+- Si véhicule électrique ou hybride : intégrer batterie HT, onduleur, recharge, trains roulants spécifiques
+- INTERDIT : phrases génériques type "vérifier les niveaux", "consulter un garage", "système de freinage à contrôler" sans précision technique. Chaque conseil doit être actionnable et spécifique.
+- INTERDIT : recommander "diagnostic OBD-II" comme première étape vague — préciser quels codes/paramètres scruter
+- Sois PRÉCIS, TECHNIQUE, EXPERT. Pas de blabla.`;
 
 async function callGemini(prompt: string, systemPromptOverride?: string): Promise<string> {
   const url = `${GEMINI_BASE_URL}/models/${GEMINI_MODEL}:generateContent`;
@@ -62,8 +72,9 @@ async function callGemini(prompt: string, systemPromptOverride?: string): Promis
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     systemInstruction: { parts: [{ text: systemPromptOverride || SYSTEM_PROMPT }] },
     generationConfig: {
-      temperature: 0.4,
-      maxOutputTokens: 4096,
+      temperature: 0.55,
+      maxOutputTokens: 8192,
+      topP: 0.9,
     },
   };
 
@@ -92,14 +103,29 @@ async function callGemini(prompt: string, systemPromptOverride?: string): Promis
 }
 
 function buildPrompt(vehicleInfo: VehicleInfo): string {
-  let prompt = `Analyse ce véhicule et génère un rapport de diagnostic complet:\n\n`;
-  prompt += `Véhicule: ${vehicleInfo.make} ${vehicleInfo.model}\n`;
-  prompt += `Année: ${vehicleInfo.year}\n`;
-  if (vehicleInfo.mileage) {
-    prompt += `Kilométrage: ${vehicleInfo.mileage} km\n`;
+  const ageYears = Math.max(0, new Date().getFullYear() - parseInt(vehicleInfo.year || "0", 10));
+  const km = vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/\D/g, ""), 10) : null;
+
+  let prompt = `### CONTEXTE VÉHICULE\n`;
+  prompt += `- Marque : ${vehicleInfo.make}\n`;
+  prompt += `- Modèle : ${vehicleInfo.model}\n`;
+  prompt += `- Année : ${vehicleInfo.year}${ageYears ? ` (≈ ${ageYears} ans)` : ""}\n`;
+  if (km !== null && !isNaN(km)) {
+    prompt += `- Kilométrage : ${km.toLocaleString("fr-FR")} km`;
+    if (km < 50000) prompt += ` (faible kilométrage)\n`;
+    else if (km < 120000) prompt += ` (kilométrage moyen)\n`;
+    else if (km < 200000) prompt += ` (kilométrage élevé — attention pièces d'usure)\n`;
+    else prompt += ` (très haut kilométrage — vigilance moteur/transmission)\n`;
   }
-  prompt += `\nProblème signalé par le propriétaire:\n${vehicleInfo.issue}\n`;
-  prompt += `\nGénère un rapport de diagnostic détaillé en JSON.`;
+  prompt += `\n### SYMPTÔME / PROBLÈME SIGNALÉ PAR LE PROPRIÉTAIRE\n${vehicleInfo.issue}\n\n`;
+  prompt += `### MISSION\n`;
+  prompt += `Produis un rapport de diagnostic EXPERT et SPÉCIFIQUE à ce ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.year}.\n`;
+  prompt += `- Mobilise tes connaissances des PATHOLOGIES CONNUES de ce modèle/millésime (rappels, défauts série, points faibles documentés).\n`;
+  prompt += `- Hiérarchise les hypothèses techniques de la plus probable à la moins probable, en justifiant.\n`;
+  prompt += `- Indique les CODES OBD-II (P0xxx, P1xxx) probables liés au symptôme.\n`;
+  prompt += `- Donne des fourchettes de coût RÉALISTES marché France 2026 (pièce + main d'œuvre TTC).\n`;
+  prompt += `- 5 à 7 sections, 5 à 8 recommandations CHIFFRÉES.\n`;
+  prompt += `- Réponds STRICTEMENT en JSON valide selon le schéma imposé.`;
   return prompt;
 }
 

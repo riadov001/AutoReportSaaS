@@ -7,7 +7,7 @@ import {
   Zap, FileText, CheckCircle2, Mail, Phone, MapPin,
   Shield, Gauge, Brain, ChevronDown, X, Download, Send,
   Activity, Clock, Star, Lock, Cpu, Database, Server, Code2,
-  Globe, Layers, Wind, Boxes, Trash2, Check,
+  Globe, Layers, Wind, Boxes, Trash2, Check, LogIn,
 } from "lucide-react";
 import { SiGoogle, SiPostgresql, SiTypescript, SiReact, SiNodedotjs, SiExpress, SiHostinger } from "react-icons/si";
 import type { GeneratedReport } from "@/components/report-display";
@@ -449,26 +449,27 @@ export default function Landing() {
               <button onClick={() => setShowTech(true)} className="hover:text-white/80 transition-colors" data-testid="button-nav-tech">Technologie</button>
               <button onClick={() => setShowContact(true)} className="hover:text-white/80 transition-colors" data-testid="button-nav-contact">Contact</button>
             </nav>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <ThemeToggle />
               <a
                 href="/signin"
                 data-testid="link-header-signin"
-                className="hidden sm:inline-flex items-center px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white/70 hover:text-white transition-colors"
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 border border-white/20 hover:border-white/40 hover:bg-white/[0.04] text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-md transition-colors"
               >
-                Connexion
+                <LogIn className="h-3.5 w-3.5" />
+                <span>Se connecter</span>
               </a>
               <a
                 href="/signup"
                 data-testid="link-header-signup"
-                className="hidden sm:inline-flex items-center px-3 py-1.5 border border-white/15 hover:border-white/30 text-white text-xs font-bold uppercase tracking-wider rounded-md transition-colors"
+                className="hidden md:inline-flex items-center px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white/70 hover:text-white transition-colors"
               >
                 Inscription
               </a>
               <button
                 onClick={() => scrollTo("generator")}
                 data-testid="button-cta-header"
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#CE1126] hover:bg-[#b8101f] text-white text-xs font-bold rounded-md transition-colors neon-red-glow"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-[#CE1126] hover:bg-[#b8101f] text-white text-[11px] sm:text-xs font-bold rounded-md transition-colors neon-red-glow"
               >
                 <Zap className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Diagnostic</span>
