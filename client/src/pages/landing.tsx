@@ -391,8 +391,10 @@ function ContactModal({ onClose }: { onClose: () => void }) {
 export default function Landing() {
   const { toast } = useToast();
   const [vehicleInfo, setVehicleInfo] = useState({ make: "", model: "", year: "", mileage: "", issue: "" });
+  const [guestEmail, setGuestEmail] = useState("");
   const [generating, setGenerating] = useState(false);
   const [report, setReport] = useState<GeneratedReport | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showTech, setShowTech] = useState(false);
   const [showLegal, setShowLegal] = useState(false);
@@ -404,12 +406,19 @@ export default function Landing() {
       return;
     }
     setGenerating(true);
+    setLimitReached(false);
     try {
       const res = await fetch("/api/reports/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(vehicleInfo),
+        body: JSON.stringify({ ...vehicleInfo, guestEmail: guestEmail.trim() || undefined }),
       });
+      if (res.status === 429) {
+        const err = await res.json();
+        setLimitReached(true);
+        toast({ title: "Rapport gratuit épuisé", description: err.message || "Inscrivez-vous pour générer plus de rapports.", variant: "destructive" });
+        return;
+      }
       if (!res.ok) throw new Error();
       const data = await res.json();
       setReport(data);
@@ -667,9 +676,36 @@ export default function Landing() {
                     />
                   </div>
 
+                  <div>
+                    <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">EMAIL <span className="text-white/15">(facultatif — pour recevoir votre rapport)</span></label>
+                    <input
+                      type="email"
+                      placeholder="votre@email.com"
+                      value={guestEmail}
+                      onChange={e => setGuestEmail(e.target.value)}
+                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all font-mono"
+                    />
+                  </div>
+
+                  {limitReached && (
+                    <div className="flex items-start gap-3 p-3 bg-[#CE1126]/10 border border-[#CE1126]/20 rounded-md">
+                      <span className="text-[#CE1126] text-lg leading-none mt-0.5">⚠</span>
+                      <div>
+                        <p className="text-sm font-bold text-white mb-0.5">Rapport gratuit épuisé</p>
+                        <p className="text-xs text-white/50 mb-2">Créez un compte pour générer plus de rapports et télécharger vos diagnostics en PDF.</p>
+                        <a
+                          href="/auth?tab=register"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#CE1126] hover:bg-[#b8101f] text-white text-xs font-bold rounded transition-colors"
+                        >
+                          S'inscrire gratuitement
+                        </a>
+                      </div>
+                    </div>
+                  )}
+
                   <button
                     type="submit"
-                    disabled={generating}
+                    disabled={generating || limitReached}
                     data-testid="button-generate"
                     className="w-full flex items-center justify-center gap-2.5 py-3 bg-[#CE1126] hover:bg-[#b8101f] disabled:opacity-60 text-white font-bold rounded-md transition-colors neon-red-glow text-sm"
                   >

@@ -121,6 +121,12 @@ import {
   repairSheets,
   type RepairSheet,
   type InsertRepairSheet,
+  subscriptionPlans,
+  type SubscriptionPlan,
+  type InsertSubscriptionPlan,
+  userSubscriptions,
+  type UserSubscription,
+  type InsertUserSubscription,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, inArray } from "drizzle-orm";
@@ -349,6 +355,24 @@ export interface IStorage {
   updateAiReport(id: string, data: Partial<InsertAiReport>): Promise<AiReport>;
   deleteAiReport(id: string): Promise<void>;
   getAllAiReports(): Promise<AiReport[]>;
+  countFreeReportsByIp(ip: string): Promise<number>;
+  countFreeReportsByEmail(email: string): Promise<number>;
+  countFreeReportsByUser(userId: string): Promise<number>;
+
+  // Subscription Plans
+  getSubscriptionPlans(activeOnly?: boolean): Promise<SubscriptionPlan[]>;
+  getSubscriptionPlan(id: string): Promise<SubscriptionPlan | undefined>;
+  createSubscriptionPlan(data: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
+  updateSubscriptionPlan(id: string, data: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan>;
+  deleteSubscriptionPlan(id: string): Promise<void>;
+
+  // User Subscriptions
+  getUserSubscriptions(userId: string): Promise<UserSubscription[]>;
+  getActiveSubscription(userId: string): Promise<UserSubscription | undefined>;
+  createUserSubscription(data: InsertUserSubscription): Promise<UserSubscription>;
+  updateUserSubscription(id: string, data: Partial<InsertUserSubscription>): Promise<UserSubscription>;
+  getSubscriptionBySessionId(sessionId: string): Promise<UserSubscription | undefined>;
+  getAllSubscriptions(): Promise<(UserSubscription & { plan: SubscriptionPlan | null })[]>;
   getLandingSettings(): Promise<LandingSettings>;
   updateLandingSettings(data: Partial<InsertLandingSettings>): Promise<LandingSettings>;
   getPanelUserByEmail(email: string): Promise<PanelUser | undefined>;
@@ -1937,6 +1961,112 @@ export class DatabaseStorage implements IStorage {
 
   async deleteRepairSheet(id: string): Promise<void> {
     await db.delete(repairSheets).where(eq(repairSheets.id, id));
+  }
+
+  // ===== FREE REPORT LIMITING =====
+  async countFreeReportsByIp(ip: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(aiReports)
+      .where(and(eq(aiReports.ipAddress, ip), eq(aiReports.isFree, true)));
+    return Number(result[0]?.count ?? 0);
+  }
+
+  async countFreeReportsByEmail(email: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(aiReports)
+      .where(and(eq(aiReports.guestEmail, email.toLowerCase()), eq(aiReports.isFree, true)));
+    return Number(result[0]?.count ?? 0);
+  }
+
+  async countFreeReportsByUser(userId: string): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)` })
+      .from(aiReports)
+      .where(and(eq(aiReports.userId, userId), eq(aiReports.isFree, true)));
+    return Number(result[0]?.count ?? 0);
+  }
+
+  // ===== SUBSCRIPTION PLANS =====
+  async getSubscriptionPlans(activeOnly = false): Promise<SubscriptionPlan[]> {
+    if (activeOnly) {
+      return await db.select().from(subscriptionPlans)
+        .where(eq(subscriptionPlans.isActive, true))
+        .orderBy(subscriptionPlans.sortOrder, subscriptionPlans.createdAt);
+    }
+    return await db.select().from(subscriptionPlans)
+      .orderBy(subscriptionPlans.sortOrder, subscriptionPlans.createdAt);
+  }
+
+  async getSubscriptionPlan(id: string): Promise<SubscriptionPlan | undefined> {
+    const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+    return plan;
+  }
+
+  async createSubscriptionPlan(data: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    const [plan] = await db.insert(subscriptionPlans).values(data).returning();
+    return plan;
+  }
+
+  async updateSubscriptionPlan(id: string, data: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan> {
+    const [plan] = await db.update(subscriptionPlans)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(subscriptionPlans.id, id))
+      .returning();
+    return plan;
+  }
+
+  async deleteSubscriptionPlan(id: string): Promise<void> {
+    await db.delete(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+  }
+
+  // ===== USER SUBSCRIPTIONS =====
+  async getUserSubscriptions(userId: string): Promise<UserSubscription[]> {
+    return await db.select().from(userSubscriptions)
+      .where(eq(userSubscriptions.userId, userId))
+      .orderBy(desc(userSubscriptions.createdAt));
+  }
+
+  async getActiveSubscription(userId: string): Promise<UserSubscription | undefined> {
+    const now = new Date();
+    const results = await db.select().from(userSubscriptions)
+      .where(and(
+        eq(userSubscriptions.userId, userId),
+        eq(userSubscriptions.status, "active"),
+      ))
+      .orderBy(desc(userSubscriptions.createdAt));
+    return results.find(s => {
+      if (!s.currentPeriodEnd) return true;
+      return s.currentPeriodEnd > now;
+    });
+  }
+
+  async createUserSubscription(data: InsertUserSubscription): Promise<UserSubscription> {
+    const [sub] = await db.insert(userSubscriptions).values(data).returning();
+    return sub;
+  }
+
+  async updateUserSubscription(id: string, data: Partial<InsertUserSubscription>): Promise<UserSubscription> {
+    const [sub] = await db.update(userSubscriptions)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(userSubscriptions.id, id))
+      .returning();
+    return sub;
+  }
+
+  async getSubscriptionBySessionId(sessionId: string): Promise<UserSubscription | undefined> {
+    const [sub] = await db.select().from(userSubscriptions)
+      .where(eq(userSubscriptions.stripeSessionId, sessionId));
+    return sub;
+  }
+
+  async getAllSubscriptions(): Promise<(UserSubscription & { plan: SubscriptionPlan | null })[]> {
+    const subs = await db.select().from(userSubscriptions)
+      .orderBy(desc(userSubscriptions.createdAt));
+    const planIds = [...new Set(subs.map(s => s.planId).filter(Boolean))] as string[];
+    const plans = planIds.length
+      ? await db.select().from(subscriptionPlans).where(inArray(subscriptionPlans.id, planIds))
+      : [];
+    const planMap = new Map(plans.map(p => [p.id, p]));
+    return subs.map(s => ({ ...s, plan: s.planId ? (planMap.get(s.planId) ?? null) : null }));
   }
 }
 

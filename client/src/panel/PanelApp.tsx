@@ -7,6 +7,7 @@ import PanelReports from "./PanelReports";
 import PanelRepairSheets from "./PanelRepairSheets";
 import PanelSettings from "./PanelSettings";
 import PanelFeatureFlags from "./PanelFeatureFlags";
+import PanelPlans from "./PanelPlans";
 import { AutoReportLogo } from "@/components/autoreport-logo";
 import {
   LayoutDashboard,
@@ -19,12 +20,14 @@ import {
   ChevronRight,
   User,
   Flag,
+  CreditCard,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { path: "/panel", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { path: "/panel/reports", label: "Rapports", icon: FileText },
   { path: "/panel/repair-sheets", label: "Fiches Réparation", icon: Wrench },
+  { path: "/panel/plans", label: "Plans & Abonnements", icon: CreditCard },
   { path: "/panel/feature-flags", label: "Feature Flags", icon: Flag },
   { path: "/panel/settings", label: "Paramètres", icon: Settings },
 ];
@@ -59,6 +62,7 @@ export default function PanelApp() {
     if (location === "/panel") return <PanelDashboard />;
     if (location.startsWith("/panel/reports")) return <PanelReports />;
     if (location.startsWith("/panel/repair-sheets")) return <PanelRepairSheets />;
+    if (location.startsWith("/panel/plans")) return <PanelPlans />;
     if (location.startsWith("/panel/feature-flags")) return <PanelFeatureFlags user={user} />;
     if (location.startsWith("/panel/settings")) return <PanelSettings user={user} />;
     return <PanelDashboard />;

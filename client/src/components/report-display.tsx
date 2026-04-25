@@ -45,6 +45,13 @@ export default function ReportDisplay({ report }: { report: GeneratedReport }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(report),
       });
+      if (res.status === 401) {
+        const proceed = window.confirm(
+          "Le téléchargement PDF est réservé aux membres inscrits.\n\nCréer un compte gratuit maintenant ?"
+        );
+        if (proceed) window.location.href = "/auth?tab=register";
+        return;
+      }
       if (!res.ok) throw new Error();
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);

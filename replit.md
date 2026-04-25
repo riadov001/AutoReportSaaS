@@ -113,3 +113,28 @@ Sauvegarde automatique : Quotidienne à 21h00 (Europe/Paris), sans cumul (garde 
 - **Tailwind CSS:** Utility-first CSS framework.
 - **ESBuild:** Fast JavaScript bundler.
 - **Drizzle Kit:** Toolkit for managing Drizzle ORM migrations.
+
+## SaaS Public Landing Features (AutoReport)
+
+### Free Report Limiting
+- `POST /api/reports/generate` — Public endpoint, **limited to 1 free AI report per person** (de-duplicated by IP address + optional guest email).
+- Authenticated users: 1 free report then must subscribe (or have an active subscription with remaining quota).
+- Guests: Limited by IP; optional email field (`guestEmail`) provides additional de-duplication layer.
+- `isFree`, `ipAddress`, `guestEmail` columns added to `aiReports` table to track usage.
+
+### PDF Download Gate
+- `POST /api/reports/download-pdf` — Requires authentication (`req.user`). Returns HTTP 401 if not logged in.
+- Frontend `report-display.tsx` intercepts the 401 and prompts the user to register.
+
+### Subscription Plans (Admin-Configurable)
+- Admin panel at `/panel/plans` — full CRUD for subscription plans.
+- Plans support: one-time payment, monthly, or yearly period.
+- Each plan has: name, description, price, currency, period, reports quota, Stripe Price ID, active/inactive toggle, sort order.
+- `GET /api/plans` — public endpoint listing active plans.
+- `POST /api/subscriptions/checkout` — Creates a Stripe Checkout session (subscription mode for recurring, payment mode for one-time) and a pending `userSubscriptions` row.
+- `POST /api/subscriptions/confirm` — Verifies Stripe payment status and marks subscription active.
+
+### Admin Credentials
+- Panel URL: `/panel`
+- Email: `admin@autoreport.com`
+- Password: `AutoReport2024!`

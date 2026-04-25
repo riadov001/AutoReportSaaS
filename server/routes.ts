@@ -573,13 +573,68 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
     }
   });
 
-  // Public report generation (no authentication required) - uses Gemini AI
+  // Public: list active subscription plans
+  app.get('/api/plans', async (req, res) => {
+    try {
+      const plans = await storage.getSubscriptionPlans(true);
+      res.json(plans);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur lors de la récupération des plans" });
+    }
+  });
+
+  // Public report generation - limited to 1 free per IP/email/user
   app.post('/api/reports/generate', async (req, res) => {
     try {
-      const { make, model, year, mileage, issue } = req.body;
+      const { make, model, year, mileage, issue, guestEmail } = req.body;
       
       if (!make || !model || !year || !issue) {
         return res.status(400).json({ message: "Marque, modèle, année et description requises" });
+      }
+
+      const userId = req.user?.id || null;
+      const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+
+      // Check free report limit
+      if (userId) {
+        // Authenticated user: check if they have a free report already, or an active subscription
+        const freeCount = await storage.countFreeReportsByUser(userId);
+        const activeSub = await storage.getActiveSubscription(userId);
+        if (freeCount >= 1 && !activeSub) {
+          return res.status(429).json({
+            message: "Vous avez déjà utilisé votre rapport gratuit. Souscrivez à un plan pour générer plus de rapports.",
+            code: "FREE_LIMIT_REACHED",
+          });
+        }
+        if (activeSub) {
+          // Check quota in subscription
+          if (activeSub.reportsUsed >= activeSub.reportsIncluded) {
+            return res.status(429).json({
+              message: "Quota de rapports atteint pour votre abonnement.",
+              code: "SUBSCRIPTION_QUOTA_REACHED",
+            });
+          }
+          // Increment usage
+          await storage.updateUserSubscription(activeSub.id, { reportsUsed: activeSub.reportsUsed + 1 });
+        }
+      } else {
+        // Guest: limit by IP and email
+        const ipCount = await storage.countFreeReportsByIp(ip);
+        if (ipCount >= 1) {
+          return res.status(429).json({
+            message: "Un seul rapport gratuit par personne. Inscrivez-vous pour accéder à plus de rapports.",
+            code: "FREE_LIMIT_REACHED",
+          });
+        }
+        if (guestEmail) {
+          const emailCount = await storage.countFreeReportsByEmail(guestEmail);
+          if (emailCount >= 1) {
+            return res.status(429).json({
+              message: "Un seul rapport gratuit par adresse email. Inscrivez-vous pour accéder à plus de rapports.",
+              code: "FREE_LIMIT_REACHED",
+            });
+          }
+        }
       }
 
       const { generateAiReport } = await import('./aiReportService');
@@ -590,8 +645,8 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       } catch {}
       const report = await generateAiReport({ make, model, year, mileage, issue }, customPrompt);
 
-      const userId = req.user?.id || null;
       const garageId = (req as any).tenantGarageId || null;
+      const isSubscribed = userId ? !!(await storage.getActiveSubscription(userId)) : false;
 
       try {
         const contentStr = typeof report === 'object' ? JSON.stringify(report) : String(report);
@@ -606,6 +661,9 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
           content: contentStr,
           status: "generated",
           metadata: { urgencyLevel: report.urgencyLevel, estimatedCost: report.estimatedCost },
+          guestEmail: guestEmail ? guestEmail.toLowerCase() : null,
+          ipAddress: ip,
+          isFree: !isSubscribed,
         });
       } catch (dbErr) {
         console.error("[AIReport] Failed to persist report:", dbErr);
@@ -618,9 +676,16 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
     }
   });
 
-  // Public PDF download (no authentication required) - generates HTML-based PDF
+  // PDF download - requires authentication
   app.post('/api/reports/download-pdf', async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({
+          message: "Vous devez être connecté pour télécharger un rapport.",
+          code: "AUTH_REQUIRED",
+        });
+      }
+
       const reportData = req.body;
       
       if (!reportData || !reportData.vehicleInfo) {
@@ -636,6 +701,159 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
     } catch (error) {
       console.error("Error generating PDF:", error);
       res.status(500).json({ message: "Erreur lors de la génération du PDF" });
+    }
+  });
+
+  // Subscription checkout via Stripe
+  app.post('/api/subscriptions/checkout', async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Connexion requise pour souscrire." });
+      }
+      const { planId } = req.body;
+      if (!planId) return res.status(400).json({ message: "planId requis" });
+
+      const plan = await storage.getSubscriptionPlan(planId);
+      if (!plan || !plan.isActive) return res.status(404).json({ message: "Plan introuvable" });
+
+      const { getStripe } = await import('./stripeService');
+      const stripe = getStripe();
+      if (!stripe) return res.status(503).json({ message: "Stripe non configuré" });
+
+      const baseUrl = req.headers['x-forwarded-proto']
+        ? `${req.headers['x-forwarded-proto']}://${req.headers['x-forwarded-host'] || req.headers.host}`
+        : `http://${req.headers.host}`;
+
+      const isRecurring = plan.period === 'monthly' || plan.period === 'yearly';
+      let session;
+
+      if (isRecurring && plan.stripePriceId) {
+        session = await stripe.checkout.sessions.create({
+          mode: 'subscription',
+          line_items: [{ price: plan.stripePriceId, quantity: 1 }],
+          success_url: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&type=subscription`,
+          cancel_url: `${baseUrl}/payment-cancel`,
+          customer_email: req.user.email || undefined,
+          metadata: { planId, userId: req.user.id },
+        });
+      } else {
+        session = await stripe.checkout.sessions.create({
+          mode: 'payment',
+          line_items: [{
+            price_data: {
+              currency: plan.currency || 'eur',
+              product_data: { name: plan.name, description: plan.description || undefined },
+              unit_amount: Math.round(Number(plan.price) * 100),
+            },
+            quantity: 1,
+          }],
+          success_url: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&type=plan`,
+          cancel_url: `${baseUrl}/payment-cancel`,
+          customer_email: req.user.email || undefined,
+          metadata: { planId, userId: req.user.id },
+        });
+      }
+
+      // Create pending subscription record
+      const periodEnd = plan.period === 'monthly'
+        ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        : plan.period === 'yearly'
+        ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+        : null;
+
+      await storage.createUserSubscription({
+        userId: req.user.id,
+        planId,
+        status: 'pending',
+        reportsUsed: 0,
+        reportsIncluded: plan.reportsIncluded,
+        stripeSessionId: session.id,
+        currentPeriodEnd: periodEnd,
+      });
+
+      res.json({ url: session.url, sessionId: session.id });
+    } catch (error) {
+      console.error("Subscription checkout error:", error);
+      res.status(500).json({ message: "Erreur lors de la création du paiement" });
+    }
+  });
+
+  // Confirm subscription after payment
+  app.post('/api/subscriptions/confirm', async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      if (!sessionId) return res.status(400).json({ message: "sessionId requis" });
+
+      const sub = await storage.getSubscriptionBySessionId(sessionId);
+      if (!sub) return res.status(404).json({ message: "Abonnement introuvable" });
+
+      const { getStripe } = await import('./stripeService');
+      const stripe = getStripe();
+      if (stripe) {
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        if (session.payment_status === 'paid' || session.status === 'complete') {
+          await storage.updateUserSubscription(sub.id, {
+            status: 'active',
+            stripeSubscriptionId: session.subscription as string || undefined,
+          });
+          return res.json({ success: true });
+        }
+      }
+      res.json({ success: false, status: sub.status });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur de confirmation" });
+    }
+  });
+
+  // Panel: CRUD plans
+  app.get('/api/panel/plans', requirePanelAuth(), async (req: any, res) => {
+    try {
+      const plans = await storage.getSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur" });
+    }
+  });
+
+  app.post('/api/panel/plans', requirePanelAuth("admin"), async (req: any, res) => {
+    try {
+      const { name, description, price, currency, period, reportsIncluded, stripePriceId, stripeProductId, isActive, sortOrder } = req.body;
+      if (!name || !price || !period) return res.status(400).json({ message: "name, price, period requis" });
+      const plan = await storage.createSubscriptionPlan({
+        name, description, price: String(price), currency: currency || 'eur',
+        period, reportsIncluded: reportsIncluded || 5, stripePriceId, stripeProductId,
+        isActive: isActive ?? true, sortOrder: sortOrder ?? 0,
+      });
+      res.json(plan);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur création plan" });
+    }
+  });
+
+  app.put('/api/panel/plans/:id', requirePanelAuth("admin"), async (req: any, res) => {
+    try {
+      const plan = await storage.updateSubscriptionPlan(req.params.id, req.body);
+      res.json(plan);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur mise à jour plan" });
+    }
+  });
+
+  app.delete('/api/panel/plans/:id', requirePanelAuth("admin"), async (req: any, res) => {
+    try {
+      await storage.deleteSubscriptionPlan(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur suppression plan" });
+    }
+  });
+
+  app.get('/api/panel/subscriptions', requirePanelAuth(), async (req: any, res) => {
+    try {
+      const subs = await storage.getAllSubscriptions();
+      res.json(subs);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur" });
     }
   });
 
