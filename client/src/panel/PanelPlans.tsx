@@ -62,42 +62,68 @@ const emptyForm = {
 };
 
 export default function PanelPlans() {
-  const { token } = usePanelAuth();
   const qc = useQueryClient();
   const [tab, setTab] = useState<"plans" | "subscriptions">("plans");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [deleteId, setDeleteId] = useState<string | null>(null);
-
-  const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const { data: plans = [], isLoading: plansLoading } = useQuery<Plan[]>({
     queryKey: ["/api/panel/plans"],
-    queryFn: () => fetch("/api/panel/plans", { headers }).then(r => r.json()),
+    queryFn: async () => {
+      const r = await panelFetch("/api/panel/plans");
+      if (!r.ok) throw new Error("Erreur chargement plans");
+      return r.json();
+    },
   });
 
   const { data: subscriptions = [], isLoading: subsLoading } = useQuery<Subscription[]>({
     queryKey: ["/api/panel/subscriptions"],
-    queryFn: () => fetch("/api/panel/subscriptions", { headers }).then(r => r.json()),
+    queryFn: async () => {
+      const r = await panelFetch("/api/panel/subscriptions");
+      if (!r.ok) throw new Error("Erreur chargement abonnements");
+      return r.json();
+    },
     enabled: tab === "subscriptions",
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: typeof form) =>
-      fetch("/api/panel/plans", { method: "POST", headers, body: JSON.stringify(data) }).then(r => r.json()),
+    mutationFn: async (data: typeof form) => {
+      const r = await panelFetch("/api/panel/plans", { method: "POST", body: JSON.stringify(data) });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.message || "Erreur création");
+      }
+      return r.json();
+    },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/panel/plans"] }); resetForm(); },
+    onError: (e: Error) => setErrorMsg(e.message),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<typeof form> }) =>
-      fetch(`/api/panel/plans/${id}`, { method: "PUT", headers, body: JSON.stringify(data) }).then(r => r.json()),
+    mutationFn: async ({ id, data }: { id: string; data: Partial<typeof form> }) => {
+      const r = await panelFetch(`/api/panel/plans/${id}`, { method: "PUT", body: JSON.stringify(data) });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.message || "Erreur mise à jour");
+      }
+      return r.json();
+    },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/panel/plans"] }); resetForm(); },
+    onError: (e: Error) => setErrorMsg(e.message),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) =>
-      fetch(`/api/panel/plans/${id}`, { method: "DELETE", headers }).then(r => r.json()),
+    mutationFn: async (id: string) => {
+      const r = await panelFetch(`/api/panel/plans/${id}`, { method: "DELETE" });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.message || "Erreur suppression");
+      }
+      return r.json();
+    },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/panel/plans"] }); setDeleteId(null); },
   });
 
@@ -312,7 +338,12 @@ export default function PanelPlans() {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-5 space-y-4">
+            {errorMsg && (
+              <div className="mx-5 mt-4 p-2.5 bg-red-500/10 border border-red-500/30 rounded text-red-400 text-xs">
+                {errorMsg}
+              </div>
+            )}
+            <form onSubmit={(e) => { setErrorMsg(null); handleSubmit(e); }} className="p-5 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
                   <label className="text-xs text-white/50 mb-1 block">Nom du plan *</label>
