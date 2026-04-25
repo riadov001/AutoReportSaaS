@@ -4,7 +4,7 @@ import {
   Plus, Pencil, Trash2, Check, X, CreditCard, Users, TrendingUp,
   RefreshCw, Zap, Calendar, Package,
 } from "lucide-react";
-import { usePanelAuth } from "./usePanelAuth";
+import { panelFetch } from "./usePanelAuth";
 
 interface Plan {
   id: string;
