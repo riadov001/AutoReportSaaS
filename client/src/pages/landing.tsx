@@ -694,7 +694,7 @@ export default function Landing() {
                         <p className="text-sm font-bold text-white mb-0.5">Rapport gratuit épuisé</p>
                         <p className="text-xs text-white/50 mb-2">Créez un compte pour générer plus de rapports et télécharger vos diagnostics en PDF.</p>
                         <a
-                          href="/auth?tab=register"
+                          href="/login"
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#CE1126] hover:bg-[#b8101f] text-white text-xs font-bold rounded transition-colors"
                         >
                           S'inscrire gratuitement
