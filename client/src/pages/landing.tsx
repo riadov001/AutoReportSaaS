@@ -1,6 +1,5 @@
 import { useState, lazy, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
 import { AutoReportLogo } from "@/components/autoreport-logo";
 import { CookieConsent } from "@/components/cookie-consent";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -389,9 +388,8 @@ function ContactModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function Landing() {
+export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {}) {
   const { toast } = useToast();
-  const isAdmin = false;
   const [vehicleInfo, setVehicleInfo] = useState({ make: "", model: "", year: "", mileage: "", issue: "" });
   const [guestEmail, setGuestEmail] = useState("");
   const [generating, setGenerating] = useState(false);

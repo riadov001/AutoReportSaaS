@@ -99,7 +99,7 @@ const menuGroups: MenuGroup[] = [
     icon: Globe,
     collapsible: false,
     items: [
-      { title: "Site AutoReport", url: "/", icon: Globe },
+      { title: "Site AutoReport", url: "/site", icon: Globe },
     ],
   },
   {

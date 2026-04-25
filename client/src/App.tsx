@@ -111,7 +111,7 @@ function Router() {
     return (
       <>
         <Switch>
-          <Route path="/" component={Landing} />
+          <Route path="/">{() => <Landing isAdmin={isAdmin || isSuperAdmin} />}</Route>
           <Route path="/legal" component={Legal} />
           <Route path="/privacy" component={PrivacyPolicy} />
           <Route path="/login" component={Login} />
@@ -212,6 +212,7 @@ function Router() {
                   <Route path="/admin/notification-settings" component={AdminNotificationSettings} />
                   <Route path="/privacy" component={PrivacyPolicy} />
                   <Route path="/support" component={SupportPage} />
+                  <Route path="/site">{() => <Landing isAdmin={true} />}</Route>
                   <Route path="/login">
                     <Redirect to="/admin" />
                   </Route>
