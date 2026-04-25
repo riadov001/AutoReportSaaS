@@ -2,7 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import QRCode from 'qrcode';
 import type { Quote, Invoice, InvoiceItem, QuoteItem, ApplicationSettings, User, DeliveryNote } from '@shared/schema';
-import defaultLogoImage from '@assets/cropped-Logo-2-1-768x543_(3)_1767977972324.png';
+const defaultLogoImage: string | null = null;
 const BRAND_NAME = 'AutoReport';
 
 interface CompanyInfo {
@@ -79,6 +79,7 @@ async function getLogoBase64(customLogo?: string): Promise<string> {
       });
     } catch (e) { console.error(e); }
   }
+  if (!defaultLogoImage) return null as any;
   const response = await fetch(defaultLogoImage);
   const blob = await response.blob();
   return new Promise((resolve, reject) => {

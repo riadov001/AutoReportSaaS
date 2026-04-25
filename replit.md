@@ -72,6 +72,16 @@ Sauvegarde automatique : Quotidienne à 21h00 (Europe/Paris), sans cumul (garde 
 - **Maintenance Mode:** Blocks all non-panel routes with 503 when `MAINTENANCE_MODE=true`.
 - **AES-256-GCM Encryption:** `server/cryptoConfig.ts` for encrypting sensitive configuration values.
 
+## Replit Setup Notes
+
+- Node.js 20 installed as the runtime
+- `@neondatabase/serverless` added as dependency (was missing from package.json)
+- `date-fns` downgraded to v2.30.0 for Vite 5 compatibility
+- `vite.config.ts` updated: `host: "0.0.0.0"`, `port: 5000`, `allowedHosts: true` for Replit proxy
+- Logo image replaced with inline SVG (original asset not included in export)
+- Workflow: `npm run dev` on port 5000
+- Deployment: autoscale with `npm run build` + `node dist/index.js`
+
 ## External Dependencies
 
 ### Third-party Services
