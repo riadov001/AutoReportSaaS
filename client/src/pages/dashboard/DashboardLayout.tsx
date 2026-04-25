@@ -1,6 +1,8 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, FileText, CreditCard, Receipt, LifeBuoy, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, FileText, CreditCard, Receipt, LifeBuoy, LogOut } from "lucide-react";
+import { AutoReportLogo } from "@/components/autoreport-logo";
+import { queryClient } from "@/lib/queryClient";
 
 const navItems = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard, exact: true },
@@ -16,13 +18,26 @@ export default function DashboardLayout({ children, title }: { children: ReactNo
   const isActive = (href: string, exact?: boolean) =>
     exact ? location === href : location === href || location.startsWith(href + "/");
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/logout", { method: "POST", credentials: "include" });
+    } catch {}
+    queryClient.clear();
+    window.location.href = "/";
+  };
+
   return (
     <div className="min-h-screen bg-[#05050A] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <div className="flex items-center justify-between mb-6">
-          <Link href="/" className="inline-flex items-center gap-2 text-xs text-white/50 hover:text-white transition-colors" data-testid="link-back-home">
-            <ArrowLeft className="h-3.5 w-3.5" /> Retour à l'accueil
-          </Link>
+          <AutoReportLogo />
+          <button
+            onClick={handleLogout}
+            data-testid="button-logout"
+            className="inline-flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors"
+          >
+            <LogOut className="h-3.5 w-3.5" /> Déconnexion
+          </button>
         </div>
 
         <div className="grid lg:grid-cols-[260px_1fr] gap-6">

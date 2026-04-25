@@ -1,5 +1,5 @@
 // Local authentication with email/password
-import { Switch, Route, Redirect, Link, useLocation } from "wouter";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -12,8 +12,6 @@ import { NotificationBell } from "@/components/notification-bell";
 import { UserMenu } from "@/components/user-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
-import { Button } from "@/components/ui/button";
-import { LifeBuoy, MessageCircle, Home, FileText, Receipt } from "lucide-react";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
@@ -232,42 +230,13 @@ function Router() {
     );
   }
 
-  const clientNavItems = [
-    { href: "/", icon: Home, label: "Accueil" },
-    { href: "/quotes", icon: FileText, label: "Devis" },
-    { href: "/invoices", icon: Receipt, label: "Factures" },
-    { href: "/messages", icon: MessageCircle, label: "Messages" },
-  ];
-
   return (
     <>
       <div className="flex flex-col h-screen">
-        <header className="flex items-center justify-between gap-2 p-2 sm:p-4 border-b border-border bg-background shrink-0 sticky top-0 z-50">
-          <Link href="/" className="flex items-center gap-2">
-            <AutoReportLogo variant="icon" className="w-8 h-8" />
-            <span className="font-bold text-base hidden sm:block">AutoReport</span>
-          </Link>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <Button variant="ghost" size="icon" data-testid="button-client-support" asChild className="hidden sm:flex">
-              <Link href="/support">
-                <LifeBuoy className="h-4 w-4" />
-              </Link>
-            </Button>
-            <NotificationBell />
-            <ThemeToggle />
-            <UserMenu />
-          </div>
-        </header>
-        <main className="flex-1 overflow-auto pb-16 sm:pb-0">
+        <main className="flex-1 overflow-auto">
           <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Chargement…</div>}>
             <Switch>
-              <Route path="/" component={ClientDashboard} />
-              <Route path="/services" component={Services} />
-              <Route path="/quotes" component={ClientQuotes} />
-              <Route path="/invoices" component={ClientInvoices} />
-              <Route path="/messages" component={ClientChat} />
               <Route path="/privacy" component={PrivacyPolicy} />
-              <Route path="/support" component={SupportPage} />
               <Route path="/payment/checkout" component={PaymentCheckout} />
               <Route path="/payment/success" component={PaymentSuccess} />
               <Route path="/payment/cancel" component={PaymentCancel} />
@@ -276,6 +245,9 @@ function Router() {
               <Route path="/dashboard/subscriptions" component={DashboardSubscriptions} />
               <Route path="/dashboard/invoices" component={DashboardInvoices} />
               <Route path="/dashboard/support" component={DashboardSupport} />
+              <Route path="/">
+                <Redirect to="/dashboard" />
+              </Route>
               <Route path="/login">
                 <Redirect to="/dashboard" />
               </Route>
@@ -286,29 +258,11 @@ function Router() {
                 <Redirect to="/dashboard" />
               </Route>
               <Route>
-                <Redirect to="/" />
+                <Redirect to="/dashboard" />
               </Route>
             </Switch>
           </Suspense>
         </main>
-
-        <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border flex items-center" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-          {clientNavItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`}
-                data-testid={`nav-bottom-${item.label.toLowerCase()}`}
-              >
-                <Icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
       </div>
     </>
   );
