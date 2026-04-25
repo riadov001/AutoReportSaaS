@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LogOut, Key, User as UserIcon, Smartphone, AlertTriangle, Trash2, Scale, FileText, Box, Home, Receipt } from "lucide-react";
+import { LogOut, Key, User as UserIcon, Smartphone, AlertTriangle, Trash2, Scale, FileText, LayoutDashboard, Receipt, CreditCard, LifeBuoy } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -154,11 +154,12 @@ export function UserMenu() {
   const handleLogout = async () => {
     try {
       await fetch("/api/logout", { method: "POST", credentials: "include" });
-      queryClient.clear();
-      setLocation("/login");
     } catch (error) {
       console.error("Logout error:", error);
     }
+    queryClient.clear();
+    const target = isClient ? "/signin" : "/login";
+    window.location.href = target;
   };
 
   const getRoleLabel = (role?: string) => {
@@ -228,22 +229,34 @@ export function UserMenu() {
 
           {isClient && (
             <>
-              <DropdownMenuItem asChild className="cursor-pointer" data-testid="nav-client-home">
-                <Link href="/">
-                  <Home className="mr-2 h-4 w-4" />
+              <DropdownMenuItem asChild className="cursor-pointer" data-testid="nav-client-dashboard">
+                <Link href="/dashboard">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
                   <span>Tableau de bord</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="cursor-pointer" data-testid="nav-client-quotes">
-                <Link href="/quotes">
+              <DropdownMenuItem asChild className="cursor-pointer" data-testid="nav-client-reports">
+                <Link href="/dashboard/reports">
                   <FileText className="mr-2 h-4 w-4" />
-                  <span>Mes devis</span>
+                  <span>Mes rapports</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="cursor-pointer" data-testid="nav-client-subscriptions">
+                <Link href="/dashboard/subscriptions">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  <span>Abonnements</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="cursor-pointer" data-testid="nav-client-invoices">
-                <Link href="/invoices">
+                <Link href="/dashboard/invoices">
                   <Receipt className="mr-2 h-4 w-4" />
                   <span>Mes factures</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="cursor-pointer" data-testid="nav-client-support">
+                <Link href="/dashboard/support">
+                  <LifeBuoy className="mr-2 h-4 w-4" />
+                  <span>Support</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
