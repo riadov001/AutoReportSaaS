@@ -741,6 +741,84 @@ export function generateVoiceDictationEmailHtml(data: {
   `;
 }
 
+export function generateAiReportEmailHtml(data: {
+  make: string;
+  model: string;
+  year: string;
+  mileage?: string;
+  issue?: string;
+  companyName?: string;
+}): string {
+  const company = data.companyName || 'AutoReport';
+  const vehicleLabel = `${data.make} ${data.model} ${data.year}${data.mileage ? ` — ${data.mileage} km` : ''}`;
+  return `
+    <div style="background-color: #f4f4f5; padding: 40px 10px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e5e7eb;">
+        <div style="background: linear-gradient(135deg, #0a0a12 0%, #1a0608 100%); padding: 32px 30px; text-align: center;">
+          <div style="display: inline-block; background-color: #CE1126; width: 48px; height: 48px; border-radius: 10px; line-height: 48px; font-size: 24px; margin-bottom: 16px;">🚗</div>
+          <h1 style="margin: 0; font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">Votre rapport <span style="color: #CE1126;">AutoReport</span> est prêt</h1>
+          <p style="margin: 8px 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">Rapport d'analyse pré-achat véhicule d'occasion</p>
+        </div>
+        <div style="padding: 30px;">
+          <div style="background-color: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px; padding: 16px 20px; margin-bottom: 24px;">
+            <p style="margin: 0 0 4px; font-size: 12px; color: #991b1b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">Véhicule analysé</p>
+            <p style="margin: 0; font-size: 20px; font-weight: 800; color: #CE1126;">${vehicleLabel}</p>
+            ${data.issue ? `<p style="margin: 8px 0 0; font-size: 12px; color: #6b7280;">${data.issue}</p>` : ''}
+          </div>
+
+          <p style="font-size: 15px; color: #374151; line-height: 1.6; margin: 0 0 20px;">
+            Bonjour,<br /><br />
+            Votre rapport d'analyse pré-achat est disponible. Il contient les points clés à vérifier, les faiblesses connues sur ce modèle ainsi que des conseils concrets pour aborder sereinement votre achat.
+          </p>
+
+          <div style="background-color: #f9fafb; border-radius: 8px; padding: 16px 20px; margin-bottom: 24px;">
+            <p style="margin: 0 0 10px; font-size: 13px; font-weight: 700; color: #111827;">Ce rapport comprend :</p>
+            <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: #4b5563; line-height: 2;">
+              <li>Points de vigilance spécifiques à ce modèle</li>
+              <li>Checklist des éléments à inspecter lors de la visite</li>
+              <li>Historique et faiblesses connues de la mécanique</li>
+              <li>Conseils de négociation et estimation de valeur</li>
+            </ul>
+          </div>
+
+          <p style="font-size: 13px; color: #6b7280; line-height: 1.6; margin: 0 0 24px;">
+            Pour télécharger votre rapport en PDF et accéder à l'historique de vos analyses, créez votre compte AutoReport gratuitement.
+          </p>
+
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="https://autoreport.fr/signup" style="background-color: #CE1126; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 800; font-size: 15px; display: inline-block; box-shadow: 0 2px 8px rgba(206,17,38,0.25);">
+              Télécharger mon rapport PDF
+            </a>
+          </div>
+
+          <p style="font-size: 12px; color: #9ca3af; text-align: center; margin: 0;">
+            Ce rapport a été généré automatiquement par ${company}. Bonne inspection !
+          </p>
+        </div>
+        <div style="background-color: #f9fafb; border-top: 1px solid #e5e7eb; padding: 20px 30px; text-align: center;">
+          <p style="margin: 0; font-size: 11px; color: #9ca3af;">
+            © ${new Date().getFullYear()} ${company} · Rapport d'analyse véhicule d'occasion<br />
+            <a href="https://autoreport.fr" style="color: #CE1126; text-decoration: none;">autoreport.fr</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+export async function sendAiReportEmail(to: string, data: {
+  make: string;
+  model: string;
+  year: string;
+  mileage?: string;
+  issue?: string;
+  companyName?: string;
+}): Promise<void> {
+  const subject = `Votre rapport AutoReport — ${data.make} ${data.model} ${data.year} est prêt`;
+  const html = generateAiReportEmailHtml(data);
+  await sendEmail(to, subject, html);
+}
+
 export async function sendReminderEmail(to: string, clientName: string, subject: string, body: string) {
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

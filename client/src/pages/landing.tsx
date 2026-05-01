@@ -489,14 +489,6 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
               >
                 Inscription
               </a>
-              <button
-                onClick={() => scrollTo("generator")}
-                data-testid="button-cta-header"
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-[#CE1126] hover:bg-[#b8101f] text-white text-[11px] sm:text-xs font-bold rounded-md transition-colors neon-red-glow"
-              >
-                <Zap className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Générer mon rapport</span>
-              </button>
             </div>
           </div>
         </div>
@@ -621,20 +613,20 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
             </div>
             <div className="grid sm:grid-cols-3 gap-5 max-w-4xl mx-auto">
               {[
-                { price: "0,49 €", label: "Rapport essentiel", desc: "Les points clés à vérifier. Idéal pour une première impression rapide.", highlight: false },
-                { price: "1,50 €", label: "Rapport complet", desc: "Checklist détaillée, faiblesses connues, conseils de négociation.", highlight: true },
-                { price: "2,49 €", label: "Rapport expert", desc: "Tout le rapport complet + estimation de la valeur marché et alertes spécifiques motorisation.", highlight: false },
-              ].map(({ price, label, desc, highlight }) => (
-                <div key={label} className={`hud-card rounded-md p-6 flex flex-col gap-3 ${highlight ? "border-[#CE1126]/40 bg-[#CE1126]/[0.04]" : ""}`}>
+                { price: "0,49 €", qty: "1 rapport", desc: "Idéal pour évaluer rapidement un seul véhicule avant de vous déplacer.", highlight: false },
+                { price: "1,50 €", qty: "3 rapports", desc: "Comparez plusieurs véhicules avant de faire votre choix. Meilleur rapport qualité/prix.", highlight: true },
+                { price: "2,49 €", qty: "5 rapports", desc: "Pour les acheteurs exigeants qui veulent analyser un maximum de véhicules en toute tranquillité.", highlight: false },
+              ].map(({ price, qty, desc, highlight }) => (
+                <div key={qty} className={`hud-card rounded-md p-6 flex flex-col gap-3 ${highlight ? "border-[#CE1126]/40 bg-[#CE1126]/[0.04]" : ""}`}>
                   {highlight && <span className="text-[10px] font-mono uppercase tracking-widest text-[#CE1126]">⭐ Recommandé</span>}
                   <div className="text-3xl font-extrabold text-white">{price}</div>
-                  <div className="text-sm font-bold text-white/80">{label}</div>
+                  <div className="text-sm font-bold text-white/80">{qty}</div>
                   <p className="text-xs text-white/40 leading-relaxed flex-1">{desc}</p>
                   <button
                     onClick={() => scrollTo("generator")}
                     className={`mt-2 w-full py-2.5 rounded-md text-xs font-bold uppercase tracking-wider transition-colors ${highlight ? "bg-[#CE1126] hover:bg-[#b8101f] text-white neon-red-glow" : "border border-white/15 hover:border-white/30 text-white/60 hover:text-white"}`}
                   >
-                    Choisir ce rapport
+                    Choisir cette offre
                   </button>
                 </div>
               ))}
@@ -659,15 +651,6 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
 
             <div className="grid lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
               <div className="hud-card rounded-md p-6 scan-line">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="flex gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#CE1126]" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#22c55e]" />
-                  </div>
-                  <span className="text-[10px] font-mono text-white/30">analyse_vehicule.ai</span>
-                </div>
-
                 <form onSubmit={handleGenerateReport} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     {[

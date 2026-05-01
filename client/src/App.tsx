@@ -87,7 +87,7 @@ function Router() {
 
   useEffect(() => {
     if (!isLoading) return;
-    const timer = setTimeout(() => setLoadingTimedOut(true), 8000);
+    const timer = setTimeout(() => setLoadingTimedOut(true), 10000);
     return () => clearTimeout(timer);
   }, [isLoading]);
 

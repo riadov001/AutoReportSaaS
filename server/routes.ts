@@ -231,8 +231,8 @@ function hasGarageAccess(user: User | undefined, resourceGarageId: string | null
   if (!user) return false;
   // Superadmin and rootadmin can access all resources
   if (user.role === "superadmin" || user.role === "rootadmin") return true;
-  // If resource has no garageId, only users without a specific garage (e.g. admins) can access
-  if (!resourceGarageId) return !user.garageId;
+  // If resource has no garageId, deny access (null garage resources are not accessible by garage-scoped users)
+  if (!resourceGarageId) return false;
   // User must belong to the same garage as the resource
   return user.garageId === resourceGarageId;
 }
@@ -656,6 +656,15 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
         });
       } catch (dbErr) {
         console.error("[AIReport] Failed to persist report:", dbErr);
+      }
+
+      if (guestEmail) {
+        try {
+          const { sendAiReportEmail } = await import('./emailService');
+          await sendAiReportEmail(guestEmail.toLowerCase(), { make, model, year, mileage, issue });
+        } catch (emailErr) {
+          console.error("[AIReport] Failed to send report email:", emailErr);
+        }
       }
 
       res.json(report);
