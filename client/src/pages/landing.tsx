@@ -5,10 +5,10 @@ import { CookieConsent } from "@/components/cookie-consent";
 import {
   Zap, FileText, CheckCircle2, Mail, Phone, MapPin,
   Shield, Gauge, Brain, ChevronDown, X, Download, Send,
-  Activity, Clock, Star, Lock, Cpu, Database, Server, Code2,
+  Activity, Clock, Star, Lock, Cpu, Database, Code2,
   Globe, Layers, Wind, Boxes, Trash2, Check, LogIn, ShieldCheck,
 } from "lucide-react";
-import { SiGoogle, SiPostgresql, SiTypescript, SiReact, SiNodedotjs, SiExpress, SiHostinger } from "react-icons/si";
+import { SiHostinger } from "react-icons/si";
 import type { GeneratedReport } from "@/components/report-display";
 
 const ReportDisplay = lazy(() => import("@/components/report-display"));
@@ -159,137 +159,6 @@ function LegalModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function TechModal({ onClose }: { onClose: () => void }) {
-  const techs = [
-    {
-      icon: <SiGoogle className="h-6 w-6 text-[#4285F4]" />,
-      name: "Google Gemini AI",
-      tag: "IA / LLM",
-      desc: "Moteur d'intelligence artificielle de pointe de Google pour l'analyse et la génération de rapports automobiles contextuels.",
-      color: "#4285F4",
-    },
-    {
-      icon: <SiReact className="h-6 w-6 text-[#61DAFB]" />,
-      name: "React + TypeScript",
-      tag: "Frontend",
-      desc: "Interface utilisateur réactive et typée avec React 18 et TypeScript. Design system Shadcn/UI, animations HUD personnalisées.",
-      color: "#61DAFB",
-    },
-    {
-      icon: <SiNodedotjs className="h-6 w-6 text-[#339933]" />,
-      name: "Node.js + Express",
-      tag: "Backend",
-      desc: "Serveur API REST performant, gestion des sessions, authentification JWT sécurisée et WebSockets en temps réel.",
-      color: "#339933",
-    },
-    {
-      icon: <SiPostgresql className="h-6 w-6 text-[#4169E1]" />,
-      name: "PostgreSQL + Drizzle",
-      tag: "Base de données",
-      desc: "Base de données relationnelle robuste avec ORM Drizzle pour des requêtes typées et migrations sécurisées.",
-      color: "#4169E1",
-    },
-  ];
-
-  const tags = [
-    { label: "Vite", color: "#646CFF" },
-    { label: "TailwindCSS", color: "#06B6D4" },
-    { label: "Drizzle ORM", color: "#C5F74F" },
-    { label: "JWT Auth", color: "#F59E0B" },
-    { label: "WebSockets", color: "#22C55E" },
-    { label: "PDF Export", color: "#EF4444" },
-    { label: "Resend API", color: "#8B5CF6" },
-    { label: "TypeScript 5", color: "#3178C6" },
-  ];
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" data-testid="modal-tech">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-2xl hud-card rounded-md bg-[#07070F] p-6 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-2 h-2 rounded-full bg-[#CE1126] animate-pulse" />
-              <span className="text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]">STACK_TECHNIQUE</span>
-            </div>
-            <h2 className="text-lg font-extrabold text-white">Technologies utilisées</h2>
-          </div>
-          <button onClick={onClose} data-testid="button-close-tech" className="p-2 rounded-md border border-white/10 hover:border-white/20 text-white/40 hover:text-white/70 transition-all">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          {techs.map(tech => (
-            <div key={tech.name} className="rounded-md p-4 border border-white/[0.06]" style={{ background: `${tech.color}08` }} data-testid={`card-tech-${tech.name.toLowerCase().replace(/\s+/g, '-')}`}>
-              <div className="flex items-start justify-between mb-3">
-                <div className="p-2 rounded-md border" style={{ background: `${tech.color}15`, borderColor: `${tech.color}30` }}>
-                  {tech.icon}
-                </div>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full" style={{ background: `${tech.color}15`, color: tech.color }}>
-                  {tech.tag}
-                </span>
-              </div>
-              <h3 className="font-bold text-white text-sm mb-1.5">{tech.name}</h3>
-              <p className="text-[11px] text-white/40 leading-relaxed">{tech.desc}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="rounded-md border border-white/[0.06] bg-white/[0.02] p-4 mb-5">
-          <div className="flex items-center gap-3 mb-4">
-            <Server className="h-4 w-4 text-[#CE1126]" />
-            <span className="text-sm font-bold text-white">Infrastructure & Éditeur</span>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-md bg-[#FF6600]/10 border border-[#FF6600]/20 shrink-0">
-                <SiHostinger className="h-4 w-4 text-[#FF6600]" />
-              </div>
-              <div>
-                <div className="text-[10px] font-semibold text-white/50 mb-0.5">Hébergeur</div>
-                <div className="text-xs font-bold text-white">Hostinger</div>
-                <p className="text-[10px] text-white/30 mt-0.5">Serveurs en Europe, conformité RGPD.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-md bg-[#CE1126]/10 border border-[#CE1126]/20 shrink-0">
-                <Globe className="h-4 w-4 text-[#CE1126]" />
-              </div>
-              <div>
-                <div className="text-[10px] font-semibold text-white/50 mb-0.5">Éditeur</div>
-                <a href="https://straight-path.eu" target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-white hover:text-[#CE1126] transition-colors">Straight-Path.eu</a>
-                <p className="text-[10px] text-white/30 mt-0.5">Développement & maintenance.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-md bg-emerald-500/10 border border-emerald-500/20 shrink-0">
-                <Shield className="h-4 w-4 text-emerald-400" />
-              </div>
-              <div>
-                <div className="text-[10px] font-semibold text-white/50 mb-0.5">Sécurité</div>
-                <div className="text-xs font-bold text-white">RGPD / HTTPS</div>
-                <p className="text-[10px] text-white/30 mt-0.5">Chiffrement TLS, données en Europe.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {tags.map(tag => (
-            <span
-              key={tag.label}
-              className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-md"
-              style={{ background: `${tag.color}15`, color: tag.color, border: `1px solid ${tag.color}25` }}
-            >
-              {tag.label}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function ContactModal({ onClose }: { onClose: () => void }) {
   const { toast } = useToast();
@@ -395,7 +264,6 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
   const [report, setReport] = useState<GeneratedReport | null>(null);
   const [limitReached, setLimitReached] = useState(false);
   const [showContact, setShowContact] = useState(false);
-  const [showTech, setShowTech] = useState(false);
   const [showLegal, setShowLegal] = useState(false);
 
   const handleGenerateReport = async (e: React.FormEvent) => {
@@ -455,7 +323,6 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
     <div className="min-h-screen bg-[#05050A] text-white flex flex-col overflow-x-hidden">
       <CookieConsent />
       {showContact && <ContactModal onClose={() => setShowContact(false)} />}
-      {showTech && <TechModal onClose={() => setShowTech(false)} />}
       {showLegal && <LegalModal onClose={() => setShowLegal(false)} />}
 
       {/* ── HEADER ── */}

@@ -86,7 +86,10 @@ function Router() {
   useWebSocket(); // Initialize WebSocket connection
 
   useEffect(() => {
-    if (!isLoading) return;
+    if (!isLoading) {
+      setLoadingTimedOut(false);
+      return;
+    }
     const timer = setTimeout(() => setLoadingTimedOut(true), 10000);
     return () => clearTimeout(timer);
   }, [isLoading]);
