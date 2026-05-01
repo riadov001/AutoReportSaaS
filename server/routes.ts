@@ -586,10 +586,10 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
   // Public report generation - limited to 1 free per IP/email/user
   app.post('/api/reports/generate', async (req, res) => {
     try {
-      const { make, model, year, mileage, issue, guestEmail } = req.body;
+      const { make, model, year, mileage, issue, guestEmail, finition, motorisation, carburant, gearbox, usage } = req.body;
       
-      if (!make || !model || !year || !issue) {
-        return res.status(400).json({ message: "Marque, modèle, année et description requises" });
+      if (!make || !model || !year) {
+        return res.status(400).json({ message: "Marque, modèle et année sont requis" });
       }
 
       const userId = req.user?.id ?? null;
@@ -627,7 +627,7 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
         const settings = await storage.getLandingSettings();
         customPrompt = settings.aiPrompt || undefined;
       } catch {}
-      const report = await generateAiReport({ make, model, year, mileage, issue }, customPrompt);
+      const report = await generateAiReport({ make, model, year, mileage, issue: issue || undefined, finition, motorisation, carburant, gearbox, usage }, customPrompt);
 
       const garageId = (req as any).tenantGarageId || null;
       const isSubscribed = userId && !isAdminUser ? !!(await storage.getActiveSubscription(userId)) : false;
@@ -641,12 +641,17 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
           model,
           year,
           mileage: mileage || null,
-          issue,
+          issue: issue || null,
           content: contentStr,
           status: "generated",
           metadata: {
             urgencyLevel: report.urgencyLevel,
             estimatedCost: report.estimatedCost,
+            finition: finition || null,
+            motorisation: motorisation || null,
+            carburant: carburant || null,
+            gearbox: gearbox || null,
+            usage: usage || null,
             ...(isAdminUser ? { generatedByAdmin: true, adminRole: userRole } : {}),
           },
           guestEmail: guestEmail ? guestEmail.toLowerCase() : null,

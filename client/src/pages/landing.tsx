@@ -423,7 +423,12 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
           make: vehicleInfo.make,
           model: vehicleInfo.model,
           year: vehicleInfo.year,
-          mileage: vehicleInfo.mileage,
+          finition: vehicleInfo.finition || undefined,
+          motorisation: vehicleInfo.motorisation || undefined,
+          carburant: vehicleInfo.carburant || undefined,
+          mileage: vehicleInfo.mileage || undefined,
+          gearbox: vehicleInfo.gearbox || undefined,
+          usage: vehicleInfo.usage.length ? vehicleInfo.usage : undefined,
           issue: builtIssue,
           guestEmail: guestEmail.trim() || undefined,
         }),
@@ -851,7 +856,8 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                     </div>
                     <div>
                       <p className="text-sm text-white/30 font-mono mb-1">Votre rapport apparaîtra ici</p>
-                      <p className="text-xs text-white/20">Remplissez le formulaire et cliquez sur "Générer mon rapport"</p>
+                      <p className="text-xs text-white/20 mb-1">Remplissez le formulaire et cliquez sur "Générer mon rapport"</p>
+                      <p className="text-xs text-white/20">Téléchargez votre rapport ou recevez-le par email</p>
                     </div>
                   </div>
                 )}

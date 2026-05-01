@@ -814,7 +814,7 @@ export async function sendAiReportEmail(to: string, data: {
   issue?: string;
   companyName?: string;
 }): Promise<void> {
-  const subject = `Votre rapport AutoReport — ${data.make} ${data.model} ${data.year} est prêt`;
+  const subject = `AutoReport : Votre rapport véhicule est prêt`;
   const html = generateAiReportEmailHtml(data);
   await sendEmail(to, subject, html);
 }
