@@ -768,8 +768,7 @@ export function generateAiReportEmailHtml(data: {
             <h2 style="margin:0 0 20px;font-size:20px;color:#111827;">Votre rapport véhicule est prêt</h2>
             <p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.6;">Bonjour,</p>
             <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.6;">
-              Votre rapport d'analyse pour le <strong>${vehicleLabel}</strong> a bien été généré.
-              Vous pouvez le consulter et le télécharger depuis votre espace ${company}.
+              L'équipe ${company} a le plaisir de vous transmettre votre rapport d'analyse véhicule pour le <strong>${vehicleLabel}</strong>.
             </p>
             <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fef2f2;border-left:4px solid #CE1126;margin-bottom:24px;">
               <tr>
@@ -780,9 +779,13 @@ export function generateAiReportEmailHtml(data: {
                 </td>
               </tr>
             </table>
-            <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.6;">
-              Le rapport inclut les faiblesses connues du modèle, les points à vérifier lors de la visite, et des conseils pratiques pour acheter en toute sécurité.
-            </p>
+            <p style="margin:0 0 12px;font-size:14px;color:#374151;line-height:1.6;">Ce rapport contient :</p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+              <tr><td style="padding:5px 0;font-size:14px;color:#374151;line-height:1.6;">— Les <strong>faiblesses connues</strong> de ce modèle</td></tr>
+              <tr><td style="padding:5px 0;font-size:14px;color:#374151;line-height:1.6;">— Les <strong>points essentiels à vérifier</strong> lors de votre visite</td></tr>
+              <tr><td style="padding:5px 0;font-size:14px;color:#374151;line-height:1.6;">— Des <strong>conseils pratiques</strong> pour négocier et acheter sereinement</td></tr>
+              <tr><td style="padding:5px 0;font-size:14px;color:#374151;line-height:1.6;">— Une <strong>checklist complète</strong> à utiliser lors de votre inspection</td></tr>
+            </table>
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td align="center" style="padding-bottom:24px;">
