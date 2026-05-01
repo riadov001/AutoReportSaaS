@@ -765,30 +765,19 @@ export function generateAiReportEmailHtml(data: {
         </tr>
         <tr>
           <td style="padding:30px;">
-            <h2 style="margin:0 0 20px;font-size:20px;color:#111827;">Votre rapport véhicule est prêt</h2>
-            <p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.6;">Bonjour,</p>
-            <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.6;">
-              L'équipe ${company} a le plaisir de vous transmettre votre rapport d'analyse véhicule pour le <strong>${vehicleLabel}</strong> en pièce jointe.
-            </p>
-            <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fef2f2;border-left:4px solid #CE1126;margin-bottom:24px;">
-              <tr>
-                <td style="padding:12px 16px;">
-                  <p style="margin:0;font-size:12px;color:#991b1b;text-transform:uppercase;font-weight:bold;">Véhicule analysé</p>
-                  <p style="margin:4px 0 0;font-size:16px;color:#CE1126;font-weight:bold;">${vehicleLabel}</p>
-                  ${data.issue ? `<p style="margin:6px 0 0;font-size:13px;color:#6b7280;">${data.issue}</p>` : ''}
-                </td>
-              </tr>
+            <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Bonjour,</p>
+            <p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.7;">L'équipe AutoReport a le plaisir de vous informer que votre rapport est prêt.</p>
+            <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Vous trouverez en pièce jointe l'analyse complète du véhicule que vous souhaitez acquérir.</p>
+            <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.7;">Ce rapport contient :</p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+              <tr><td style="padding:3px 0 3px 16px;font-size:14px;color:#374151;line-height:1.7;">• les faiblesses connues du modèle</td></tr>
+              <tr><td style="padding:3px 0 3px 16px;font-size:14px;color:#374151;line-height:1.7;">• les points essentiels à vérifier avant achat</td></tr>
+              <tr><td style="padding:3px 0 3px 16px;font-size:14px;color:#374151;line-height:1.7;">• des conseils pratiques pour éviter les mauvaises surprises</td></tr>
             </table>
-            <p style="margin:0 0 12px;font-size:14px;color:#374151;line-height:1.6;">Ce rapport contient :</p>
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
-              <tr><td style="padding:5px 0;font-size:14px;color:#374151;line-height:1.6;">— Les <strong>faiblesses connues</strong> de ce modèle</td></tr>
-              <tr><td style="padding:5px 0;font-size:14px;color:#374151;line-height:1.6;">— Les <strong>points essentiels à vérifier</strong> lors de votre visite</td></tr>
-              <tr><td style="padding:5px 0;font-size:14px;color:#374151;line-height:1.6;">— Des <strong>conseils pratiques</strong> pour négocier et acheter sereinement</td></tr>
-              <tr><td style="padding:5px 0;font-size:14px;color:#374151;line-height:1.6;">— Une <strong>checklist complète</strong> à utiliser lors de votre visite</td></tr>
-            </table>
-            <p style="margin:0 0 24px;font-size:14px;color:#374151;line-height:1.6;">
-              N'hésitez pas à retourner sur <a href="https://autoreport.fr" style="color:#CE1126;text-decoration:none;">autoreport.fr</a> pour générer d'autres rapports sur les véhicules qui vous intéressent.
-            </p>
+            <p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.7;">Nous vous recommandons de le consulter avant votre visite et de l'utiliser comme checklist sur place.</p>
+            <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.7;">Si vous analysez plusieurs véhicules, vous pouvez générer d'autres rapports directement depuis le site.</p>
+            <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.7;">Bonne lecture et bon achat 🚗</p>
+            <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.7;">L'équipe AutoReport</p>
             <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
               Ce message a été envoyé automatiquement par ${company}.<br>
               <a href="https://autoreport.fr" style="color:#CE1126;text-decoration:none;">autoreport.fr</a>
