@@ -750,65 +750,64 @@ export function generateAiReportEmailHtml(data: {
   companyName?: string;
 }): string {
   const company = data.companyName || 'AutoReport';
-  const vehicleLabel = `${data.make} ${data.model} ${data.year}${data.mileage ? ` — ${Number(data.mileage).toLocaleString('fr-FR')} km` : ''}`;
-  return `
-    <div style="background-color: #f4f4f5; padding: 40px 10px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e5e7eb;">
-        <div style="background: #0a0a12; padding: 28px 30px; text-align: center; border-bottom: 3px solid #CE1126;">
-          <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">AutoReport</p>
-          <h1 style="margin: 0; font-size: 20px; font-weight: 900; color: #ffffff;">Votre rapport véhicule est prêt</h1>
-        </div>
-        <div style="padding: 28px 30px;">
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; background-color: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px;">
-            <tr>
-              <td style="padding: 14px 18px;">
-                <p style="margin: 0 0 3px; font-size: 11px; color: #991b1b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">Véhicule analysé</p>
-                <p style="margin: 0; font-size: 18px; font-weight: 800; color: #CE1126;">${vehicleLabel}</p>
-              </td>
-            </tr>
-          </table>
-
-          <p style="font-size: 14px; color: #374151; line-height: 1.7; margin: 0 0 16px;">
-            Bonjour,
-          </p>
-          <p style="font-size: 14px; color: #374151; line-height: 1.7; margin: 0 0 16px;">
-            Votre rapport d'analyse pré-achat pour le <strong>${vehicleLabel}</strong> a été généré avec succès. Il contient les <strong>faiblesses connues</strong> du modèle, les <strong>points à vérifier</strong> lors de la visite, et des <strong>conseils concrets</strong> pour acheter en toute confiance.
-          </p>
-
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
-            ${[
-              'Faiblesses mécaniques documentées sur ce modèle',
-              'Checklist complète à utiliser lors de la visite',
-              'Points de négociation et estimation de valeur marché',
-              'Alertes spécifiques à la motorisation et au kilométrage',
-            ].map(item => `
+  const vehicleLabel = `${data.make} ${data.model} (${data.year})${data.mileage ? ` — ${Number(data.mileage).toLocaleString('fr-FR')} km` : ''}`;
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:30px 10px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e0e0e0;max-width:600px;">
+        <tr>
+          <td style="background-color:#0a0a12;padding:24px 30px;text-align:center;border-bottom:3px solid #CE1126;">
+            <p style="margin:0;color:#CE1126;font-size:18px;font-weight:bold;letter-spacing:1px;">${company}</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:30px;">
+            <h2 style="margin:0 0 20px;font-size:20px;color:#111827;">Votre rapport véhicule est prêt</h2>
+            <p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.6;">Bonjour,</p>
+            <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.6;">
+              Votre rapport d'analyse pour le <strong>${vehicleLabel}</strong> a bien été généré.
+              Vous pouvez le consulter et le télécharger depuis votre espace ${company}.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fef2f2;border-left:4px solid #CE1126;margin-bottom:24px;">
               <tr>
-                <td style="padding: 6px 0; font-size: 13px; color: #374151; border-bottom: 1px solid #f3f4f6;">
-                  <span style="color: #CE1126; margin-right: 8px;">✓</span>${item}
+                <td style="padding:12px 16px;">
+                  <p style="margin:0;font-size:12px;color:#991b1b;text-transform:uppercase;font-weight:bold;">Véhicule analysé</p>
+                  <p style="margin:4px 0 0;font-size:16px;color:#CE1126;font-weight:bold;">${vehicleLabel}</p>
+                  ${data.issue ? `<p style="margin:6px 0 0;font-size:13px;color:#6b7280;">${data.issue}</p>` : ''}
                 </td>
               </tr>
-            `).join('')}
-          </table>
-
-          <div style="text-align: center; margin: 28px 0 20px;">
-            <a href="https://autoreport.fr" style="background-color: #CE1126; color: #ffffff; padding: 13px 30px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block;">
-              Voir mon rapport complet
-            </a>
-          </div>
-
-          <p style="font-size: 12px; color: #9ca3af; text-align: center; margin: 0; line-height: 1.6;">
-            Ce rapport a été généré par <strong>${company}</strong>.<br />
-            Pour toute question : <a href="mailto:support@autoreport.fr" style="color: #CE1126; text-decoration: none;">support@autoreport.fr</a>
-          </p>
-        </div>
-        <div style="background-color: #f9fafb; border-top: 1px solid #e5e7eb; padding: 16px 30px; text-align: center;">
-          <p style="margin: 0; font-size: 11px; color: #9ca3af;">
-            © ${new Date().getFullYear()} ${company} · <a href="https://autoreport.fr" style="color: #9ca3af; text-decoration: none;">autoreport.fr</a>
-          </p>
-        </div>
-      </div>
-    </div>
-  `;
+            </table>
+            <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.6;">
+              Le rapport inclut les faiblesses connues du modèle, les points à vérifier lors de la visite, et des conseils pratiques pour acheter en toute sécurité.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center" style="padding-bottom:24px;">
+                  <a href="https://autoreport.fr" style="background-color:#CE1126;color:#ffffff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;font-size:14px;display:inline-block;">
+                    Accéder à mon rapport
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
+              Ce message a été envoyé automatiquement par ${company}.<br>
+              <a href="https://autoreport.fr" style="color:#CE1126;text-decoration:none;">autoreport.fr</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#f9fafb;padding:16px 30px;text-align:center;border-top:1px solid #e5e7eb;">
+            <p style="margin:0;font-size:11px;color:#9ca3af;">© ${new Date().getFullYear()} ${company}</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
 }
 
 export async function sendAiReportEmail(to: string, data: {
