@@ -334,7 +334,7 @@ function ContactModal({ onClose }: { onClose: () => void }) {
                 type={type}
                 required
                 placeholder={placeholder}
-                value={(form as any)[key]}
+                value={form[key as keyof typeof form]}
                 onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
                 data-testid={`input-contact-${key}`}
                 className="w-full bg-white/[0.04] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#CE1126]/40 transition-all"
@@ -668,7 +668,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                           type="text"
                           required
                           placeholder={placeholder}
-                          value={(vehicleInfo as any)[key]}
+                          value={vehicleInfo[key as "make" | "model"]}
                           onChange={e => setVehicleInfo(v => ({ ...v, [key]: e.target.value }))}
                           data-testid={`input-${key}`}
                           className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all font-mono"
