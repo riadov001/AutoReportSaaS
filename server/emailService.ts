@@ -768,7 +768,7 @@ export function generateAiReportEmailHtml(data: {
             <h2 style="margin:0 0 20px;font-size:20px;color:#111827;">Votre rapport véhicule est prêt</h2>
             <p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.6;">Bonjour,</p>
             <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.6;">
-              L'équipe ${company} a le plaisir de vous transmettre votre rapport d'analyse véhicule pour le <strong>${vehicleLabel}</strong>.
+              L'équipe ${company} a le plaisir de vous transmettre votre rapport d'analyse véhicule pour le <strong>${vehicleLabel}</strong> en pièce jointe.
             </p>
             <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fef2f2;border-left:4px solid #CE1126;margin-bottom:24px;">
               <tr>
@@ -780,21 +780,15 @@ export function generateAiReportEmailHtml(data: {
               </tr>
             </table>
             <p style="margin:0 0 12px;font-size:14px;color:#374151;line-height:1.6;">Ce rapport contient :</p>
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
               <tr><td style="padding:5px 0;font-size:14px;color:#374151;line-height:1.6;">— Les <strong>faiblesses connues</strong> de ce modèle</td></tr>
               <tr><td style="padding:5px 0;font-size:14px;color:#374151;line-height:1.6;">— Les <strong>points essentiels à vérifier</strong> lors de votre visite</td></tr>
               <tr><td style="padding:5px 0;font-size:14px;color:#374151;line-height:1.6;">— Des <strong>conseils pratiques</strong> pour négocier et acheter sereinement</td></tr>
-              <tr><td style="padding:5px 0;font-size:14px;color:#374151;line-height:1.6;">— Une <strong>checklist complète</strong> à utiliser lors de votre inspection</td></tr>
+              <tr><td style="padding:5px 0;font-size:14px;color:#374151;line-height:1.6;">— Une <strong>checklist complète</strong> à utiliser lors de votre visite</td></tr>
             </table>
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td align="center" style="padding-bottom:24px;">
-                  <a href="https://autoreport.fr" style="background-color:#CE1126;color:#ffffff;padding:12px 28px;text-decoration:none;border-radius:6px;font-weight:bold;font-size:14px;display:inline-block;">
-                    Accéder à mon rapport
-                  </a>
-                </td>
-              </tr>
-            </table>
+            <p style="margin:0 0 24px;font-size:14px;color:#374151;line-height:1.6;">
+              N'hésitez pas à retourner sur <a href="https://autoreport.fr" style="color:#CE1126;text-decoration:none;">autoreport.fr</a> pour générer d'autres rapports sur les véhicules qui vous intéressent.
+            </p>
             <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
               Ce message a été envoyé automatiquement par ${company}.<br>
               <a href="https://autoreport.fr" style="color:#CE1126;text-decoration:none;">autoreport.fr</a>
