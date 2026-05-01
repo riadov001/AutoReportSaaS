@@ -229,10 +229,10 @@ function getGarageScope(user: User | undefined): string | undefined {
 // Check if user has access to a specific garage's resource
 function hasGarageAccess(user: User | undefined, resourceGarageId: string | null | undefined): boolean {
   if (!user) return false;
-  // Superadmin can access all resources
-  if (user.role === "superadmin") return true;
-  // If resource has no garageId, allow access (legacy data or global resource)
-  if (!resourceGarageId) return true;
+  // Superadmin and rootadmin can access all resources
+  if (user.role === "superadmin" || user.role === "rootadmin") return true;
+  // If resource has no garageId, only users without a specific garage (e.g. admins) can access
+  if (!resourceGarageId) return !user.garageId;
   // User must belong to the same garage as the resource
   return user.garageId === resourceGarageId;
 }

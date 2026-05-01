@@ -44,7 +44,7 @@ export function AutoReportLogo({ className = "", variant = "full", ...rest }: Au
           Auto<span className="text-[#CE1126]">Report</span>
         </span>
         <span className="text-[9px] font-semibold text-white/30 tracking-[0.25em] uppercase">
-          Diagnostics IA
+          Rapport d'analyse véhicule
         </span>
       </div>
     </div>

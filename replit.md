@@ -2,7 +2,7 @@
 
 ## Overview
 
-AutoReport est une plateforme SaaS multi-tenant pour les ateliers automobiles. Elle permet la gestion complète des devis, factures, réservations, clients, et la génération de rapports diagnostiques via IA. L'application supporte les mises à jour en temps réel via WebSockets et propose une interface responsive mobile-first. Fonctionnalités clés : gestion atelier, paiements en ligne (Stripe), scan OCR de documents, comptabilité intégrée, notifications SMS (Twilio), et rapports IA.
+AutoReport est une plateforme SaaS multi-tenant pour les ateliers automobiles. Elle permet la gestion complète des devis, factures, réservations, clients, et la génération de rapports diagnostiques via IA. La landing page est orientée achat de véhicule d'occasion (pre-purchase analysis). L'application supporte les mises à jour en temps réel via WebSockets et propose une interface responsive mobile-first. Fonctionnalités clés : gestion atelier, paiements en ligne (Stripe), scan OCR de documents, comptabilité intégrée, notifications SMS (Twilio), et rapports IA pré-achat VO.
 
 ## User Preferences
 

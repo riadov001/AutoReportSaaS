@@ -458,7 +458,11 @@ export default function AdminSettings() {
   };
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-    updateSettingsMutation.mutate(data);
+    const payload = {
+      ...data,
+      dailyRevenueObjective: String(Number(data.dailyRevenueObjective) || 0),
+    };
+    updateSettingsMutation.mutate(payload);
   };
 
   if (isLoading || !isAdmin) {

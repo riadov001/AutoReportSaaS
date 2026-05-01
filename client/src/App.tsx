@@ -1,4 +1,5 @@
 // Local authentication with email/password
+import { useState, useEffect } from "react";
 import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -81,14 +82,21 @@ const DashboardSupport = lazy(() => import("@/pages/dashboard/Support"));
 function Router() {
   const { isAuthenticated, isLoading, isAdmin, isSuperAdmin, isRootAdmin, isEmployee } = useAuth();
   const [location] = useLocation();
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
   useWebSocket(); // Initialize WebSocket connection
+
+  useEffect(() => {
+    if (!isLoading) return;
+    const timer = setTimeout(() => setLoadingTimedOut(true), 8000);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
 
   // Panel has its own JWT auth — serve it independently before SaaS auth checks
   if (location === "/panel" || location.startsWith("/panel/")) {
     return <PanelApp />;
   }
 
-  if (isLoading) {
+  if (isLoading && !loadingTimedOut) {
     return (
       <Switch>
         <Route path="/devis/:token" component={PublicQuoteView} />

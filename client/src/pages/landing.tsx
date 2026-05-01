@@ -2,7 +2,6 @@ import { useState, lazy, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AutoReportLogo } from "@/components/autoreport-logo";
 import { CookieConsent } from "@/components/cookie-consent";
-import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Zap, FileText, CheckCircle2, Mail, Phone, MapPin,
   Shield, Gauge, Brain, ChevronDown, X, Download, Send,
@@ -390,7 +389,7 @@ function ContactModal({ onClose }: { onClose: () => void }) {
 
 export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {}) {
   const { toast } = useToast();
-  const [vehicleInfo, setVehicleInfo] = useState({ make: "", model: "", year: "", mileage: "", issue: "" });
+  const [vehicleInfo, setVehicleInfo] = useState({ make: "", model: "", year: "", finition: "", motorisation: "", carburant: "", mileage: "", gearbox: "", usage: [] as string[], issue: "" });
   const [guestEmail, setGuestEmail] = useState("");
   const [generating, setGenerating] = useState(false);
   const [report, setReport] = useState<GeneratedReport | null>(null);
@@ -401,10 +400,18 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
 
   const handleGenerateReport = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!vehicleInfo.make || !vehicleInfo.model || !vehicleInfo.year || !vehicleInfo.issue) {
-      toast({ title: "Champs requis", description: "Remplissez la marque, le modèle, l'année et le problème.", variant: "destructive" });
+    if (!vehicleInfo.make || !vehicleInfo.model || !vehicleInfo.year) {
+      toast({ title: "Champs requis", description: "Remplissez au minimum la marque, le modèle et l'année.", variant: "destructive" });
       return;
     }
+    const builtIssue = [
+      "Analyse pré-achat véhicule d'occasion",
+      vehicleInfo.motorisation ? `Motorisation : ${vehicleInfo.motorisation}` : "",
+      vehicleInfo.carburant ? `Carburant : ${vehicleInfo.carburant}` : "",
+      vehicleInfo.gearbox ? `Boîte : ${vehicleInfo.gearbox}` : "",
+      vehicleInfo.usage.length ? `Usage : ${vehicleInfo.usage.join(" / ")}` : "",
+      vehicleInfo.finition ? `Finition : ${vehicleInfo.finition}` : "",
+    ].filter(Boolean).join(" | ");
     setGenerating(true);
     setLimitReached(false);
     try {
@@ -412,7 +419,14 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...vehicleInfo, guestEmail: guestEmail.trim() || undefined }),
+        body: JSON.stringify({
+          make: vehicleInfo.make,
+          model: vehicleInfo.model,
+          year: vehicleInfo.year,
+          mileage: vehicleInfo.mileage,
+          issue: builtIssue,
+          guestEmail: guestEmail.trim() || undefined,
+        }),
       });
       if (res.status === 429) {
         const err = await res.json();
@@ -445,13 +459,11 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-2">
             <AutoReportLogo />
             <nav className="hidden md:flex items-center gap-6 text-xs font-semibold uppercase tracking-wider text-white/40">
-              <button onClick={() => scrollTo("features")} className="hover:text-white/80 transition-colors">Modules</button>
-              <button onClick={() => scrollTo("generator")} className="hover:text-white/80 transition-colors">Diagnostic</button>
-              <button onClick={() => setShowTech(true)} className="hover:text-white/80 transition-colors" data-testid="button-nav-tech">Technologie</button>
+              <button onClick={() => scrollTo("features")} className="hover:text-white/80 transition-colors">Comment ça marche</button>
+              <button onClick={() => scrollTo("generator")} className="hover:text-white/80 transition-colors">Générer mon rapport</button>
               <button onClick={() => setShowContact(true)} className="hover:text-white/80 transition-colors" data-testid="button-nav-contact">Contact</button>
             </nav>
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <ThemeToggle />
               {isAdmin && (
                 <a
                   href="/dashboard"
@@ -483,7 +495,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                 className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-[#CE1126] hover:bg-[#b8101f] text-white text-[11px] sm:text-xs font-bold rounded-md transition-colors neon-red-glow"
               >
                 <Zap className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Diagnostic</span>
+                <span className="hidden sm:inline">Générer mon rapport</span>
               </button>
             </div>
           </div>
@@ -510,24 +522,17 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
 
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-24 pb-16 lg:pt-0">
             <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#CE1126]/10 border border-[#CE1126]/20 backdrop-blur-sm mb-6">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#CE1126] animate-pulse" />
-                <span className="text-[10px] font-mono font-bold text-[#CE1126] uppercase tracking-[0.25em]">IA · DIAGNOSTIC · AUTOMOBILE</span>
-              </div>
-
               <h1
-                data-text="Diagnostics automobiles nouvelle génération"
                 className="text-4xl sm:text-5xl lg:text-[4.5rem] font-extrabold text-white mb-5 leading-[1.04] tracking-tight"
               >
-                Diagnostics{" "}
-                <span style={{ color: "#CE1126", textShadow: "0 0 30px rgba(206,17,38,0.5), 0 0 60px rgba(206,17,38,0.2)" }}>automobiles</span>
+                Achetez votre{" "}
+                <span style={{ color: "#CE1126", textShadow: "0 0 30px rgba(206,17,38,0.5), 0 0 60px rgba(206,17,38,0.2)" }}>voiture d'occasion</span>
                 <br />
-                <span className="text-white/80">nouvelle génération</span>
+                <span className="text-white/80">sans vous tromper</span>
               </h1>
 
               <p className="text-base sm:text-lg text-white/50 mb-8 leading-relaxed max-w-xl font-light">
-                Analysez votre véhicule en quelques secondes grâce à notre moteur d'intelligence artificielle.
-                Rapports structurés, diagnostics précis, export PDF instantané.
+                Accédez en quelques secondes à toutes les informations essentielles sur le véhicule que vous souhaitez acquérir : faiblesses connues, points à vérifier et conseils concrets issus de milliers de retours d'expérience et sources spécialisées.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 mb-10">
@@ -537,25 +542,25 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                   className="flex items-center justify-center gap-2 px-6 py-3 bg-[#CE1126] hover:bg-[#b8101f] text-white font-bold rounded-md transition-colors neon-red-glow text-sm"
                 >
                   <Zap className="h-4 w-4" />
-                  Renseigner mon véhicule
+                  Générer mon rapport
                 </button>
                 <button
                   onClick={() => scrollTo("features")}
                   data-testid="button-hero-learn"
                   className="flex items-center justify-center gap-2 px-6 py-3 border border-white/15 hover:border-white/30 text-white/70 hover:text-white font-semibold rounded-md transition-all backdrop-blur-sm text-sm bg-white/[0.03]"
                 >
-                  Découvrir les modules
+                  🔍 Comment ça marche
                 </button>
               </div>
 
               <div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/[0.06]">
                 {[
-                  { value: "<5s", label: "Analyse IA" },
-                  { value: "PDF", label: "Export instantané" },
-                  { value: "100%", label: "Gratuit" },
+                  { value: "⚡", label: "Rapport instantané" },
+                  { value: "🔍", label: "Checklist complète" },
+                  { value: "📄", label: "PDF téléchargeable" },
                 ].map((s) => (
                   <div key={s.label}>
-                    <div className="text-2xl sm:text-3xl font-extrabold font-mono" style={{ color: "#CE1126", textShadow: "0 0 20px rgba(206,17,38,0.4)" }}>{s.value}</div>
+                    <div className="text-2xl sm:text-3xl font-extrabold" style={{ color: "#CE1126", textShadow: "0 0 20px rgba(206,17,38,0.4)" }}>{s.value}</div>
                     <div className="text-xs text-white/30 font-medium mt-0.5 uppercase tracking-wider">{s.label}</div>
                   </div>
                 ))}
@@ -576,7 +581,6 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
 
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
             <div className="text-center max-w-xl mx-auto mb-14">
-              <p className="text-[10px] font-mono text-[#CE1126] uppercase tracking-[0.3em] mb-3">// MODULES_SYSTÈME</p>
               <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
                 Tout ce que vous devez savoir
                 <br />
@@ -589,17 +593,16 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { Icon: Brain, title: "Analyse IA", code: "MOD-01", desc: "Notre moteur analyse les symptômes et identifie les causes probables avec une précision de niveau expert." },
-                { Icon: Gauge, title: "Rapide & Précis", code: "MOD-02", desc: "Diagnostic complet en moins de 5 secondes. Niveau de sévérité, coût estimé, recommandations détaillées." },
-                { Icon: Download, title: "Export PDF", code: "MOD-03", desc: "Rapport structuré téléchargeable en PDF, formaté pour être partagé directement avec votre mécanicien." },
-                { Icon: Shield, title: "Sans Inscription", code: "MOD-04", desc: "Aucun compte requis. Démarrez immédiatement, sans engagement, sans carte bancaire." },
-              ].map(({ Icon, title, code, desc }) => (
-                <div key={title} className="hud-card rounded-md p-5 group hover:border-[#CE1126]/20 transition-all duration-300 scan-line" data-testid={`card-module-${code}`}>
-                  <div className="flex items-start justify-between mb-4">
+                { emoji: "📋", title: "Toutes les informations en un seul rapport", desc: "Plus besoin de chercher pendant des heures : nous regroupons les faiblesses connues, les points à vérifier et les retours d'expérience pour ce véhicule précis." },
+                { emoji: "⚡", title: "Un gain de temps énorme", desc: "Plus besoin de parcourir des forums ou des vidéos : vous obtenez directement l'essentiel à vérifier avant achat." },
+                { emoji: "✅", title: "Un rapport clair et exploitable", desc: "Une checklist simple, lisible et prête à être utilisée lors de la visite du véhicule." },
+                { emoji: "🔒", title: "Achetez en toute confiance", desc: "Identifiez les points critiques avant de vous déplacer et évitez les mauvaises surprises." },
+              ].map(({ emoji, title, desc }) => (
+                <div key={title} className="hud-card rounded-md p-5 group hover:border-[#CE1126]/20 transition-all duration-300 scan-line">
+                  <div className="flex items-start mb-4">
                     <div className="p-2.5 rounded-md bg-[#CE1126]/10 border border-[#CE1126]/20 group-hover:bg-[#CE1126]/15 transition-colors">
-                      <Icon className="h-5 w-5 text-[#CE1126]" />
+                      <span className="text-xl">{emoji}</span>
                     </div>
-                    <span className="text-[10px] font-mono text-white/20 group-hover:text-[#CE1126]/40 transition-colors">{code}</span>
                   </div>
                   <h3 className="font-bold text-white text-sm mb-2">{title}</h3>
                   <p className="text-xs text-white/40 leading-relaxed">{desc}</p>
@@ -610,19 +613,29 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
         </section>
 
         {/* ── STATS ── */}
-        <section className="py-12 relative border-y border-white/[0.04]" style={{ background: "#060610" }}>
+        <section id="pricing" className="py-12 relative border-y border-white/[0.04]" style={{ background: "#060610" }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center mb-10">
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Un rapport complet à partir de <span style={{ color: "#CE1126" }}>0,49 €</span></h2>
+              <p className="text-sm text-white/40">Paiement unique · Aucun abonnement · Rapport disponible immédiatement</p>
+            </div>
+            <div className="grid sm:grid-cols-3 gap-5 max-w-4xl mx-auto">
               {[
-                { Icon: Activity, value: "10 000+", label: "Rapports générés" },
-                { Icon: Clock, value: "<5s", label: "Temps d'analyse" },
-                { Icon: Star, value: "98%", label: "Satisfaction" },
-                { Icon: Lock, value: "RGPD", label: "Conforme" },
-              ].map(({ Icon, value, label }) => (
-                <div key={label} className="text-center">
-                  <Icon className="h-5 w-5 text-[#CE1126] mx-auto mb-2 opacity-60" />
-                  <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white mb-1" style={{ textShadow: "0 0 20px rgba(206,17,38,0.2)" }}>{value}</div>
-                  <p className="text-xs text-white/30 uppercase tracking-wider">{label}</p>
+                { price: "0,49 €", label: "Rapport essentiel", desc: "Les points clés à vérifier. Idéal pour une première impression rapide.", highlight: false },
+                { price: "1,50 €", label: "Rapport complet", desc: "Checklist détaillée, faiblesses connues, conseils de négociation.", highlight: true },
+                { price: "2,49 €", label: "Rapport expert", desc: "Tout le rapport complet + estimation de la valeur marché et alertes spécifiques motorisation.", highlight: false },
+              ].map(({ price, label, desc, highlight }) => (
+                <div key={label} className={`hud-card rounded-md p-6 flex flex-col gap-3 ${highlight ? "border-[#CE1126]/40 bg-[#CE1126]/[0.04]" : ""}`}>
+                  {highlight && <span className="text-[10px] font-mono uppercase tracking-widest text-[#CE1126]">⭐ Recommandé</span>}
+                  <div className="text-3xl font-extrabold text-white">{price}</div>
+                  <div className="text-sm font-bold text-white/80">{label}</div>
+                  <p className="text-xs text-white/40 leading-relaxed flex-1">{desc}</p>
+                  <button
+                    onClick={() => scrollTo("generator")}
+                    className={`mt-2 w-full py-2.5 rounded-md text-xs font-bold uppercase tracking-wider transition-colors ${highlight ? "bg-[#CE1126] hover:bg-[#b8101f] text-white neon-red-glow" : "border border-white/15 hover:border-white/30 text-white/60 hover:text-white"}`}
+                  >
+                    Choisir ce rapport
+                  </button>
                 </div>
               ))}
             </div>
@@ -636,9 +649,8 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
 
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
             <div className="text-center max-w-xl mx-auto mb-12">
-              <p className="text-[10px] font-mono text-[#CE1126] uppercase tracking-[0.3em] mb-3">// DIAGNOSTIC_ENGINE_v2</p>
               <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
-                Renseigner mon véhicule
+                Analyser le véhicule
               </h2>
               <p className="text-sm text-white/50 leading-relaxed">
                 Nous vous indiquons immédiatement les points à vérifier et les risques à connaître
@@ -653,39 +665,21 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                     <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
                     <span className="w-2.5 h-2.5 rounded-full bg-[#22c55e]" />
                   </div>
-                  <span className="text-[10px] font-mono text-white/30">vehicle_diagnostic.ai</span>
+                  <span className="text-[10px] font-mono text-white/30">analyse_vehicule.ai</span>
                 </div>
 
                 <form onSubmit={handleGenerateReport} className="space-y-4">
-                  {[
-                    { key: "make", label: "MARQUE *", placeholder: "BMW / Mercedes / Peugeot" },
-                    { key: "model", label: "MODÈLE *", placeholder: "Série 3 / Classe C / 308" },
-                  ].map(({ key, label, placeholder }) => (
-                    <div key={key}>
-                      <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">{label}</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder={placeholder}
-                        value={(vehicleInfo as any)[key]}
-                        onChange={e => setVehicleInfo(v => ({ ...v, [key]: e.target.value }))}
-                        data-testid={`input-${key}`}
-                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all font-mono"
-                      />
-                    </div>
-                  ))}
-
                   <div className="grid grid-cols-2 gap-4">
                     {[
-                      { key: "year", label: "ANNÉE *", placeholder: "2020", type: "number" },
-                      { key: "mileage", label: "KM", placeholder: "150 000", type: "number" },
-                    ].map(({ key, label, placeholder, type }) => (
+                      { key: "make", label: "MARQUE *", placeholder: "BMW / Peugeot / Renault" },
+                      { key: "model", label: "MODÈLE *", placeholder: "Série 3 / 308 / Clio" },
+                    ].map(({ key, label, placeholder }) => (
                       <div key={key}>
                         <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">{label}</label>
                         <input
-                          type={type}
+                          type="text"
+                          required
                           placeholder={placeholder}
-                          required={key === "year"}
                           value={(vehicleInfo as any)[key]}
                           onChange={e => setVehicleInfo(v => ({ ...v, [key]: e.target.value }))}
                           data-testid={`input-${key}`}
@@ -696,20 +690,107 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">DESCRIPTION DU PROBLÈME *</label>
-                    <textarea
-                      required
-                      rows={4}
-                      placeholder="Décrivez les symptômes : bruit, vibration, voyant allumé, perte de puissance..."
-                      value={vehicleInfo.issue}
-                      onChange={e => setVehicleInfo(v => ({ ...v, issue: e.target.value }))}
-                      data-testid="textarea-issue"
-                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all resize-none font-mono"
+                    <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">FINITION <span className="text-white/15">(optionnel)</span></label>
+                    <input
+                      type="text"
+                      placeholder="Sport / Executive / Confort / GTI..."
+                      value={vehicleInfo.finition}
+                      onChange={e => setVehicleInfo(v => ({ ...v, finition: e.target.value }))}
+                      data-testid="input-finition"
+                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all font-mono"
                     />
                   </div>
 
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">ANNÉE *</label>
+                      <input
+                        type="number"
+                        required
+                        placeholder="2019"
+                        value={vehicleInfo.year}
+                        onChange={e => setVehicleInfo(v => ({ ...v, year: e.target.value }))}
+                        data-testid="input-year"
+                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">MOTORISATION</label>
+                      <input
+                        type="text"
+                        placeholder="1.5 dCi / 2.0 TDI"
+                        value={vehicleInfo.motorisation}
+                        onChange={e => setVehicleInfo(v => ({ ...v, motorisation: e.target.value }))}
+                        data-testid="input-motorisation"
+                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">KM</label>
+                      <input
+                        type="number"
+                        placeholder="120 000"
+                        value={vehicleInfo.mileage}
+                        onChange={e => setVehicleInfo(v => ({ ...v, mileage: e.target.value }))}
+                        data-testid="input-mileage"
+                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all font-mono"
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">EMAIL <span className="text-white/15">(facultatif — pour recevoir votre rapport)</span></label>
+                    <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-2">CARBURANT</label>
+                    <div className="flex flex-wrap gap-2">
+                      {["Diesel", "Essence", "Hybride", "Électrique", "GPL"].map(opt => (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setVehicleInfo(v => ({ ...v, carburant: v.carburant === opt ? "" : opt }))}
+                          className={`px-3 py-1.5 rounded-md text-xs font-mono border transition-all ${vehicleInfo.carburant === opt ? "bg-[#CE1126]/20 border-[#CE1126]/50 text-white" : "border-white/[0.08] text-white/30 hover:border-white/20 hover:text-white/50"}`}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-2">BOÎTE DE VITESSE</label>
+                    <div className="flex gap-2">
+                      {["Manuelle", "Automatique"].map(opt => (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setVehicleInfo(v => ({ ...v, gearbox: v.gearbox === opt ? "" : opt }))}
+                          className={`px-3 py-1.5 rounded-md text-xs font-mono border transition-all ${vehicleInfo.gearbox === opt ? "bg-[#CE1126]/20 border-[#CE1126]/50 text-white" : "border-white/[0.08] text-white/30 hover:border-white/20 hover:text-white/50"}`}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-2">USAGE <span className="text-white/15">(plusieurs possibles)</span></label>
+                    <div className="flex gap-2">
+                      {["Ville", "Mixte", "Autoroute"].map(opt => (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setVehicleInfo(v => ({
+                            ...v,
+                            usage: v.usage.includes(opt) ? v.usage.filter(u => u !== opt) : [...v.usage, opt],
+                          }))}
+                          className={`px-3 py-1.5 rounded-md text-xs font-mono border transition-all ${vehicleInfo.usage.includes(opt) ? "bg-[#CE1126]/20 border-[#CE1126]/50 text-white" : "border-white/[0.08] text-white/30 hover:border-white/20 hover:text-white/50"}`}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">EMAIL <span className="text-white/15">(facultatif — recevoir votre rapport)</span></label>
                     <input
                       type="email"
                       placeholder="votre@email.com"
@@ -724,7 +805,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                       <span className="text-[#CE1126] text-lg leading-none mt-0.5">⚠</span>
                       <div>
                         <p className="text-sm font-bold text-white mb-0.5">Rapport gratuit épuisé</p>
-                        <p className="text-xs text-white/50 mb-2">Créez un compte pour générer plus de rapports et télécharger vos diagnostics en PDF.</p>
+                        <p className="text-xs text-white/50 mb-2">Créez un compte pour générer plus de rapports et télécharger vos analyses en PDF.</p>
                         <a
                           href="/signup"
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#CE1126] hover:bg-[#b8101f] text-white text-xs font-bold rounded transition-colors"
@@ -744,12 +825,12 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                     {generating ? (
                       <>
                         <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span className="font-mono">Analyse en cours<span className="terminal-cursor" /></span>
+                        <span className="font-mono">Génération en cours<span className="terminal-cursor" /></span>
                       </>
                     ) : (
                       <>
                         <Zap className="h-4 w-4" />
-                        Lancer l'analyse IA
+                        Générer mon rapport
                       </>
                     )}
                   </button>
@@ -786,8 +867,8 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                       <FileText className="h-7 w-7 text-white/10" />
                     </div>
                     <div>
-                      <p className="text-sm text-white/30 font-mono mb-1">// EN ATTENTE</p>
-                      <p className="text-xs text-white/20">Remplissez le formulaire pour lancer l'analyse</p>
+                      <p className="text-sm text-white/30 font-mono mb-1">Votre rapport apparaîtra ici</p>
+                      <p className="text-xs text-white/20">Remplissez le formulaire et cliquez sur "Générer mon rapport"</p>
                     </div>
                   </div>
                 )}
@@ -796,23 +877,6 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
           </div>
         </section>
 
-        {/* ── CTA ── */}
-        <section className="py-16 relative border-t border-white/[0.04]" style={{ background: "#07070F" }}>
-          <div className="absolute inset-0 hud-grid-subtle pointer-events-none" />
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 text-center max-w-2xl mx-auto">
-            <p className="text-[10px] font-mono text-[#CE1126] uppercase tracking-[0.3em] mb-4">// DÉMARRER_MAINTENANT</p>
-            <h2 className="text-2xl sm:text-3xl font-extrabold mb-3">Prêt à diagnostiquer votre véhicule ?</h2>
-            <p className="text-white/40 text-sm mb-8 max-w-md mx-auto">Gratuit, immédiat, sans inscription. Des milliers d'utilisateurs font confiance à AutoReport.</p>
-            <button
-              onClick={() => scrollTo("generator")}
-              data-testid="button-cta-bottom"
-              className="inline-flex items-center gap-2 px-8 py-3 bg-[#CE1126] hover:bg-[#b8101f] text-white font-bold rounded-md transition-colors neon-red-glow text-sm"
-            >
-              <Zap className="h-4 w-4" />
-              Commencer maintenant
-            </button>
-          </div>
-        </section>
       </main>
 
       {/* ── FOOTER ── */}
@@ -838,9 +902,9 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
               <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest mb-4">Navigation</div>
               <div className="space-y-2.5">
                 {[
-                  { label: "Fonctionnalités", action: () => scrollTo("features") },
-                  { label: "Générateur", action: () => scrollTo("generator") },
-                  { label: "Technologie", action: () => setShowTech(true) },
+                  { label: "Comment ça marche", action: () => scrollTo("features") },
+                  { label: "Générer mon rapport", action: () => scrollTo("generator") },
+                  { label: "Tarifs", action: () => scrollTo("pricing") },
                   { label: "Contact", action: () => setShowContact(true) },
                 ].map(item => (
                   <button key={item.label} onClick={item.action} className="block text-xs text-white/30 hover:text-white/60 transition-colors">
