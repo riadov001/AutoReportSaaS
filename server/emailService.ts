@@ -750,55 +750,60 @@ export function generateAiReportEmailHtml(data: {
   companyName?: string;
 }): string {
   const company = data.companyName || 'AutoReport';
-  const vehicleLabel = `${data.make} ${data.model} ${data.year}${data.mileage ? ` — ${data.mileage} km` : ''}`;
+  const vehicleLabel = `${data.make} ${data.model} ${data.year}${data.mileage ? ` — ${Number(data.mileage).toLocaleString('fr-FR')} km` : ''}`;
   return `
     <div style="background-color: #f4f4f5; padding: 40px 10px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e5e7eb;">
-        <div style="background: linear-gradient(135deg, #0a0a12 0%, #1a0608 100%); padding: 32px 30px; text-align: center;">
-          <div style="display: inline-block; background-color: #CE1126; width: 48px; height: 48px; border-radius: 10px; line-height: 48px; font-size: 24px; margin-bottom: 16px;">🚗</div>
-          <h1 style="margin: 0; font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">Votre rapport <span style="color: #CE1126;">AutoReport</span> est prêt</h1>
-          <p style="margin: 8px 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">Rapport d'analyse pré-achat véhicule d'occasion</p>
+        <div style="background: #0a0a12; padding: 28px 30px; text-align: center; border-bottom: 3px solid #CE1126;">
+          <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">AutoReport</p>
+          <h1 style="margin: 0; font-size: 20px; font-weight: 900; color: #ffffff;">Votre rapport véhicule est prêt</h1>
         </div>
-        <div style="padding: 30px;">
-          <div style="background-color: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px; padding: 16px 20px; margin-bottom: 24px;">
-            <p style="margin: 0 0 4px; font-size: 12px; color: #991b1b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">Véhicule analysé</p>
-            <p style="margin: 0; font-size: 20px; font-weight: 800; color: #CE1126;">${vehicleLabel}</p>
-            ${data.issue ? `<p style="margin: 8px 0 0; font-size: 12px; color: #6b7280;">${data.issue}</p>` : ''}
-          </div>
+        <div style="padding: 28px 30px;">
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; background-color: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px;">
+            <tr>
+              <td style="padding: 14px 18px;">
+                <p style="margin: 0 0 3px; font-size: 11px; color: #991b1b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">Véhicule analysé</p>
+                <p style="margin: 0; font-size: 18px; font-weight: 800; color: #CE1126;">${vehicleLabel}</p>
+              </td>
+            </tr>
+          </table>
 
-          <p style="font-size: 15px; color: #374151; line-height: 1.6; margin: 0 0 20px;">
-            Bonjour,<br /><br />
-            Votre rapport d'analyse pré-achat est disponible. Il contient les points clés à vérifier, les faiblesses connues sur ce modèle ainsi que des conseils concrets pour aborder sereinement votre achat.
+          <p style="font-size: 14px; color: #374151; line-height: 1.7; margin: 0 0 16px;">
+            Bonjour,
+          </p>
+          <p style="font-size: 14px; color: #374151; line-height: 1.7; margin: 0 0 16px;">
+            Votre rapport d'analyse pré-achat pour le <strong>${vehicleLabel}</strong> a été généré avec succès. Il contient les <strong>faiblesses connues</strong> du modèle, les <strong>points à vérifier</strong> lors de la visite, et des <strong>conseils concrets</strong> pour acheter en toute confiance.
           </p>
 
-          <div style="background-color: #f9fafb; border-radius: 8px; padding: 16px 20px; margin-bottom: 24px;">
-            <p style="margin: 0 0 10px; font-size: 13px; font-weight: 700; color: #111827;">Ce rapport comprend :</p>
-            <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: #4b5563; line-height: 2;">
-              <li>Points de vigilance spécifiques à ce modèle</li>
-              <li>Checklist des éléments à inspecter lors de la visite</li>
-              <li>Historique et faiblesses connues de la mécanique</li>
-              <li>Conseils de négociation et estimation de valeur</li>
-            </ul>
-          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+            ${[
+              'Faiblesses mécaniques documentées sur ce modèle',
+              'Checklist complète à utiliser lors de la visite',
+              'Points de négociation et estimation de valeur marché',
+              'Alertes spécifiques à la motorisation et au kilométrage',
+            ].map(item => `
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #374151; border-bottom: 1px solid #f3f4f6;">
+                  <span style="color: #CE1126; margin-right: 8px;">✓</span>${item}
+                </td>
+              </tr>
+            `).join('')}
+          </table>
 
-          <p style="font-size: 13px; color: #6b7280; line-height: 1.6; margin: 0 0 24px;">
-            Pour télécharger votre rapport en PDF et accéder à l'historique de vos analyses, créez votre compte AutoReport gratuitement.
-          </p>
-
-          <div style="text-align: center; margin: 32px 0;">
-            <a href="https://autoreport.fr/signup" style="background-color: #CE1126; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 800; font-size: 15px; display: inline-block; box-shadow: 0 2px 8px rgba(206,17,38,0.25);">
-              Télécharger mon rapport PDF
+          <div style="text-align: center; margin: 28px 0 20px;">
+            <a href="https://autoreport.fr" style="background-color: #CE1126; color: #ffffff; padding: 13px 30px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block;">
+              Voir mon rapport complet
             </a>
           </div>
 
-          <p style="font-size: 12px; color: #9ca3af; text-align: center; margin: 0;">
-            Ce rapport a été généré automatiquement par ${company}. Bonne inspection !
+          <p style="font-size: 12px; color: #9ca3af; text-align: center; margin: 0; line-height: 1.6;">
+            Ce rapport a été généré par <strong>${company}</strong>.<br />
+            Pour toute question : <a href="mailto:support@autoreport.fr" style="color: #CE1126; text-decoration: none;">support@autoreport.fr</a>
           </p>
         </div>
-        <div style="background-color: #f9fafb; border-top: 1px solid #e5e7eb; padding: 20px 30px; text-align: center;">
+        <div style="background-color: #f9fafb; border-top: 1px solid #e5e7eb; padding: 16px 30px; text-align: center;">
           <p style="margin: 0; font-size: 11px; color: #9ca3af;">
-            © ${new Date().getFullYear()} ${company} · Rapport d'analyse véhicule d'occasion<br />
-            <a href="https://autoreport.fr" style="color: #CE1126; text-decoration: none;">autoreport.fr</a>
+            © ${new Date().getFullYear()} ${company} · <a href="https://autoreport.fr" style="color: #9ca3af; text-decoration: none;">autoreport.fr</a>
           </p>
         </div>
       </div>

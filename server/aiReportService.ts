@@ -147,6 +147,7 @@ function buildPrompt(vehicleInfo: VehicleInfo): string {
   const ageYears = Math.max(0, new Date().getFullYear() - parseInt(vehicleInfo.year || "0", 10));
   const km = vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/\D/g, ""), 10) : null;
   const motorization = vehicleInfo.carburant || inferMotorization(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year);
+  const engineSpec = vehicleInfo.motorisation || null;
   const issueText = vehicleInfo.issue || "Analyse pré-achat véhicule d'occasion";
   const problemCategory = categorizeProblem(issueText);
 
@@ -157,13 +158,13 @@ function buildPrompt(vehicleInfo: VehicleInfo): string {
   if (ageYears > 0) prompt += ` (véhicule de ${ageYears} an${ageYears > 1 ? "s" : ""})`;
   prompt += `\n`;
   if (vehicleInfo.finition) prompt += `- **Finition** : ${vehicleInfo.finition}\n`;
-  if (vehicleInfo.motorisation) prompt += `- **Motorisation** : ${vehicleInfo.motorisation}\n`;
+  if (engineSpec) prompt += `- **Motorisation (moteur)** : ${engineSpec}\n`;
   if (vehicleInfo.gearbox) prompt += `- **Boîte de vitesse** : ${vehicleInfo.gearbox}\n`;
   if (vehicleInfo.usage) {
     const usageStr = Array.isArray(vehicleInfo.usage) ? vehicleInfo.usage.join(", ") : vehicleInfo.usage;
     if (usageStr) prompt += `- **Usage** : ${usageStr}\n`;
   }
-  prompt += `- **Motorisation détectée** : ${motorization}\n`;
+  prompt += `- **Type de carburant** : ${motorization}\n`;
 
   if (km !== null && !isNaN(km)) {
     prompt += `- **Kilométrage** : ${km.toLocaleString("fr-FR")} km`;
@@ -217,7 +218,7 @@ function generateFallbackReport(vehicleInfo: VehicleInfo): GeneratedReport {
     sections: [
       {
         title: `Analyse préliminaire — ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.year}`,
-        content: `Ce ${vehicleInfo.make} ${vehicleInfo.model} de motorisation ${motorization}${km ? ` à ${km.toLocaleString("fr-FR")} km` : ""} nécessite une inspection complète avant achat. Un scan OBD-II complet (codes défaut actifs et passés, données temps réel) est la première étape indispensable. Les symptômes doivent être reproduits à froid et à chaud. Un scan OBD-II complet (codes défaut actifs et passés, données temps réel) est la première étape indispensable.`,
+        content: `Ce ${vehicleInfo.make} ${vehicleInfo.model} de motorisation ${motorization}${km ? ` à ${km.toLocaleString("fr-FR")} km` : ""} nécessite une inspection complète avant achat. Vérifiez les points de vigilance connus sur ce modèle, l'entretien suivi et l'état général de la carrosserie. Un scan OBD-II (codes défaut actifs et passés, données temps réel) permettra de détecter d'éventuels problèmes électroniques avant acquisition.`,
         severity: "medium",
       },
       {

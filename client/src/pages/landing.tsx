@@ -727,52 +727,53 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-2">CARBURANT</label>
-                    <div className="flex flex-wrap gap-2">
+                    <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">CARBURANT</label>
+                    <select
+                      value={vehicleInfo.carburant}
+                      onChange={e => setVehicleInfo(v => ({ ...v, carburant: e.target.value }))}
+                      data-testid="select-carburant"
+                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all font-mono"
+                    >
+                      <option value="" className="bg-[#0a0a12]">Sélectionner...</option>
                       {["Diesel", "Essence", "Hybride", "Électrique", "GPL"].map(opt => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => setVehicleInfo(v => ({ ...v, carburant: v.carburant === opt ? "" : opt }))}
-                          className={`px-3 py-1.5 rounded-md text-xs font-mono border transition-all ${vehicleInfo.carburant === opt ? "bg-[#CE1126]/20 border-[#CE1126]/50 text-white" : "border-white/[0.08] text-white/30 hover:border-white/20 hover:text-white/50"}`}
-                        >
-                          {opt}
-                        </button>
+                        <option key={opt} value={opt} className="bg-[#0a0a12]">{opt}</option>
                       ))}
-                    </div>
+                    </select>
                   </div>
 
                   <div>
                     <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-2">BOÎTE DE VITESSE</label>
-                    <div className="flex gap-2">
+                    <div className="flex gap-4">
                       {["Manuelle", "Automatique"].map(opt => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => setVehicleInfo(v => ({ ...v, gearbox: v.gearbox === opt ? "" : opt }))}
-                          className={`px-3 py-1.5 rounded-md text-xs font-mono border transition-all ${vehicleInfo.gearbox === opt ? "bg-[#CE1126]/20 border-[#CE1126]/50 text-white" : "border-white/[0.08] text-white/30 hover:border-white/20 hover:text-white/50"}`}
-                        >
-                          {opt}
-                        </button>
+                        <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={vehicleInfo.gearbox === opt}
+                            onChange={() => setVehicleInfo(v => ({ ...v, gearbox: v.gearbox === opt ? "" : opt }))}
+                            className="accent-[#CE1126] w-4 h-4"
+                          />
+                          <span className="text-xs font-mono text-white/50">{opt}</span>
+                        </label>
                       ))}
                     </div>
                   </div>
 
                   <div>
                     <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-2">USAGE <span className="text-white/15">(plusieurs possibles)</span></label>
-                    <div className="flex gap-2">
+                    <div className="flex gap-4">
                       {["Ville", "Mixte", "Autoroute"].map(opt => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => setVehicleInfo(v => ({
-                            ...v,
-                            usage: v.usage.includes(opt) ? v.usage.filter(u => u !== opt) : [...v.usage, opt],
-                          }))}
-                          className={`px-3 py-1.5 rounded-md text-xs font-mono border transition-all ${vehicleInfo.usage.includes(opt) ? "bg-[#CE1126]/20 border-[#CE1126]/50 text-white" : "border-white/[0.08] text-white/30 hover:border-white/20 hover:text-white/50"}`}
-                        >
-                          {opt}
-                        </button>
+                        <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={vehicleInfo.usage.includes(opt)}
+                            onChange={() => setVehicleInfo(v => ({
+                              ...v,
+                              usage: v.usage.includes(opt) ? v.usage.filter(u => u !== opt) : [...v.usage, opt],
+                            }))}
+                            className="accent-[#CE1126] w-4 h-4"
+                          />
+                          <span className="text-xs font-mono text-white/50">{opt}</span>
+                        </label>
                       ))}
                     </div>
                   </div>
