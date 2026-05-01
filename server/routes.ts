@@ -226,13 +226,15 @@ function getGarageScope(user: User | undefined): string | undefined {
   return user.garageId || undefined;
 }
 
-// Check if user has access to a specific garage's resource
+// Check if user has access to a specific garage's resource.
+// Returns false → caller MUST return res.status(403).
+// null/undefined resourceGarageId is an EXPLICIT DENY: resources without a garage are inaccessible to scoped users.
 function hasGarageAccess(user: User | undefined, resourceGarageId: string | null | undefined): boolean {
   if (!user) return false;
   // Superadmin and rootadmin can access all resources
   if (user.role === "superadmin" || user.role === "rootadmin") return true;
-  // If resource has no garageId, deny access (null garage resources are not accessible by garage-scoped users)
-  if (!resourceGarageId) return false;
+  // Explicit deny: resource with no garageId is not accessible to garage-scoped users → caller returns 403
+  if (resourceGarageId === null || resourceGarageId === undefined || resourceGarageId === "") return false;
   // User must belong to the same garage as the resource
   return user.garageId === resourceGarageId;
 }
