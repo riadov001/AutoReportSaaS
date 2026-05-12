@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "postgresql-16", "python-3.11"]
+modules = ["nodejs-20", "python-3.11", "postgresql-16"]
 [agent]
 expertMode = true
 stack = "GAMESTACK_JS"
@@ -41,7 +41,7 @@ externalPort = 3000
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["node", "./dist/index.cjs"]
+run = ["node", "./dist/index.js"]
 build = ["npm", "run", "build"]
 
 [postMerge]

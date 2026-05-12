@@ -1,4 +1,5 @@
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
+const GEMINI_API_KEY = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
+const GEMINI_BASE_URL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || "https://generativelanguage.googleapis.com";
 const GEMINI_MODEL = "gemini-2.0-flash";
 
 interface VehicleInfo {
@@ -81,7 +82,7 @@ Réponds UNIQUEMENT en JSON valide (zéro markdown, zéro texte hors JSON) :
 7. **Réponds toujours en FRANÇAIS technique professionnel**`;
 
 async function callGemini(prompt: string, systemPromptOverride?: string): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const url = `${GEMINI_BASE_URL}/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
   const body = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
