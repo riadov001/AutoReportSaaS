@@ -21,6 +21,13 @@ interface ReportSection {
   severity?: "low" | "medium" | "high" | "critical";
 }
 
+export interface PurchaseRecommendation {
+  score: number;
+  verdict: "Acheter" | "Négocier" | "Éviter";
+  negotiationTips: string[];
+  inspectionChecklist: string[];
+}
+
 export interface GeneratedReport {
   vehicleInfo: VehicleInfo;
   summary: string;
@@ -28,6 +35,7 @@ export interface GeneratedReport {
   recommendations: string[];
   estimatedCost?: string;
   urgencyLevel: "low" | "medium" | "high" | "critical";
+  purchaseRecommendation?: PurchaseRecommendation;
   generatedAt: string;
 }
 
@@ -62,7 +70,25 @@ Réponds UNIQUEMENT en JSON valide (zéro markdown, zéro texte hors JSON) :
     "Vérification préventive liée au kilométrage et à l'âge..."
   ],
   "estimatedCost": "Fourchette globale selon hypothèse confirmée : XXX-YYY € TTC (garage indépendant) / XXX-YYY € TTC (concession ou spécialiste marque)",
-  "urgencyLevel": "low|medium|high|critical"
+  "urgencyLevel": "low|medium|high|critical",
+  "purchaseRecommendation": {
+    "score": 7.5,
+    "verdict": "Négocier",
+    "negotiationTips": [
+      "Négociez 800-1 200 € en justifiant le remplacement imminent de la courroie de distribution à 150 000 km (pièce 120 € + MO 350 € = 470 € garage indépendant)",
+      "Faites valoir l'usure documentée des amortisseurs arrière (bruit sourd en virage) — devis de remplacement : 400-600 €",
+      "Exigez la facture du dernier vidange — absence de preuve = levier de négociation supplémentaire de 200-300 €"
+    ],
+    "inspectionChecklist": [
+      "Vérifier visuellement toutes les fuites sous le véhicule moteur chaud (huile, refroidissement, direction assistée)",
+      "Tester le démarrage à froid ET après 10 min de chauffe — noter tout raté, fumée bleue/blanche, vibration",
+      "Scanner OBD-II : lire les codes défaut actifs ET mémorisés sur TOUS les calculateurs (moteur, boîte, ABS, habitacle)",
+      "Inspecter l'état de la courroie de distribution / chaîne (si accessible) et vérifier la date du dernier remplacement sur carnet",
+      "Contrôler l'état des pneumatiques (usure régulière = alignement correct, usure irrégulière = suspension défectueuse)",
+      "Vérifier le niveau et la couleur de l'huile moteur : huile noire très visqueuse = entretiens négligés, lait = joint de culasse",
+      "Tester toutes les vitres, rétroviseurs électriques, climatisation, chauffage, audiovisuel — noter les pannes électriques"
+    ]
+  }
 }
 
 ## RÈGLES NON NÉGOCIABLES
@@ -79,7 +105,12 @@ Réponds UNIQUEMENT en JSON valide (zéro markdown, zéro texte hors JSON) :
 4. **Jamais de conseil vague** : "vérifier les niveaux" → interdit. À la place : "Vérifier le niveau d'huile moteur et sa viscosité (5W-30 ou 5W-40 selon préconisation constructeur) — signe de consommation anormale > 0,5L/1000km sur ce moteur indique usure segments ou joints de queues de soupapes"
 5. **Véhicules premium/sportifs** (Ferrari, Porsche, Maserati, AMG, M, RS, F-Sport) : coûts × 2-5, mentionner "atelier agréé constructeur requis"
 6. **Véhicules électriques/hybrides** : analyser batterie HT (dégradation SOH, cellules défaillantes), BMS, onduleur, pompe de refroidissement HT, recharge AC/DC
-7. **Réponds toujours en FRANÇAIS technique professionnel**`;
+7. **Réponds toujours en FRANÇAIS technique professionnel**
+8. **purchaseRecommendation OBLIGATOIRE** :
+   - score : note de 0 à 10 (10 = véhicule parfait, 0 = catastrophe) calculée sur : état mécanique (40%), kilométrage/âge (30%), fiabilité du modèle (20%), rapport qualité/prix (10%)
+   - verdict : "Acheter" (score ≥ 7), "Négocier" (score 4-6.9), "Éviter" (score < 4)
+   - negotiationTips : 3 à 5 arguments chiffrés en € pour faire baisser le prix, basés sur les défauts trouvés
+   - inspectionChecklist : 6 à 10 points de contrôle physique SPÉCIFIQUES à ce véhicule/motorisation avant de signer`;
 
 async function callGemini(prompt: string, systemPromptOverride?: string): Promise<string> {
   const url = `${GEMINI_BASE_URL}/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
@@ -117,7 +148,6 @@ async function callGemini(prompt: string, systemPromptOverride?: string): Promis
 }
 
 function inferMotorization(make: string, model: string, year: string): string {
-  const y = parseInt(year, 10);
   const m = model.toLowerCase();
   const mk = make.toLowerCase();
 
@@ -203,9 +233,57 @@ function buildPrompt(vehicleInfo: VehicleInfo): string {
     prompt += `5. Véhicule de ${ageYears} ans : intègre le vieillissement des durites, joints caoutchouc, capteurs électroniques, et la corrosion des connecteurs/faisceaux.\n`;
   }
 
+  prompt += `\n## RECOMMANDATION D'ACHAT — CALCUL DU SCORE\n`;
+  prompt += `Calcule le score (0-10) selon ces critères pondérés :\n`;
+  prompt += `- État mécanique (40%) : basé sur le nombre/gravité des défauts identifiés\n`;
+  prompt += `- Kilométrage/âge (30%) : ${km ? `${km.toLocaleString("fr-FR")} km, ${ageYears} ans` : `${ageYears} ans`}\n`;
+  prompt += `- Fiabilité du modèle (20%) : historique TSB et rappels constructeur sur ce millésime\n`;
+  prompt += `- Rapport qualité/prix estimé (10%) : défauts vs. prix marché attendu\n`;
+  prompt += `Produis des negotiationTips CHIFFRÉS en € basés sur les coûts de réparation de tes recommandations.\n`;
+  prompt += `Produis une inspectionChecklist SPÉCIFIQUE à ce véhicule/${motorization} — pas de conseils génériques.\n`;
+
   prompt += `\nProduis le rapport JSON complet selon le schéma imposé. Sois PRÉCIS, SPÉCIFIQUE, EXPERT. Aucune phrase générique.`;
 
   return prompt;
+}
+
+function generateFallbackPurchaseRecommendation(vehicleInfo: VehicleInfo): PurchaseRecommendation {
+  const motorization = inferMotorization(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year);
+  const km = vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/\D/g, ""), 10) : null;
+  const ageYears = Math.max(0, new Date().getFullYear() - parseInt(vehicleInfo.year || "0", 10));
+
+  const baseChecklist = [
+    "Scanner OBD-II sur tous les calculateurs (moteur, boîte, ABS, habitacle) — prévoir 40-80 € en garage indépendant",
+    "Vérifier visuellement toutes les fuites sous le véhicule moteur chaud (huile, liquide de refroidissement)",
+    "Inspecter l'état et la couleur de l'huile moteur — présence de lait = joint de culasse, huile très noire = entretiens négligés",
+    "Tester le démarrage à froid ET après chauffe complète — noter tout raté d'allumage, fumée anormale, vibration",
+    "Contrôler l'usure des pneumatiques et la géométrie (usure irrégulière = problème de suspension ou direction)",
+    "Vérifier le carnet d'entretien complet : intervalles respectés, factures à l'appui",
+  ];
+
+  if (motorization === "diesel") {
+    baseChecklist.push("Faire un essai à froid : surveiller la fumée noire au démarrage (turbo/injection) et l'accélération franche sans à-coups (FAP)");
+  } else if (motorization === "électrique" || motorization === "hybride") {
+    baseChecklist.push("Demander le rapport SOH (State of Health) de la batterie HT — refuser si < 80% ou si non disponible");
+    baseChecklist.push("Tester la recharge AC (borne 7kW) et DC (rapide) — noter le temps de charge réel vs. théorique");
+  } else {
+    baseChecklist.push("Vérifier la date et l'état de la courroie de distribution (ou tension chaîne de distribution si applicable)");
+  }
+
+  if (km && km > 100000) {
+    baseChecklist.push(`À ${km.toLocaleString("fr-FR")} km : demander les factures de remplacement amortisseurs, embrayage (si thermique), courroie accessoires`);
+  }
+
+  return {
+    score: 5.5,
+    verdict: "Négocier",
+    negotiationTips: [
+      "Faites réaliser un diagnostic OBD complet avant signature — utilisez les codes défaut trouvés pour négocier le prix",
+      "Demandez systématiquement le rapport d'historique (CarVertical, Histovec gratuit) — accident non déclaré = levier -10 à -20% du prix",
+      "Exigez toutes les factures d'entretien — absence de preuves = négociation de 300-500 € minimum pour couvrir les risques",
+    ],
+    inspectionChecklist: baseChecklist,
+  };
 }
 
 function generateFallbackReport(vehicleInfo: VehicleInfo): GeneratedReport {
@@ -241,6 +319,7 @@ function generateFallbackReport(vehicleInfo: VehicleInfo): GeneratedReport {
     ],
     estimatedCost: "80-250 € (diagnostic initial complet)",
     urgencyLevel: "medium",
+    purchaseRecommendation: generateFallbackPurchaseRecommendation(vehicleInfo),
     generatedAt: new Date().toISOString(),
   };
 }
@@ -255,7 +334,6 @@ export async function generateAiReport(vehicleInfo: VehicleInfo, customSystemPro
     if (jsonMatch) {
       cleanJson = jsonMatch[1].trim();
     }
-    // Remove leading/trailing non-JSON characters
     const firstBrace = cleanJson.indexOf("{");
     const lastBrace = cleanJson.lastIndexOf("}");
     if (firstBrace !== -1 && lastBrace !== -1) {
@@ -264,6 +342,9 @@ export async function generateAiReport(vehicleInfo: VehicleInfo, customSystemPro
 
     const parsed = JSON.parse(cleanJson);
 
+    const purchaseRec = parsed.purchaseRecommendation;
+    const validVerdicts = ["Acheter", "Négocier", "Éviter"];
+
     const report: GeneratedReport = {
       vehicleInfo,
       summary: parsed.summary || "Rapport de diagnostic généré par IA.",
@@ -271,6 +352,14 @@ export async function generateAiReport(vehicleInfo: VehicleInfo, customSystemPro
       recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
       estimatedCost: parsed.estimatedCost || undefined,
       urgencyLevel: parsed.urgencyLevel || "medium",
+      purchaseRecommendation: purchaseRec && typeof purchaseRec.score === "number" && validVerdicts.includes(purchaseRec.verdict)
+        ? {
+            score: Math.min(10, Math.max(0, purchaseRec.score)),
+            verdict: purchaseRec.verdict as PurchaseRecommendation["verdict"],
+            negotiationTips: Array.isArray(purchaseRec.negotiationTips) ? purchaseRec.negotiationTips : [],
+            inspectionChecklist: Array.isArray(purchaseRec.inspectionChecklist) ? purchaseRec.inspectionChecklist : [],
+          }
+        : generateFallbackPurchaseRecommendation(vehicleInfo),
       generatedAt: new Date().toISOString(),
     };
 
@@ -296,6 +385,12 @@ export function generateReportHtml(report: GeneratedReport): string {
     critical: "Critique",
   };
 
+  const verdictColors: Record<string, string> = {
+    Acheter: "#22c55e",
+    Négocier: "#f59e0b",
+    Éviter: "#ef4444",
+  };
+
   const sectionsHtml = report.sections
     .map(
       (s) => `
@@ -310,6 +405,37 @@ export function generateReportHtml(report: GeneratedReport): string {
   const recsHtml = report.recommendations
     .map((r, i) => `<li style="margin-bottom: 10px; color: #333; font-size: 13px; line-height:1.6;"><strong style="color:#dc2626;">#${i + 1}</strong> ${r}</li>`)
     .join("");
+
+  const pr = report.purchaseRecommendation;
+  const purchaseHtml = pr ? `
+    <div style="margin-bottom: 30px; padding: 20px; border-radius: 8px; border: 2px solid ${verdictColors[pr.verdict] || "#f59e0b"}; background: ${verdictColors[pr.verdict] || "#f59e0b"}08;">
+      <h2 style="font-size: 16px; font-weight: 700; margin-bottom: 14px; color: #0a0a0a; text-transform: uppercase; letter-spacing: 1px;">Recommandation d'achat</h2>
+      <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 16px; flex-wrap: wrap;">
+        <div style="text-align: center;">
+          <div style="width: 64px; height: 64px; border-radius: 50%; border: 4px solid ${verdictColors[pr.verdict] || "#f59e0b"}; display: flex; align-items: center; justify-content: center;">
+            <span style="font-size: 22px; font-weight: 800; color: ${verdictColors[pr.verdict] || "#f59e0b"};">${pr.score.toFixed(1)}</span>
+          </div>
+          <p style="font-size: 10px; color: #888; margin-top: 4px;">/ 10</p>
+        </div>
+        <div>
+          <span style="display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 16px; font-weight: 800; color: white; background: ${verdictColors[pr.verdict] || "#f59e0b"};">${pr.verdict}</span>
+        </div>
+      </div>
+      ${pr.negotiationTips.length > 0 ? `
+      <div style="margin-bottom: 14px;">
+        <h3 style="font-size: 13px; font-weight: 700; color: #0a0a0a; margin-bottom: 8px;">💰 Arguments de négociation</h3>
+        <ul style="padding-left: 16px; margin: 0;">
+          ${pr.negotiationTips.map(t => `<li style="font-size: 12px; color: #444; margin-bottom: 6px; line-height: 1.5;">${t}</li>`).join("")}
+        </ul>
+      </div>` : ""}
+      ${pr.inspectionChecklist.length > 0 ? `
+      <div>
+        <h3 style="font-size: 13px; font-weight: 700; color: #0a0a0a; margin-bottom: 8px;">✅ Points à vérifier avant signature</h3>
+        <ul style="padding-left: 16px; margin: 0; list-style: none;">
+          ${pr.inspectionChecklist.map(item => `<li style="font-size: 12px; color: #444; margin-bottom: 6px; line-height: 1.5; padding-left: 4px;">☐ ${item}</li>`).join("")}
+        </ul>
+      </div>` : ""}
+    </div>` : "";
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -360,6 +486,9 @@ export function generateReportHtml(report: GeneratedReport): string {
       <span style="font-weight: 600; font-size: 14px;">Niveau d'urgence : ${urgencyLabels[report.urgencyLevel]}</span>
       ${report.estimatedCost ? `<span style="margin-left: auto; font-weight: 600; font-size: 14px; color: #555;">Estimation : ${report.estimatedCost}</span>` : ""}
     </div>
+
+    <!-- Purchase Recommendation -->
+    ${purchaseHtml}
 
     <!-- Summary -->
     <div style="margin-bottom: 30px;">
