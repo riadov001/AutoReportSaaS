@@ -8811,7 +8811,12 @@ var objectStorageService = null;
 try {
   objectStorageService = new ObjectStorageService();
 } catch (e) {
-  console.warn("Object storage not available:", e.message);
+  const hasBucketConfig = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID || process.env.REPLIT_OBJECT_STORAGE_BUCKET_ID;
+  if (hasBucketConfig) {
+    console.warn("Object storage not available:", e.message);
+  } else {
+    console.log("[ObjectStorage] No bucket configured \u2014 using local /uploads/ fallback.");
+  }
 }
 var downloadFileFromPath = downloadMedia;
 var deleteFileAtPath = deleteMedia;
@@ -20575,6 +20580,9 @@ function initNotificationScheduler() {
 }
 
 // server/index.ts
+if (!process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID && process.env.REPLIT_OBJECT_STORAGE_BUCKET_ID) {
+  process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID = process.env.REPLIT_OBJECT_STORAGE_BUCKET_ID;
+}
 var app2 = express3();
 app2.set("trust proxy", 1);
 app2.use("/api/webhooks/stripe", express3.raw({ type: "application/json" }));

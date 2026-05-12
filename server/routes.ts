@@ -45,7 +45,12 @@ let objectStorageService: ObjectStorageService | null = null;
 try {
   objectStorageService = new ObjectStorageService();
 } catch (e) {
-  console.warn("Object storage not available:", (e as Error).message);
+  const hasBucketConfig = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID || process.env.REPLIT_OBJECT_STORAGE_BUCKET_ID;
+  if (hasBucketConfig) {
+    console.warn("Object storage not available:", (e as Error).message);
+  } else {
+    console.log("[ObjectStorage] No bucket configured — using local /uploads/ fallback.");
+  }
 }
 
 const downloadFileFromPath = downloadMedia;

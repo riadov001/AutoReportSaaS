@@ -1,3 +1,8 @@
+// Wire Replit Object Storage bucket ID if not explicitly set
+if (!process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID && process.env.REPLIT_OBJECT_STORAGE_BUCKET_ID) {
+  process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID = process.env.REPLIT_OBJECT_STORAGE_BUCKET_ID;
+}
+
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import fileUpload from "express-fileupload";
