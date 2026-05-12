@@ -1,8 +1,11 @@
-const USE_INTEGRATION = !!process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
+const USE_INTEGRATION = !!(process.env.AI_INTEGRATIONS_GEMINI_BASE_URL && process.env.AI_INTEGRATIONS_GEMINI_API_KEY);
 const GEMINI_BASE_URL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || "https://generativelanguage.googleapis.com";
 const GEMINI_API_KEY = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
 const GEMINI_MODEL = "gemini-2.0-flash";
 
+if (!USE_INTEGRATION && !GEMINI_API_KEY) {
+  console.warn("[AIReport] No Gemini API key configured — report generation will fail. Set AI_INTEGRATIONS_GEMINI_API_KEY or GEMINI_API_KEY.");
+}
 console.info(`[AIReport] Gemini provider: ${USE_INTEGRATION ? "Replit integration proxy" : "Google direct API"}`);
 
 interface VehicleInfo {
