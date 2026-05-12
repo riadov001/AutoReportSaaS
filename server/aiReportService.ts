@@ -1,5 +1,5 @@
-const GEMINI_API_KEY = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
-const GEMINI_BASE_URL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || "https://generativelanguage.googleapis.com";
+const GEMINI_BASE_URL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || "http://localhost:1106/modelfarm/gemini";
+const GEMINI_API_KEY = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || "dummy-key";
 const GEMINI_MODEL = "gemini-2.0-flash";
 
 interface VehicleInfo {
@@ -113,7 +113,7 @@ Réponds UNIQUEMENT en JSON valide (zéro markdown, zéro texte hors JSON) :
    - inspectionChecklist : 6 à 10 points de contrôle physique SPÉCIFIQUES à ce véhicule/motorisation avant de signer`;
 
 async function callGemini(prompt: string, systemPromptOverride?: string): Promise<string> {
-  const url = `${GEMINI_BASE_URL}/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const url = `${GEMINI_BASE_URL}/models/${GEMINI_MODEL}:generateContent`;
 
   const body = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -128,7 +128,10 @@ async function callGemini(prompt: string, systemPromptOverride?: string): Promis
 
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": GEMINI_API_KEY,
+    },
     body: JSON.stringify(body),
   });
 
