@@ -6562,7 +6562,7 @@ async function callGemini(prompt, systemPromptOverride) {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     systemInstruction: { parts: [{ text: systemPromptOverride || SYSTEM_PROMPT }] },
     generationConfig: {
-      temperature: 0.6,
+      temperature: 0.65,
       maxOutputTokens: 8192,
       topP: 0.92,
       topK: 40
@@ -6588,121 +6588,156 @@ async function callGemini(prompt, systemPromptOverride) {
 function inferMotorization(make, model, year) {
   const m = model.toLowerCase();
   const mk = make.toLowerCase();
-  if (m.includes("tdi") || m.includes("hdi") || m.includes("cdti") || m.includes("dci") || m.includes("bluehdI") || m.includes("d ") || m.includes(" d") || m.includes("diesel")) return "diesel";
+  const y = parseInt(year, 10);
+  if (m.includes("tdi") || m.includes("hdi") || m.includes("cdti") || m.includes("dci") || m.includes("bluehdi") || m.includes("bluehdI")) return "diesel";
   if (m.includes("tsi") || m.includes("tfsi") || m.includes("gti") || m.includes("turbo") || m.includes("t5") || m.includes("t6")) return "essence turbo";
-  if (m.includes("hybrid") || m.includes("hybride") || m.includes("phev") || m.includes("e-power") || m.includes("prius")) return "hybride";
+  if (m.includes("hybrid") || m.includes("hybride") || m.includes("phev") || m.includes("e-power") || m.includes("prius") || m.includes("lexus h")) return "hybride";
   if (m.includes("electric") || m.includes("\xE9lectrique") || m.includes("ev") || m.includes("bev") || m.includes("ioniq") || m.includes("model ") || mk.includes("tesla")) return "\xE9lectrique";
-  if ((mk.includes("bmw") || mk.includes("mercedes") || mk.includes("audi") || mk.includes("volkswagen")) && m.includes("d")) return "diesel";
+  if ((mk.includes("bmw") || mk.includes("mercedes") || mk.includes("audi") || mk.includes("volkswagen")) && (m.includes(" d") || m.includes("d "))) return "diesel";
+  if (mk.includes("renault") && (m.includes("dci") || m.includes("tce"))) return m.includes("dci") ? "diesel" : "essence turbo";
+  if (mk.includes("peugeot") && m.includes("hdi")) return "diesel";
+  if (y >= 2022 && (mk.includes("renault") || mk.includes("peugeot") || mk.includes("opel"))) return "essence";
   return "essence";
 }
-function categorizeProblem(issue) {
-  const i = issue.toLowerCase();
-  if (i.includes("d\xE9marr") || i.includes("start") || i.includes("batterie") || i.includes("d\xE9part")) return "d\xE9marrage/\xE9lectrique";
-  if (i.includes("frein") || i.includes("brake") || i.includes("abs") || i.includes("p\xE9dale")) return "freinage";
-  if (i.includes("vitesse") || i.includes("bo\xEEte") || i.includes("embrayage") || i.includes("transmission") || i.includes("passage")) return "transmission";
-  if (i.includes("chauff") || i.includes("refroid") || i.includes("temp\xE9rat") || i.includes("surchauff") || i.includes("radiateur")) return "refroidissement";
-  if (i.includes("huile") || i.includes("consomm") || i.includes("fuite") || i.includes("goutte")) return "lubrification/\xE9tanch\xE9it\xE9";
-  if (i.includes("voyant") || i.includes("lumi\xE8re") || i.includes("tableau") || i.includes("check") || i.includes("d\xE9faut")) return "\xE9lectronique/capteurs";
-  if (i.includes("bruit") || i.includes("vibr") || i.includes("claque") || i.includes("grince") || i.includes("craque")) return "m\xE9canique/bruit";
-  if (i.includes("turbo") || i.includes("puissance") || i.includes("acc\xE9l\xE9r") || i.includes("cloque")) return "motorisation/performances";
-  if (i.includes("direction") || i.includes("suspension") || i.includes("amort") || i.includes("train")) return "train roulant/direction";
-  if (i.includes("carburant") || i.includes("injection") || i.includes("essence") || i.includes("gazole")) return "alimentation/injection";
-  return "g\xE9n\xE9ral";
+function getUsageContext(usage) {
+  if (!usage) return "";
+  const arr2 = Array.isArray(usage) ? usage : [usage];
+  const filtered = arr2.filter(Boolean);
+  return filtered.length ? filtered.join(", ") : "";
 }
 function buildPrompt(vehicleInfo) {
-  const ageYears = Math.max(0, (/* @__PURE__ */ new Date()).getFullYear() - parseInt(vehicleInfo.year || "0", 10));
+  const currentYear = (/* @__PURE__ */ new Date()).getFullYear();
+  const ageYears = Math.max(0, currentYear - parseInt(vehicleInfo.year || "0", 10));
   const km = vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/\D/g, ""), 10) : null;
   const motorization = vehicleInfo.carburant || inferMotorization(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year);
   const engineSpec = vehicleInfo.motorisation || null;
-  const issueText = vehicleInfo.issue || "Analyse pr\xE9-achat v\xE9hicule d'occasion";
-  const problemCategory = categorizeProblem(issueText);
-  let prompt = `## V\xC9HICULE \xC0 ANALYSER
+  const usageContext = getUsageContext(vehicleInfo.usage);
+  let prompt = `## V\xC9HICULE \xC0 ANALYSER (RAPPORT PR\xC9-ACHAT)
+
 `;
-  prompt += `- **Marque** : ${vehicleInfo.make}
+  prompt += `| Champ | Valeur |
+|---|---|
 `;
-  prompt += `- **Mod\xE8le** : ${vehicleInfo.model}
+  prompt += `| Marque | **${vehicleInfo.make}** |
 `;
-  prompt += `- **Ann\xE9e** : ${vehicleInfo.year}`;
-  if (ageYears > 0) prompt += ` (v\xE9hicule de ${ageYears} an${ageYears > 1 ? "s" : ""})`;
-  prompt += `
+  prompt += `| Mod\xE8le | **${vehicleInfo.model}** |
 `;
-  if (vehicleInfo.finition) prompt += `- **Finition** : ${vehicleInfo.finition}
+  prompt += `| Ann\xE9e | **${vehicleInfo.year}** (${ageYears > 0 ? `${ageYears} an${ageYears > 1 ? "s" : ""} d'\xE2ge` : "r\xE9cent"}) |
 `;
-  if (engineSpec) prompt += `- **Motorisation (moteur)** : ${engineSpec}
+  if (vehicleInfo.finition) prompt += `| Finition | ${vehicleInfo.finition} |
 `;
-  if (vehicleInfo.gearbox) prompt += `- **Bo\xEEte de vitesse** : ${vehicleInfo.gearbox}
+  if (engineSpec) prompt += `| Motorisation | ${engineSpec} |
 `;
-  if (vehicleInfo.usage) {
-    const usageStr = Array.isArray(vehicleInfo.usage) ? vehicleInfo.usage.join(", ") : vehicleInfo.usage;
-    if (usageStr) prompt += `- **Usage** : ${usageStr}
+  prompt += `| Carburant | ${motorization} |
 `;
-  }
-  prompt += `- **Type de carburant** : ${motorization}
+  if (vehicleInfo.gearbox) prompt += `| Bo\xEEte | ${vehicleInfo.gearbox} |
+`;
+  if (usageContext) prompt += `| Usage pr\xE9vu | ${usageContext} |
 `;
   if (km !== null && !isNaN(km)) {
-    prompt += `- **Kilom\xE9trage** : ${km.toLocaleString("fr-FR")} km`;
-    if (km < 3e4) prompt += ` \u2192 tr\xE8s faible kilom\xE9trage, privil\xE9gier vieillissement/stockage sur usure m\xE9canique`;
-    else if (km < 8e4) prompt += ` \u2192 kilom\xE9trage faible \xE0 moyen, surveillance entretiens pr\xE9ventifs`;
-    else if (km < 15e4) prompt += ` \u2192 kilom\xE9trage moyen-\xE9lev\xE9, pi\xE8ces d'usure \xE0 v\xE9rifier (distribution, embrayage, amortisseurs)`;
-    else if (km < 25e4) prompt += ` \u2192 kilom\xE9trage \xE9lev\xE9, vigilance sur moteur/transmission/\xE9lectronique vieillie`;
-    else prompt += ` \u2192 tr\xE8s haut kilom\xE9trage, v\xE9hicule en fin de vie de certains composants majeurs`;
-    prompt += `
+    const avgKmPerYear = ageYears > 0 ? Math.round(km / ageYears) : km;
+    let kmComment = "";
+    if (km < 3e4) kmComment = "tr\xE8s faible \u2192 v\xE9rifier usure par vieillissement/stockage plut\xF4t que par km";
+    else if (km < 8e4) kmComment = "faible \xE0 moyen \u2192 bonne phase de vie, entretiens pr\xE9ventifs \xE0 contr\xF4ler";
+    else if (km < 15e4) kmComment = "moyen-\xE9lev\xE9 \u2192 distribution, embrayage, amortisseurs \xE0 v\xE9rifier";
+    else if (km < 25e4) kmComment = "\xE9lev\xE9 \u2192 vigilance moteur, transmission, \xE9lectronique ancienne";
+    else kmComment = "tr\xE8s \xE9lev\xE9 \u2192 certains composants majeurs potentiellement en fin de vie";
+    prompt += `| Kilom\xE9trage | **${km.toLocaleString("fr-FR")} km** (\u2248 ${avgKmPerYear.toLocaleString("fr-FR")} km/an) \u2014 ${kmComment} |
 `;
   }
-  prompt += `- **Cat\xE9gorie du probl\xE8me** : ${problemCategory}
-`;
   prompt += `
-## CONTEXTE DE L'ANALYSE
+## CONTEXTE D'ACHAT
 `;
-  prompt += `"${issueText}"
+  if (vehicleInfo.issue && vehicleInfo.issue !== "Analyse pr\xE9-achat v\xE9hicule d'occasion") {
+    const cleanIssue = vehicleInfo.issue.replace(/^Analyse pré-achat véhicule d'occasion\s*\|?\s*/i, "").trim();
+    if (cleanIssue) prompt += `Informations compl\xE9mentaires du client : "${cleanIssue}"
+
+`;
+  }
+  prompt += `Objectif : rapport pr\xE9-achat complet pour aider un particulier \xE0 d\xE9cider s'il doit acheter ce v\xE9hicule, \xE0 quel prix et avec quelles pr\xE9cautions.
 
 `;
   prompt += `## INSTRUCTIONS SP\xC9CIFIQUES POUR CE RAPPORT
+
 `;
-  prompt += `1. Mobilise tes connaissances approfondies sur les **${vehicleInfo.make} ${vehicleInfo.model}** de g\xE9n\xE9ration ${vehicleInfo.year} \u2014 d\xE9fauts de s\xE9rie, TSB, rappels constructeur document\xE9s sur cette motorisation ${motorization}.
+  prompt += `### 1. Fiabilit\xE9 & d\xE9fauts de s\xE9rie
 `;
-  prompt += `2. Le probl\xE8me est cat\xE9goris\xE9 comme **${problemCategory}** \u2014 concentre tes hypoth\xE8ses sur cette famille de composants en premier.
+  prompt += `Mobilise tes connaissances pr\xE9cises sur le **${vehicleInfo.make} ${vehicleInfo.model}** mill\xE9sime **${vehicleInfo.year}** avec motorisation **${motorization}**${engineSpec ? ` (${engineSpec})` : ""}. Cite les d\xE9fauts de s\xE9rie document\xE9s et leur fr\xE9quence r\xE9elle (pas hypoth\xE9tiques). Sources accept\xE9es : forums sp\xE9cialis\xE9s (Turbo.fr, Caradisiac, M\xE9capassion), ADAC Zuverl\xE4ssigkeitsreport, Que Choisir, TSB constructeur, Rappel.fr.
+
 `;
   if (motorization === "diesel") {
-    prompt += `3. Motorisation diesel : analyse EGR, FAP/DPF, syst\xE8me d'injection haute pression, turbocompresseur, capteurs NOx/lambda, circuit AdBlue si applicable.
+    prompt += `### 2. Points sp\xE9cifiques diesel
+`;
+    prompt += `Analyse la cha\xEEne FAP/EGR/AdBlue (si applicable), la fiabilit\xE9 du turbocompresseur, l'injection haute pression (pompe HP, injecteurs), et les risques li\xE9s \xE0 un usage urbain court-trajets (encrassement FAP, dilution huile). Pour ce mod\xE8le : y a-t-il des d\xE9fauts de s\xE9rie document\xE9s sur ces composants ?
+
 `;
   } else if (motorization === "hybride") {
-    prompt += `3. Motorisation hybride : analyse batterie HT (d\xE9gradation SOH, BMS), onduleur, DCDC converter, gestion thermique hybride, r\xE9cup\xE9ration d'\xE9nergie.
+    prompt += `### 2. Points sp\xE9cifiques hybride
+`;
+    prompt += `Analyse la d\xE9gradation probable de la batterie HT selon l'\xE2ge (${ageYears} ans) et le kilom\xE9trage${km ? ` (${km.toLocaleString("fr-FR")} km)` : ""}. Donne la capacit\xE9 de batterie d'origine vs. d\xE9gradation estim\xE9e, le co\xFBt de remplacement batterie en 2026 et la disponibilit\xE9 des pi\xE8ces. Quelle est la garantie batterie constructeur pour ce mod\xE8le ?
+
 `;
   } else if (motorization === "\xE9lectrique") {
-    prompt += `3. V\xE9hicule \xE9lectrique : analyse batterie HT (capacit\xE9, \xE9quilibrage cellules, BMS), chargeur embarqu\xE9, onduleur de traction, pompe de refroidissement HT, c\xE2blage haute tension.
+    prompt += `### 2. Points sp\xE9cifiques \xE9lectrique
+`;
+    prompt += `\xC9value la d\xE9gradation probable de la batterie HT (SOH estim\xE9 selon ${ageYears} ans / ${km ? `${km.toLocaleString("fr-FR")} km` : "km inconnu"}). Donne le co\xFBt de remplacement batterie pour ce mod\xE8le en 2026. Couvre aussi la disponibilit\xE9 des chargeurs AC/DC compatibles et la compatibilit\xE9 r\xE9seau de charge.
+
 `;
   } else {
-    prompt += `3. Motorisation essence : analyse circuit d'allumage, injection directe/indirecte, capteurs (MAP, MAF, lambda), distribution, refroidissement moteur.
+    prompt += `### 2. Points sp\xE9cifiques essence
+`;
+    prompt += `Analyse la distribution (courroie/cha\xEEne \u2014 co\xFBt et fr\xE9quence de remplacement sur ce moteur), les risques d'encrassement injecteurs/soupapes (injection directe GDI ?), et la fiabilit\xE9 du turbo si applicable. Y a-t-il des d\xE9fauts connus sur cette g\xE9n\xE9ration moteur ?
+
 `;
   }
-  if (km && km > 1e5) {
-    prompt += `4. \xC0 ${km.toLocaleString("fr-FR")} km : int\xE8gre obligatoirement l'\xE9tat probable de la distribution (courroie/cha\xEEne), des joints moteur, des amortisseurs, et de l'embrayage (si thermique).
+  prompt += `### 3. Analyse kilom\xE9trage & \xE2ge
+`;
+  if (km !== null && !isNaN(km)) {
+    if (km > 1e5) {
+      prompt += `\xC0 **${km.toLocaleString("fr-FR")} km**, liste pr\xE9cis\xE9ment quels entretiens ont normalement \xE9t\xE9 effectu\xE9s selon les pr\xE9conisations constructeur et lesquels sont imminents. L'acheteur doit demander les factures pour : `;
+      const checkItems = ["vidanges", "filtres (air, habitacle, carburant)", "distribution/cha\xEEne"];
+      if (km > 15e4) checkItems.push("embrayage (si thermique)", "amortisseurs", "joints moteur");
+      prompt += checkItems.join(", ") + `.
+
+`;
+    } else {
+      prompt += `\xC0 **${km.toLocaleString("fr-FR")} km**, le v\xE9hicule est encore en phase d'entretien courant. V\xE9rifie si les vidanges et filtres ont \xE9t\xE9 respect\xE9s selon le carnet constructeur.
+
+`;
+    }
+  }
+  if (ageYears >= 7) {
+    prompt += `Avec **${ageYears} ans** d'\xE2ge : int\xE8gre obligatoirement le vieillissement des durites (refroidissement, direction assist\xE9e), joints d'\xE9tanch\xE9it\xE9 caoutchouc, capteurs (sonde lambda, d\xE9bitm\xE8tre air), et la corrosion des connecteurs \xE9lectriques.
+
 `;
   }
-  if (ageYears >= 8) {
-    prompt += `5. V\xE9hicule de ${ageYears} ans : int\xE8gre le vieillissement des durites, joints caoutchouc, capteurs \xE9lectroniques, et la corrosion des connecteurs/faisceaux.
+  prompt += `### 4. Budget entretien 24 mois
+`;
+  prompt += `Liste les interventions probables dans les 24 prochains mois avec co\xFBts r\xE9alistes en France 2026 (pi\xE8ce + main d'\u0153uvre, garage ind\xE9pendant vs. sp\xE9cialiste). Sois pr\xE9cis : pas "r\xE9vision" mais "vidange + filtre huile + filtre air = 120-180 \u20AC ind\xE9pendant".
+
+`;
+  prompt += `### 5. Valeur march\xE9
+`;
+  prompt += `Estime la cote march\xE9 de ce **${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.year}**${km ? ` \xE0 ${km.toLocaleString("fr-FR")} km` : ""}${vehicleInfo.finition ? `, finition ${vehicleInfo.finition}` : ""} selon AutoScout24/LaCentrale/Argus en mai 2026. Indique si le prix demand\xE9 (si connu) est juste, bas ou \xE9lev\xE9. Donne la fourchette r\xE9aliste.
+
+`;
+  if (usageContext) {
+    prompt += `### 6. Ad\xE9quation \xE0 l'usage pr\xE9vu
+`;
+    prompt += `L'acheteur pr\xE9voit un usage : **${usageContext}**. Ce v\xE9hicule (${motorization}, ${km ? `${km.toLocaleString("fr-FR")} km` : "km inconnu"}) est-il bien adapt\xE9 \xE0 cet usage ? Y a-t-il des risques sp\xE9cifiques (ex : diesel court-trajet en ville = FAP encrass\xE9, hybride autoroute = batterie peu recharg\xE9e, etc.) ?
+
 `;
   }
-  prompt += `
-## RECOMMANDATION D'ACHAT \u2014 CALCUL DU SCORE
+  prompt += `### Score d'achat
 `;
-  prompt += `Calcule le score (0-10) selon ces crit\xE8res pond\xE9r\xE9s :
+  prompt += `Calcule le score (0-10) selon : \xE9tat m\xE9canique probable (40%) + kilom\xE9trage/\xE2ge (30%) + fiabilit\xE9 document\xE9e du mod\xE8le (20%) + rapport qualit\xE9-prix estim\xE9 (10%).
 `;
-  prompt += `- \xC9tat m\xE9canique (40%) : bas\xE9 sur le nombre/gravit\xE9 des d\xE9fauts identifi\xE9s
+  prompt += `Produis des negotiationTips CHIFFR\xC9S en \u20AC bas\xE9s sur les d\xE9fauts/risques identifi\xE9s.
 `;
-  prompt += `- Kilom\xE9trage/\xE2ge (30%) : ${km ? `${km.toLocaleString("fr-FR")} km, ${ageYears} ans` : `${ageYears} ans`}
+  prompt += `Produis une inspectionChecklist de points v\xE9rifiables par un particulier lors de la visite/essai, SP\xC9CIFIQUES \xE0 ce mod\xE8le.
+
 `;
-  prompt += `- Fiabilit\xE9 du mod\xE8le (20%) : historique TSB et rappels constructeur sur ce mill\xE9sime
-`;
-  prompt += `- Rapport qualit\xE9/prix estim\xE9 (10%) : d\xE9fauts vs. prix march\xE9 attendu
-`;
-  prompt += `Produis des negotiationTips CHIFFR\xC9S en \u20AC bas\xE9s sur les co\xFBts de r\xE9paration de tes recommandations.
-`;
-  prompt += `Produis une inspectionChecklist SP\xC9CIFIQUE \xE0 ce v\xE9hicule/${motorization} \u2014 pas de conseils g\xE9n\xE9riques.
-`;
-  prompt += `
-Produis le rapport JSON complet selon le sch\xE9ma impos\xE9. Sois PR\xC9CIS, SP\xC9CIFIQUE, EXPERT. Aucune phrase g\xE9n\xE9rique.`;
+  prompt += `Produis le rapport JSON complet selon le format impos\xE9. Sois PR\xC9CIS, SP\xC9CIFIQUE et UTILE pour un acheteur particulier. Aucune phrase g\xE9n\xE9rique.`;
   return prompt;
 }
 function generateFallbackPurchaseRecommendation(vehicleInfo) {
@@ -6710,31 +6745,32 @@ function generateFallbackPurchaseRecommendation(vehicleInfo) {
   const km = vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/\D/g, ""), 10) : null;
   const ageYears = Math.max(0, (/* @__PURE__ */ new Date()).getFullYear() - parseInt(vehicleInfo.year || "0", 10));
   const baseChecklist = [
-    "Scanner OBD-II sur tous les calculateurs (moteur, bo\xEEte, ABS, habitacle) \u2014 pr\xE9voir 40-80 \u20AC en garage ind\xE9pendant",
-    "V\xE9rifier visuellement toutes les fuites sous le v\xE9hicule moteur chaud (huile, liquide de refroidissement)",
-    "Inspecter l'\xE9tat et la couleur de l'huile moteur \u2014 pr\xE9sence de lait = joint de culasse, huile tr\xE8s noire = entretiens n\xE9glig\xE9s",
-    "Tester le d\xE9marrage \xE0 froid ET apr\xE8s chauffe compl\xE8te \u2014 noter tout rat\xE9 d'allumage, fum\xE9e anormale, vibration",
-    "Contr\xF4ler l'usure des pneumatiques et la g\xE9om\xE9trie (usure irr\xE9guli\xE8re = probl\xE8me de suspension ou direction)",
-    "V\xE9rifier le carnet d'entretien complet : intervalles respect\xE9s, factures \xE0 l'appui"
+    "V\xE9rifier la couleur de l'huile sur la jauge \u2014 huile noire tr\xE8s \xE9paisse = entretiens n\xE9glig\xE9s, traces laiteuses = joint de culasse suspect",
+    "Demander le carnet d'entretien complet avec les factures \u2014 refuser si entretiens non document\xE9s",
+    "Lancer le moteur \xE0 froid pour observer fum\xE9es et vibrations anormales au d\xE9marrage",
+    "Tester tous les \xE9quipements \xE9lectriques (vitres, r\xE9tros, clim, chauffage, autoradio) \u2014 les pannes \xE9lectroniques sont co\xFBteuses",
+    "Observer sous le v\xE9hicule moteur chaud : toute fuite d'huile, de liquide de refroidissement ou de liquide de direction",
+    "Faire scanner le v\xE9hicule par un garage avant achat (40-80 \u20AC) \u2014 lire tous les codes d\xE9faut actifs et m\xE9moris\xE9s"
   ];
   if (motorization === "diesel") {
-    baseChecklist.push("Faire un essai \xE0 froid : surveiller la fum\xE9e noire au d\xE9marrage (turbo/injection) et l'acc\xE9l\xE9ration franche sans \xE0-coups (FAP)");
+    baseChecklist.push("Tester une acc\xE9l\xE9ration franche \xE0 80 km/h \u2014 absence de fum\xE9e noire/bleue et progression fluide = bon signe");
+    baseChecklist.push("Demander la date du dernier nettoyage FAP ou remplacement \u2014 FAP colmat\xE9 = r\xE9paration 400-1 200 \u20AC");
   } else if (motorization === "\xE9lectrique" || motorization === "hybride") {
-    baseChecklist.push("Demander le rapport SOH (State of Health) de la batterie HT \u2014 refuser si < 80% ou si non disponible");
-    baseChecklist.push("Tester la recharge AC (borne 7kW) et DC (rapide) \u2014 noter le temps de charge r\xE9el vs. th\xE9orique");
+    baseChecklist.push("Demander le rapport SOH (State of Health) de la batterie \u2014 refuser si inf\xE9rieur \xE0 80% ou non disponible");
+    baseChecklist.push("Tester la charge AC (borne 7 kW) et v\xE9rifier le temps de charge r\xE9el vs. th\xE9orique");
   } else {
-    baseChecklist.push("V\xE9rifier la date et l'\xE9tat de la courroie de distribution (ou tension cha\xEEne de distribution si applicable)");
+    baseChecklist.push("V\xE9rifier la date de remplacement de la courroie de distribution (ou l'\xE9tat de la cha\xEEne si applicable) sur les factures");
   }
   if (km && km > 1e5) {
-    baseChecklist.push(`\xC0 ${km.toLocaleString("fr-FR")} km : demander les factures de remplacement amortisseurs, embrayage (si thermique), courroie accessoires`);
+    baseChecklist.push(`\xC0 ${km.toLocaleString("fr-FR")} km : demander les factures de remplacement amortisseurs, embrayage, courroie de distribution et accessoires`);
   }
   return {
     score: 5.5,
     verdict: "N\xE9gocier",
     negotiationTips: [
-      "Faites r\xE9aliser un diagnostic OBD complet avant signature \u2014 utilisez les codes d\xE9faut trouv\xE9s pour n\xE9gocier le prix",
-      "Demandez syst\xE9matiquement le rapport d'historique (CarVertical, Histovec gratuit) \u2014 accident non d\xE9clar\xE9 = levier -10 \xE0 -20% du prix",
-      "Exigez toutes les factures d'entretien \u2014 absence de preuves = n\xE9gociation de 300-500 \u20AC minimum pour couvrir les risques"
+      "Faites scanner le v\xE9hicule par un garage avant achat (40-80 \u20AC) \u2014 utilisez tout d\xE9faut trouv\xE9 pour n\xE9gocier une remise \xE9quivalente au co\xFBt de r\xE9paration",
+      "Demandez un rapport Histovec (gratuit) ou CarVertical \u2014 ant\xE9c\xE9dents d'accident non d\xE9clar\xE9s = levier de -10 \xE0 -20% du prix",
+      "Absence de factures d'entretien = risque = n\xE9gociation minimale de 300-500 \u20AC pour couvrir les interventions \xE0 pr\xE9voir"
     ],
     inspectionChecklist: baseChecklist
   };
@@ -6745,31 +6781,32 @@ function generateFallbackReport(vehicleInfo) {
   const ageYears = Math.max(0, (/* @__PURE__ */ new Date()).getFullYear() - parseInt(vehicleInfo.year || "0", 10));
   return {
     vehicleInfo,
-    summary: `Rapport d'analyse pr\xE9-achat pour ${vehicleInfo.make} ${vehicleInfo.model} (${vehicleInfo.year}${km ? `, ${km.toLocaleString("fr-FR")} km` : ""}) \u2014 motorisation ${motorization}. Une inspection physique du v\xE9hicule reste indispensable avant acquisition.`,
+    summary: `Rapport pr\xE9-achat pour le ${vehicleInfo.make} ${vehicleInfo.model} (${vehicleInfo.year}${km ? `, ${km.toLocaleString("fr-FR")} km` : ""}), motorisation ${motorization}. ${ageYears > 5 ? `Avec ${ageYears} ans d'\xE2ge, certains composants d'usure m\xE9ritent une v\xE9rification approfondie avant acquisition. ` : ""}Une inspection physique du v\xE9hicule reste indispensable avant de signer, id\xE9alement accompagn\xE9e d'un scan \xE9lectronique complet par un garage de confiance (40-80 \u20AC).`,
     sections: [
       {
-        title: `Analyse pr\xE9liminaire \u2014 ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.year}`,
-        content: `Ce ${vehicleInfo.make} ${vehicleInfo.model} de motorisation ${motorization}${km ? ` \xE0 ${km.toLocaleString("fr-FR")} km` : ""} n\xE9cessite une inspection compl\xE8te avant achat. V\xE9rifiez les points de vigilance connus sur ce mod\xE8le, l'entretien suivi et l'\xE9tat g\xE9n\xE9ral de la carrosserie. Un scan OBD-II (codes d\xE9faut actifs et pass\xE9s, donn\xE9es temps r\xE9el) permettra de d\xE9tecter d'\xE9ventuels probl\xE8mes \xE9lectroniques avant acquisition.`,
+        title: `Profil fiabilit\xE9 \u2014 ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.year}`,
+        content: `Ce ${vehicleInfo.make} ${vehicleInfo.model} de ${vehicleInfo.year} en motorisation ${motorization}${km ? ` \xE0 ${km.toLocaleString("fr-FR")} km` : ""} n\xE9cessite une \xE9valuation compl\xE8te avant achat. Consultez les retours d'exp\xE9rience sur les forums sp\xE9cialis\xE9s (Caradisiac, Turbo.fr) pour ce mod\xE8le et ce mill\xE9sime pr\xE9cis. V\xE9rifiez notamment les rappels constructeur sur Rappel.fr (gratuit) en entrant le num\xE9ro de s\xE9rie du v\xE9hicule.`,
         severity: "medium"
       },
       {
-        title: "Priorit\xE9s d'inspection selon kilom\xE9trage et \xE2ge",
-        content: `${ageYears >= 5 ? `V\xE9hicule de ${ageYears} ans : v\xE9rifier l'\xE9tat des durites de refroidissement, joints, capteurs. ` : ""}${km && km > 1e5 ? `\xC0 ${km.toLocaleString("fr-FR")} km : contr\xF4ler la distribution, l'embrayage, les amortisseurs. ` : ""}Un contr\xF4le visuel complet des niveaux (huile moteur, liquide de refroidissement, liquide de frein) et de l'\xE9tat des courroies s'impose avant tout diagnostic \xE9lectronique.`,
+        title: "Points d'entretien \xE0 v\xE9rifier selon kilom\xE9trage et \xE2ge",
+        content: `${ageYears >= 5 ? `V\xE9hicule de ${ageYears} ans : les durites de refroidissement, joints d'\xE9tanch\xE9it\xE9 et capteurs \xE9lectroniques vieillissent ind\xE9pendamment du kilom\xE9trage. ` : ""}${km && km > 1e5 ? `\xC0 ${km.toLocaleString("fr-FR")} km, demandez imp\xE9rativement les factures prouvant le remplacement de la distribution, de l'embrayage et des amortisseurs. ` : ""}Exigez le carnet d'entretien complet avec toutes les factures pour valider l'historique d'entretien.`,
+        severity: km && km > 15e4 ? "high" : "low"
+      },
+      {
+        title: "Budget entretien \xE0 anticiper",
+        content: `Pr\xE9voir un budget d'entretien courant (vidange + filtres) de 120-200 \u20AC par an en garage ind\xE9pendant. Si la distribution n'a pas \xE9t\xE9 chang\xE9e et approche de son \xE9ch\xE9ance constructeur, comptez 400-900 \u20AC selon le mod\xE8le. Consultez un garage de confiance pour chiffrer l'ensemble des interventions \xE0 pr\xE9voir.`,
         severity: "low"
-      },
-      {
-        title: "Diagnostic \xE9lectronique recommand\xE9",
-        content: `Connexion \xE0 la valise OBD-II : lecture des codes d\xE9faut (DTCs) actifs et m\xE9moris\xE9s sur tous les calculateurs (moteur, bo\xEEte, ABS/ESP, habitacle). Analyse des donn\xE9es temps r\xE9el : temp\xE9rature moteur, pression d'admission, d\xE9bitm\xE8tre d'air, tensions batterie/alternateur, r\xE9gimes moteur. Ces donn\xE9es permettront d'orienter pr\xE9cis\xE9ment le diagnostic.`,
-        severity: "medium"
       }
     ],
     recommendations: [
-      "Scan OBD-II complet (tous calculateurs) \u2014 lire codes d\xE9faut actifs ET m\xE9moris\xE9s \u2014 co\xFBt : 40-80 \u20AC en garage ind\xE9pendant",
-      "Contr\xF4le visuel des niveaux : huile moteur (quantit\xE9 + couleur), liquide refroidissement, liquide de frein",
-      "Planifier un rendez-vous en atelier avec description pr\xE9cise du sympt\xF4me (conditions d'apparition, temp\xE9rature, r\xE9gime)",
-      "Ne pas ignorer un voyant moteur allum\xE9 \u2014 risque d'aggravation et de dommages secondaires co\xFBteux"
+      "AVANT DE SIGNER : faire scanner le v\xE9hicule par un garage ind\xE9pendant (40-80 \u20AC) \u2014 lire tous les codes d\xE9faut actifs et m\xE9moris\xE9s",
+      "PENDANT LA VISITE : v\xE9rifier la couleur et le niveau d'huile sur la jauge \u2014 huile noire = entretiens n\xE9glig\xE9s",
+      "DEMANDER : toutes les factures d'entretien + carnet constructeur tamponn\xE9",
+      "V\xC9RIFIER : ant\xE9c\xE9dents sur Histovec.fr (gratuit) ou SIV pour d\xE9tecter un sinistre non d\xE9clar\xE9",
+      "BUDGET : pr\xE9voir 300-600 \u20AC d'entretien dans les 6-12 premiers mois (r\xE9vision de reprise)"
     ],
-    estimatedCost: "80-250 \u20AC (diagnostic initial complet)",
+    estimatedCost: "Budget entretien pr\xE9visible sur 24 mois : 400-800 \u20AC (garage ind\xE9pendant). Hors r\xE9parations impr\xE9vues.",
     urgencyLevel: "medium",
     purchaseRecommendation: generateFallbackPurchaseRecommendation(vehicleInfo),
     generatedAt: (/* @__PURE__ */ new Date()).toISOString()
@@ -6794,7 +6831,7 @@ async function generateAiReport(vehicleInfo, customSystemPrompt) {
     const validVerdicts = ["Acheter", "N\xE9gocier", "\xC9viter"];
     const report = {
       vehicleInfo,
-      summary: parsed.summary || "Rapport de diagnostic g\xE9n\xE9r\xE9 par IA.",
+      summary: parsed.summary || "Rapport d'analyse pr\xE9-achat g\xE9n\xE9r\xE9 par AutoReport.",
       sections: Array.isArray(parsed.sections) ? parsed.sections : [],
       recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
       estimatedCost: parsed.estimatedCost || void 0,
@@ -6820,11 +6857,11 @@ function generateReportHtml(report) {
     high: "#f97316",
     critical: "#ef4444"
   };
-  const urgencyLabels = {
-    low: "Faible",
-    medium: "Moyen",
-    high: "\xC9lev\xE9",
-    critical: "Critique"
+  const riskLabels = {
+    low: "Risque faible",
+    medium: "Risque mod\xE9r\xE9",
+    high: "Risque \xE9lev\xE9",
+    critical: "Risque critique"
   };
   const verdictColors = {
     Acheter: "#22c55e",
@@ -6836,7 +6873,7 @@ function generateReportHtml(report) {
     <div style="margin-bottom: 20px; padding: 16px; border-left: 4px solid ${severityColors[s.severity || "medium"]}; background: #f8f9fa; border-radius: 4px;">
       <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1a1a1a;">${s.title}</h3>
       <p style="margin: 0; color: #444; line-height: 1.6; font-size: 13px;">${s.content}</p>
-      ${s.severity ? `<span style="display: inline-block; margin-top: 8px; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; color: white; background: ${severityColors[s.severity]};">${urgencyLabels[s.severity]}</span>` : ""}
+      ${s.severity ? `<span style="display: inline-block; margin-top: 8px; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; color: white; background: ${severityColors[s.severity]};">${riskLabels[s.severity]}</span>` : ""}
     </div>`
   ).join("");
   const recsHtml = report.recommendations.map((r, i) => `<li style="margin-bottom: 10px; color: #333; font-size: 13px; line-height:1.6;"><strong style="color:#dc2626;">#${i + 1}</strong> ${r}</li>`).join("");
@@ -6886,7 +6923,7 @@ function generateReportHtml(report) {
     <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 24px; border-bottom: 3px solid #dc2626; margin-bottom: 30px;">
       <div>
         <h1 style="font-size: 28px; font-weight: 800; letter-spacing: 1px;">Auto<span style="color: #dc2626;">Report</span></h1>
-        <p style="font-size: 11px; color: #888; letter-spacing: 3px; text-transform: uppercase; margin-top: 2px;">Rapport IA Automobile</p>
+        <p style="font-size: 11px; color: #888; letter-spacing: 3px; text-transform: uppercase; margin-top: 2px;">Rapport Pr\xE9-Achat V\xE9hicule d'Occasion</p>
       </div>
       <div style="text-align: right;">
         <p style="font-size: 12px; color: #666;">Date: ${new Date(report.generatedAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}</p>
@@ -6913,11 +6950,11 @@ function generateReportHtml(report) {
       </div>
     </div>
 
-    <!-- Urgency -->
+    <!-- Risk Level -->
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding: 14px 18px; border-radius: 8px; background: ${severityColors[report.urgencyLevel]}15; border: 1px solid ${severityColors[report.urgencyLevel]}30;">
       <div style="width: 12px; height: 12px; border-radius: 50%; background: ${severityColors[report.urgencyLevel]};"></div>
-      <span style="font-weight: 600; font-size: 14px;">Niveau d'urgence : ${urgencyLabels[report.urgencyLevel]}</span>
-      ${report.estimatedCost ? `<span style="margin-left: auto; font-weight: 600; font-size: 14px; color: #555;">Estimation : ${report.estimatedCost}</span>` : ""}
+      <span style="font-weight: 600; font-size: 14px;">Niveau de risque : ${riskLabels[report.urgencyLevel]}</span>
+      ${report.estimatedCost ? `<span style="margin-left: auto; font-weight: 600; font-size: 14px; color: #555;">${report.estimatedCost}</span>` : ""}
     </div>
 
     <!-- Purchase Recommendation -->
@@ -6925,14 +6962,8 @@ function generateReportHtml(report) {
 
     <!-- Summary -->
     <div style="margin-bottom: 30px;">
-      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 12px; color: #0a0a0a;">R\xE9sum\xE9 du diagnostic</h2>
+      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 12px; color: #0a0a0a;">Synth\xE8se de l'analyse</h2>
       <p style="line-height: 1.7; color: #444; font-size: 14px;">${report.summary}</p>
-    </div>
-
-    <!-- Problem -->
-    <div style="margin-bottom: 30px; padding: 16px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
-      <h3 style="font-size: 14px; color: #dc2626; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Probl\xE8me signal\xE9</h3>
-      <p style="color: #333; line-height: 1.6; font-size: 13px;">${report.vehicleInfo.issue}</p>
     </div>
 
     <!-- Sections -->
@@ -6943,7 +6974,7 @@ function generateReportHtml(report) {
 
     <!-- Recommendations -->
     <div style="margin-bottom: 30px;">
-      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #0a0a0a;">Recommandations</h2>
+      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #0a0a0a;">Actions recommand\xE9es avant achat</h2>
       <ol style="padding-left: 20px; line-height: 1.8;">
         ${recsHtml}
       </ol>
@@ -6951,8 +6982,8 @@ function generateReportHtml(report) {
 
     <!-- Footer -->
     <div style="border-top: 2px solid #e5e5e5; padding-top: 20px; margin-top: 40px; text-align: center;">
-      <p style="font-size: 11px; color: #999; margin-bottom: 4px;">Ce rapport a \xE9t\xE9 g\xE9n\xE9r\xE9 automatiquement par AutoReport \u2014 Intelligence Artificielle Automobile</p>
-      <p style="font-size: 11px; color: #999;">support@autoreport.com | +33 (0)1 21 40 80 80 | www.autoreport.com</p>
+      <p style="font-size: 11px; color: #999; margin-bottom: 4px;">Ce rapport a \xE9t\xE9 g\xE9n\xE9r\xE9 automatiquement par AutoReport \u2014 Analyse IA Pr\xE9-Achat Automobile</p>
+      <p style="font-size: 11px; color: #999;">support@autoreport.com | www.autoreport.com</p>
     </div>
   </div>
 </body>
@@ -6970,78 +7001,77 @@ var init_aiReportService = __esm({
       console.warn("[AIReport] No Gemini API key configured \u2014 report generation will fail. Set AI_INTEGRATIONS_GEMINI_API_KEY or GEMINI_API_KEY.");
     }
     console.info(`[AIReport] Gemini provider: ${USE_INTEGRATION ? "Replit integration proxy" : "Google direct API"}`);
-    SYSTEM_PROMPT = `Tu es ALEXIS, expert senior en diagnostic automobile chez AutoReport \u2014 ing\xE9nieur m\xE9canicien avec 30 ans d'exp\xE9rience, certifi\xE9 multi-constructeurs (VW Group, PSA, Stellantis, BMW Group, Mercedes, Renault-Nissan, Toyota, Ford), sp\xE9cialiste OBD-II/OBD-III, \xE9lectronique embarqu\xE9e, CAN bus, motorisations thermiques/hybrides/\xE9lectriques (HV/BEV/PHEV). Tu connais par c\u0153ur les TSB (Technical Service Bulletins), les rappels constructeur, les d\xE9fauts de s\xE9rie document\xE9s, et les statistiques de sinistralit\xE9 par mod\xE8le/mill\xE9sime.
+    SYSTEM_PROMPT = `Tu es ALEXIS, expert senior en analyse pr\xE9-achat automobile chez AutoReport \u2014 consultant ind\xE9pendant avec 30 ans d'exp\xE9rience dans l'\xE9valuation des v\xE9hicules d'occasion. Tu es certifi\xE9 multi-constructeurs (VW Group, PSA, Stellantis, BMW Group, Mercedes, Renault-Nissan, Toyota, Ford, Hyundai-Kia), expert en fiabilit\xE9 des mod\xE8les, historique de sinistralit\xE9, d\xE9fauts de s\xE9rie document\xE9s, TSB (Technical Service Bulletins) et rappels constructeur. Tu connais parfaitement les co\xFBts d'entretien r\xE9els par r\xE9seau (ind\xE9pendant, sp\xE9cialiste marque, concession officielle) et les tendances du march\xE9 occasion en France en 2026.
 
-## TON MANDAT
-Produire un rapport de diagnostic ULTRA-PERSONNALIS\xC9, aussi pr\xE9cis qu'un vrai compte-rendu d'atelier. Chaque rapport doit \xEAtre unique et calibr\xE9 sur le v\xE9hicule EXACT fourni. Interdit de copier-coller des phrases g\xE9n\xE9riques.
+## TON R\xD4LE : CONSEILLER L'ACHETEUR, PAS LE M\xC9CANICIEN
+Tu r\xE9diges des rapports d'analyse pr\xE9-achat destin\xE9s \xE0 des particuliers qui souhaitent acheter un v\xE9hicule d'occasion. Tu ne diagnostiques PAS une panne en atelier. Tu analyses le profil de fiabilit\xE9 et de risque du v\xE9hicule AVANT l'achat pour aider l'acheteur \xE0 prendre la meilleure d\xE9cision.
 
 ## INTELLIGENCE CONTEXTUELLE REQUISE
-Pour chaque v\xE9hicule analys\xE9, tu DOIS mobiliser :
-- Les **d\xE9fauts de s\xE9rie connus** (ex: EGR encrass\xE9 sur les 2.0 TDI EA189, vanos d\xE9faillant sur les N47, bo\xEEte DSG7 DQ200 s\xE8che, distribution 1.6 e-HDi fragile, etc.)
-- Les **codes d\xE9faut OBD sp\xE9cifiques** (P0XXX, P1XXX, C0XXX, B0XXX, U0XXX) probables selon le sympt\xF4me ET la motorisation
-- Les **intervalles d'entretien constructeur** et leur respect probable selon le kilom\xE9trage
-- L'**\xE2ge \xE9lectronique** du v\xE9hicule (calculateurs, capteurs, faisceaux \xE9lectriques)
-- Les **co\xFBts r\xE9els 2026** : diff\xE9rencier garage ind\xE9pendant / concession / sp\xE9cialiste marque
+Pour chaque v\xE9hicule, tu DOIS mobiliser :
+- Les **d\xE9fauts de s\xE9rie document\xE9s** et leur fr\xE9quence (ex : turbo N47 BMW, EGR 2.0 TDI EA189, cha\xEEne de distribution 1.6 HDi, bo\xEEte DSG7 DQ200, joints culasse 1.8 TFSI, etc.)
+- Les **rappels constructeur** connus sur ce mill\xE9sime (informations publiques NHTSA/RAPEX/RAPPEL.FR)
+- La **r\xE9putation fiabilit\xE9** du mod\xE8le selon les statistiques de sinistralit\xE9 (Que Choisir, ADAC, Consumer Reports, forums sp\xE9cialis\xE9s)
+- Les **intervalles d'entretien constructeur** et les co\xFBts r\xE9els en France en 2026
+- La **valeur march\xE9** du v\xE9hicule selon l'Argus, AutoScout24, LaCentrale \u2014 d\xE9pr\xE9ciation et prix juste
+- Les **points de vigilance sp\xE9cifiques** \xE0 ce mill\xE9sime/motorisation que l'acheteur doit imp\xE9rativement v\xE9rifier lors de l'essai
 
 ## FORMAT DE R\xC9PONSE \u2014 JSON STRICT
 R\xE9ponds UNIQUEMENT en JSON valide (z\xE9ro markdown, z\xE9ro texte hors JSON) :
 {
-  "summary": "Synth\xE8se experte en 5-7 phrases : identifie pr\xE9cis\xE9ment le v\xE9hicule et sa motorisation probable, interpr\xE8te techniquement le sympt\xF4me, hi\xE9rarchise les 2-3 hypoth\xE8ses les plus probables avec justification, donne le niveau de criticit\xE9 et l'horizon d'intervention recommand\xE9. Cite le mod\xE8le exact et l'ann\xE9e.",
+  "summary": "Synth\xE8se pr\xE9-achat en 5-7 phrases : pr\xE9sente le v\xE9hicule pr\xE9cis\xE9ment (marque/mod\xE8le/ann\xE9e/motorisation), \xE9value sa r\xE9putation fiabilit\xE9 globale, cite les 2-3 points forts et faibles principaux, donne un avis clair sur l'opportunit\xE9 d'achat au regard du kilom\xE9trage et de l'\xE2ge. Cite le mod\xE8le exact et l'ann\xE9e. Ton doit \xEAtre celui d'un ami expert qui donne un vrai avis.",
   "sections": [
     {
-      "title": "Titre technique pr\xE9cis et sp\xE9cifique (NON g\xE9n\xE9rique) \u2014 ex: 'Vanne EGR encrass\xE9e \u2014 d\xE9faut r\xE9current sur 2.0 TDI EA288 (2015-2019)' ou 'Pompe \xE0 eau d\xE9faillante \u2014 point faible document\xE9 sur BMW N47 de cette g\xE9n\xE9ration'",
-      "content": "Analyse approfondie en 5-8 phrases : m\xE9canisme physique de la panne, organes pr\xE9cis concern\xE9s avec leur r\xE9f\xE9rence ou d\xE9signation technique, codes OBD probables (ex: P0401, P0087), sympt\xF4mes corr\xE9l\xE9s \xE0 surveiller, cause racine (usure m\xE9canique/thermique, d\xE9faut s\xE9rie, entretien insuffisant, corrosion, vieillissement), proc\xE9dure de test pr\xE9cise (ex: mesure au multim\xE8tre tension alimentation capteur, test pression rampe injection, scan valise OBD param\xE8tre XX), cons\xE9quences si non trait\xE9 (ex: casse turbo, immobilisation, d\xE9pollution catalyseur). Mobilise tes connaissances des pathologies DOCUMENT\xC9ES de ce mod\xE8le/mill\xE9sime.",
+      "title": "Titre pr\xE9cis et accrocheur \u2014 ex: 'Fiabilit\xE9 moteur : point fort reconnu de cette g\xE9n\xE9ration' ou 'Bo\xEEte DSG7 DQ200 : d\xE9faut de s\xE9rie co\xFBteux \xE0 surveiller imp\xE9rativement'",
+      "content": "Analyse approfondie en 4-6 phrases : contexte document\xE9 (sources : forums sp\xE9cialis\xE9s, ADAC, Que Choisir, TSB constructeur), fr\xE9quence du probl\xE8me ou de la qualit\xE9, impact financier r\xE9el si d\xE9faillance, ce que l'acheteur doit demander ou v\xE9rifier concr\xE8tement (sans n\xE9cessiter d'\xE9quipement de diagnostic professionnel), et si ce point doit influencer la n\xE9gociation du prix.",
       "severity": "low|medium|high|critical"
     }
   ],
   "recommendations": [
-    "Action n\xB01 \u2014 PRIORIT\xC9 IMM\xC9DIATE : [organe exact] \xE0 [action] \u2014 co\xFBt estim\xE9 : [X-Y \u20AC] pi\xE8ce + [Z \u20AC] MO \u2248 [total] \u20AC TTC (garage ind\xE9pendant) / [total] \u20AC TTC (concession)",
-    "Action n\xB02 \u2014 SOUS 500 KM : ...",
-    "Action n\xB03 \u2014 AU PROCHAIN ENTRETIEN : ...",
-    "V\xE9rification pr\xE9ventive li\xE9e au kilom\xE9trage et \xE0 l'\xE2ge..."
+    "Action pr\xE9-achat n\xB01 \u2014 AVANT DE SIGNER : [v\xE9rification concr\xE8te] \u2014 pourquoi c'est important \u2014 co\xFBt de r\xE9paration si probl\xE8me : [X-Y \u20AC] (r\xE9f. co\xFBts 2026 France)",
+    "Action n\xB02 \u2014 PENDANT L'ESSAI : ...",
+    "Action n\xB03 \u2014 BUDGET \xC0 PR\xC9VOIR dans les 12 mois : [entretien/pi\xE8ce] \u2014 co\xFBt estim\xE9 : [X \u20AC]",
+    "Action n\xB04 \u2014 ARGUMENT DE N\xC9GOCIATION : ..."
   ],
-  "estimatedCost": "Fourchette globale selon hypoth\xE8se confirm\xE9e : XXX-YYY \u20AC TTC (garage ind\xE9pendant) / XXX-YYY \u20AC TTC (concession ou sp\xE9cialiste marque)",
+  "estimatedCost": "Budget entretien pr\xE9visible sur 24 mois : XXX-YYY \u20AC (garage ind\xE9pendant) / XXX-YYY \u20AC (r\xE9seau sp\xE9cialis\xE9). Hors r\xE9parations impr\xE9vues.",
   "urgencyLevel": "low|medium|high|critical",
   "purchaseRecommendation": {
     "score": 7.5,
     "verdict": "N\xE9gocier",
     "negotiationTips": [
-      "N\xE9gociez 800-1 200 \u20AC en justifiant le remplacement imminent de la courroie de distribution \xE0 150 000 km (pi\xE8ce 120 \u20AC + MO 350 \u20AC = 470 \u20AC garage ind\xE9pendant)",
-      "Faites valoir l'usure document\xE9e des amortisseurs arri\xE8re (bruit sourd en virage) \u2014 devis de remplacement : 400-600 \u20AC",
-      "Exigez la facture du dernier vidange \u2014 absence de preuve = levier de n\xE9gociation suppl\xE9mentaire de 200-300 \u20AC"
+      "Argument chiffr\xE9 n\xB01 : [d\xE9faut document\xE9] \u2192 co\xFBt de remise en \xE9tat [X-Y \u20AC] \u2192 demandez une remise de [montant \u20AC] sur le prix affich\xE9",
+      "Argument n\xB02 : kilom\xE9trage [X km] implique remplacement imminent [pi\xE8ce] dans [d\xE9lai] \u2192 valoris\xE9 [X \u20AC]"
     ],
     "inspectionChecklist": [
-      "V\xE9rifier visuellement toutes les fuites sous le v\xE9hicule moteur chaud (huile, refroidissement, direction assist\xE9e)",
-      "Tester le d\xE9marrage \xE0 froid ET apr\xE8s 10 min de chauffe \u2014 noter tout rat\xE9, fum\xE9e bleue/blanche, vibration",
-      "Scanner OBD-II : lire les codes d\xE9faut actifs ET m\xE9moris\xE9s sur TOUS les calculateurs (moteur, bo\xEEte, ABS, habitacle)",
-      "Inspecter l'\xE9tat de la courroie de distribution / cha\xEEne (si accessible) et v\xE9rifier la date du dernier remplacement sur carnet",
-      "Contr\xF4ler l'\xE9tat des pneumatiques (usure r\xE9guli\xE8re = alignement correct, usure irr\xE9guli\xE8re = suspension d\xE9fectueuse)",
-      "V\xE9rifier le niveau et la couleur de l'huile moteur : huile noire tr\xE8s visqueuse = entretiens n\xE9glig\xE9s, lait = joint de culasse",
-      "Tester toutes les vitres, r\xE9troviseurs \xE9lectriques, climatisation, chauffage, audiovisuel \u2014 noter les pannes \xE9lectriques"
+      "Point \xE0 v\xE9rifier lors de l'essai physique \u2014 sp\xE9cifique \xE0 ce mod\xE8le/motorisation (sans \xE9quipement pro)",
+      "Document \xE0 demander au vendeur : [facture/carnet/rapport...]",
+      "Comportement \xE0 tester pendant l'essai : [description pr\xE9cise de ce qu'on \xE9coute/ressent/observe]"
     ]
   }
 }
 
+## STRUCTURE DES SECTIONS \u2014 5 \xC0 6 OBLIGATOIRES, ORIENT\xC9ES ACHETEUR
+1. **Fiabilit\xE9 g\xE9n\xE9rale & r\xE9putation du mod\xE8le** \u2014 bilan objectif (forces et faiblesses connues de cette g\xE9n\xE9ration, stats sinistralit\xE9, avis communaut\xE9s)
+2. **Point(s) faible(s) sp\xE9cifique(s) \xE0 surveiller** \u2014 d\xE9faut(s) de s\xE9rie document\xE9(s) sur cette motorisation/mill\xE9sime avec impact financier r\xE9el
+3. **Analyse kilom\xE9trage & \xE2ge \u2014 usure probable** \u2014 quels composants ont probablement \xE9t\xE9 sollicit\xE9s, quels entretiens sont \xE0 v\xE9rifier ou \xE0 planifier imminemment
+4. **Budget d'entretien r\xE9aliste sur 24 mois** \u2014 liste des interventions probables avec co\xFBts 2026 (distribution, embrayage, freins, amortisseurs, etc.)
+5. **Position march\xE9 & valeur de ce v\xE9hicule** \u2014 est-il au bon prix ? d\xE9pr\xE9ciation, cote Argus/AutoScout24 estim\xE9e, rapport qualit\xE9-prix pour l'acheteur
+6. (Optionnelle) **Point sp\xE9cifique motorisation** \u2014 diesel/essence/hybride/\xE9lectrique : avantages et inconv\xE9nients propres \xE0 ce type pour un usage [usage d\xE9clar\xE9]
+
 ## R\xC8GLES NON N\xC9GOCIABLES
-1. **5 \xE0 7 sections obligatoires**, chacune avec un angle technique DIFF\xC9RENT :
-   - Section 1 : Hypoth\xE8se principale (la plus probable) avec m\xE9canisme d\xE9taill\xE9
-   - Section 2 : Hypoth\xE8se alternative (seconde cause probable)
-   - Section 3 : D\xE9fauts de s\xE9rie / TSB connus sur ce mod\xE8le/mill\xE9sime sp\xE9cifique
-   - Section 4 : Codes OBD-II/III probables et proc\xE9dure de scan \xE0 r\xE9aliser
-   - Section 5 : Proc\xE9dures de validation et tests m\xE9caniques/\xE9lectroniques
-   - Section 6 : Impact du kilom\xE9trage / \xE2ge sur ce composant et usures connexes
-   - Section 7 (optionnelle) : Point sp\xE9cifique motorisation (diesel/essence/hybride/\xE9lectrique)
-2. **5 \xE0 8 recommandations** chiffr\xE9es, hi\xE9rarchis\xE9es par priorit\xE9, avec d\xE9lai d'intervention
-3. **Co\xFBts en euros TTC 2026** \u2014 garage ind\xE9pendant ET concession quand pertinent
-4. **Jamais de conseil vague** : "v\xE9rifier les niveaux" \u2192 interdit. \xC0 la place : "V\xE9rifier le niveau d'huile moteur et sa viscosit\xE9 (5W-30 ou 5W-40 selon pr\xE9conisation constructeur) \u2014 signe de consommation anormale > 0,5L/1000km sur ce moteur indique usure segments ou joints de queues de soupapes"
-5. **V\xE9hicules premium/sportifs** (Ferrari, Porsche, Maserati, AMG, M, RS, F-Sport) : co\xFBts \xD7 2-5, mentionner "atelier agr\xE9\xE9 constructeur requis"
-6. **V\xE9hicules \xE9lectriques/hybrides** : analyser batterie HT (d\xE9gradation SOH, cellules d\xE9faillantes), BMS, onduleur, pompe de refroidissement HT, recharge AC/DC
-7. **R\xE9ponds toujours en FRAN\xC7AIS technique professionnel**
+1. **PAS de jargon OBD, pas de codes d\xE9faut P0XXX** \u2014 l'acheteur n'a pas de valise de diagnostic. Remplacement : "faire scanner par un garage avant achat (40-80 \u20AC)"
+2. **PAS de proc\xE9dures d'atelier** (ex: "d\xE9poser le turbo", "mesurer la compression") \u2014 l'acheteur est un particulier
+3. **5 \xE0 8 recommandations** concr\xE8tes, actionnables sans \xE9quipement pro, avec co\xFBts en \u20AC
+4. **Co\xFBts en euros TTC 2026** \u2014 toujours diff\xE9rencier garage ind\xE9pendant et r\xE9seau sp\xE9cialis\xE9/concession
+5. **Jamais de g\xE9n\xE9rique** : "v\xE9rifier les niveaux" \u2192 interdit. \xC0 la place : "V\xE9rifiez la couleur de l'huile sur la jauge : huile noire tr\xE8s \xE9paisse = entretiens n\xE9glig\xE9s (pr\xE9voir vidange 80-120 \u20AC), traces laiteuses = joint de culasse (r\xE9paration 800-2 000 \u20AC)"
+6. **V\xE9hicules premium/sportifs** (Ferrari, Porsche, BMW M, AMG, RS, Maserati) : co\xFBts \xD7 2-5, pr\xE9ciser "r\xE9seau agr\xE9\xE9 constructeur recommand\xE9"
+7. **V\xE9hicules \xE9lectriques/hybrides** : \xE9valuer la d\xE9gradation batterie HT probable selon \xE2ge/km, co\xFBt de remplacement batterie, statut de garantie constructeur
 8. **purchaseRecommendation OBLIGATOIRE** :
-   - score : note de 0 \xE0 10 (10 = v\xE9hicule parfait, 0 = catastrophe) calcul\xE9e sur : \xE9tat m\xE9canique (40%), kilom\xE9trage/\xE2ge (30%), fiabilit\xE9 du mod\xE8le (20%), rapport qualit\xE9/prix (10%)
-   - verdict : "Acheter" (score \u2265 7), "N\xE9gocier" (score 4-6.9), "\xC9viter" (score < 4)
-   - negotiationTips : 3 \xE0 5 arguments chiffr\xE9s en \u20AC pour faire baisser le prix, bas\xE9s sur les d\xE9fauts trouv\xE9s
-   - inspectionChecklist : 6 \xE0 10 points de contr\xF4le physique SP\xC9CIFIQUES \xE0 ce v\xE9hicule/motorisation avant de signer`;
+   - score 0-10 : \xE9tat g\xE9n\xE9ral (40%) + kilom\xE9trage/\xE2ge (30%) + fiabilit\xE9 mod\xE8le (20%) + rapport qualit\xE9-prix (10%)
+   - verdict : "Acheter" (\u22657), "N\xE9gocier" (4-6.9), "\xC9viter" (<4)
+   - negotiationTips : 3-5 arguments CHIFFR\xC9S en \u20AC bas\xE9s sur les d\xE9fauts identifi\xE9s
+   - inspectionChecklist : 6-10 points v\xE9rifiables par un particulier lors de l'essai/visite
+9. **urgencyLevel** = niveau de risque global pour l'acheteur : low (v\xE9hicule fiable, bonne affaire), medium (quelques points \xE0 surveiller), high (risques significatifs, n\xE9gociation importante), critical (risques majeurs, d\xE9conseill\xE9 sauf prix tr\xE8s bas)
+10. **R\xE9ponds toujours en FRAN\xC7AIS professionnel mais accessible**`;
   }
 });
 

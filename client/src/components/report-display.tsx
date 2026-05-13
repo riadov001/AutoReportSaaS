@@ -28,9 +28,16 @@ export interface GeneratedReport {
 
 export const SEVERITY_CONFIG = {
   low:      { label: "Faible",   color: "#22c55e", bg: "rgba(34,197,94,0.1)",  border: "rgba(34,197,94,0.3)",  Icon: Info },
-  medium:   { label: "Moyen",    color: "#f59e0b", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.3)", Icon: AlertTriangle },
+  medium:   { label: "Modéré",   color: "#f59e0b", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.3)", Icon: AlertTriangle },
   high:     { label: "Élevé",    color: "#f97316", bg: "rgba(249,115,22,0.1)", border: "rgba(249,115,22,0.3)", Icon: AlertCircle },
   critical: { label: "Critique", color: "#CE1126", bg: "rgba(206,17,38,0.1)",  border: "rgba(206,17,38,0.3)",  Icon: TriangleAlert },
+};
+
+const RISK_LABEL: Record<string, string> = {
+  low: "Risque faible — bon profil d'achat",
+  medium: "Risque modéré — vérifications recommandées",
+  high: "Risque élevé — négociation importante",
+  critical: "Risque critique — achat déconseillé",
 };
 
 const VERDICT_CONFIG = {
@@ -118,7 +125,7 @@ function PurchaseRecommendationCard({ pr }: { pr: PurchaseRecommendation }) {
             {pr.verdict === "Acheter"
               ? "Ce véhicule présente un bon rapport qualité/risque"
               : pr.verdict === "Négocier"
-              ? "Des défauts justifient une négociation du prix"
+              ? "Des points justifient une négociation du prix"
               : "Les risques identifiés déconseillent cet achat"}
           </p>
         </div>
@@ -204,7 +211,7 @@ export default function ReportDisplay({ report }: { report: GeneratedReport }) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `diagnostic-${report.vehicleInfo.make}-${Date.now()}.pdf`;
+      a.download = `rapport-preachat-${report.vehicleInfo.make}-${report.vehicleInfo.model}-${report.vehicleInfo.year}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch {
@@ -229,14 +236,14 @@ export default function ReportDisplay({ report }: { report: GeneratedReport }) {
 
   return (
     <div className="space-y-4">
-      {/* Urgency bar */}
+      {/* Risk level bar */}
       <div
         className="flex items-center justify-between gap-3 px-4 py-3 rounded-md"
         style={{ background: urgencyCfg.bg, border: `1px solid ${urgencyCfg.border}` }}
       >
         <div className="flex items-center gap-2">
           <UrgencyIcon className="h-4 w-4" style={{ color: urgencyCfg.color }} />
-          <span className="text-sm font-bold text-white">Urgence : {urgencyCfg.label}</span>
+          <span className="text-sm font-bold text-white">{RISK_LABEL[report.urgencyLevel]}</span>
         </div>
         {report.estimatedCost && (
           <span className="text-xs font-mono font-bold" style={{ color: "#C9A656" }}>
@@ -245,24 +252,25 @@ export default function ReportDisplay({ report }: { report: GeneratedReport }) {
         )}
       </div>
 
-      {/* Purchase recommendation — shown near the top for purchase context */}
+      {/* Purchase recommendation — shown near the top */}
       {report.purchaseRecommendation && (
         <PurchaseRecommendationCard pr={report.purchaseRecommendation} />
       )}
 
       {/* Summary */}
       <div className="hud-card rounded-md p-4">
-        <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2 font-mono">// RÉSUMÉ</p>
+        <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2 font-mono">// SYNTHÈSE</p>
         <p className="text-sm text-white/80 leading-relaxed">{report.summary}</p>
       </div>
 
       {report.estimatedCost && (
         <div className="hud-card rounded-md p-4">
-          <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2 font-mono">// COÛTS</p>
+          <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2 font-mono">// BUDGET_ENTRETIEN</p>
           <p className="text-base font-mono font-bold" style={{ color: "#C9A656" }}>{report.estimatedCost}</p>
         </div>
       )}
 
+      {/* Risk distribution chart */}
       {chartData.length > 1 && (
         <div className="hud-card rounded-md p-4 flex flex-col sm:flex-row items-center gap-4">
           <div className="w-32 h-32 shrink-0">
@@ -276,7 +284,7 @@ export default function ReportDisplay({ report }: { report: GeneratedReport }) {
             </ResponsiveContainer>
           </div>
           <div className="flex-1">
-            <p className="text-[10px] text-white/30 uppercase tracking-wider mb-3 font-mono">// ANALYSE_GLOBALE</p>
+            <p className="text-[10px] text-white/30 uppercase tracking-wider mb-3 font-mono">// RÉPARTITION_DES_RISQUES</p>
             <div className="space-y-1.5">
               {chartData.map((d) => (
                 <div key={d.name} className="flex items-center gap-2">
@@ -290,31 +298,33 @@ export default function ReportDisplay({ report }: { report: GeneratedReport }) {
         </div>
       )}
 
-      {/* Diagnostic sections */}
-      <div className="space-y-3">
-        <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// POINTS_DE_VIGILANCE</p>
-        {(report.sections || []).map((section, i) => {
-          const sev = section.severity || "medium";
-          return (
-            <div
-              key={i}
-              className={`rounded-md p-4 border-l-2 severity-${sev}`}
-              style={{ background: "rgba(255,255,255,0.02)", borderRight: "1px solid rgba(255,255,255,0.04)", borderTop: "1px solid rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}
-            >
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <h4 className="text-sm font-bold text-white/90">{section.title}</h4>
-                <SeverityBadge severity={sev as keyof typeof SEVERITY_CONFIG} />
+      {/* Analysis sections */}
+      {(report.sections || []).length > 0 && (
+        <div className="space-y-3">
+          <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// ANALYSE_VÉHICULE</p>
+          {(report.sections || []).map((section, i) => {
+            const sev = section.severity || "medium";
+            return (
+              <div
+                key={i}
+                className={`rounded-md p-4 border-l-2 severity-${sev}`}
+                style={{ background: "rgba(255,255,255,0.02)", borderRight: "1px solid rgba(255,255,255,0.04)", borderTop: "1px solid rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+              >
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <h4 className="text-sm font-bold text-white/90">{section.title}</h4>
+                  <SeverityBadge severity={sev as keyof typeof SEVERITY_CONFIG} />
+                </div>
+                <p className="text-xs text-white/55 leading-relaxed">{section.content}</p>
               </div>
-              <p className="text-xs text-white/55 leading-relaxed">{section.content}</p>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
-      {/* Recommendations */}
+      {/* Actions to take before buying */}
       {(report.recommendations || []).length > 0 && (
         <div className="hud-card rounded-md p-4">
-          <p className="text-[10px] text-white/30 uppercase tracking-wider mb-3 font-mono">// CHECKLIST</p>
+          <p className="text-[10px] text-white/30 uppercase tracking-wider mb-3 font-mono">// ACTIONS_AVANT_ACHAT</p>
           <ol className="space-y-2">
             {report.recommendations.map((rec, i) => (
               <li key={i} className="flex items-start gap-3">

@@ -47,6 +47,7 @@ __export(schema_exports, {
   expenseCounters: () => expenseCounters,
   expenses: () => expenses,
   expensesRelations: () => expensesRelations,
+  featureFlags: () => featureFlags,
   fecExports: () => fecExports,
   garages: () => garages,
   garagesRelations: () => garagesRelations,
@@ -68,6 +69,7 @@ __export(schema_exports, {
   insertEngagementSchema: () => insertEngagementSchema,
   insertExpenseCategorySchema: () => insertExpenseCategorySchema,
   insertExpenseSchema: () => insertExpenseSchema,
+  insertFeatureFlagSchema: () => insertFeatureFlagSchema,
   insertFecExportSchema: () => insertFecExportSchema,
   insertGarageSchema: () => insertGarageSchema,
   insertInvoiceCounterSchema: () => insertInvoiceCounterSchema,
@@ -90,7 +92,10 @@ __export(schema_exports, {
   insertServiceSchema: () => insertServiceSchema,
   insertServiceWorkflowSchema: () => insertServiceWorkflowSchema,
   insertSmsLogSchema: () => insertSmsLogSchema,
+  insertSubscriptionPlanSchema: () => insertSubscriptionPlanSchema,
+  insertSupportTicketSchema: () => insertSupportTicketSchema,
   insertUserSchema: () => insertUserSchema,
+  insertUserSubscriptionSchema: () => insertUserSubscriptionSchema,
   insertWorkflowSchema: () => insertWorkflowSchema,
   insertWorkflowStepSchema: () => insertWorkflowStepSchema,
   insertWorkshopTaskSchema: () => insertWorkshopTaskSchema,
@@ -129,6 +134,11 @@ __export(schema_exports, {
   servicesRelations: () => servicesRelations,
   sessions: () => sessions,
   smsLogs: () => smsLogs,
+  subscriptionPlans: () => subscriptionPlans,
+  supportTickets: () => supportTickets,
+  supportTicketsRelations: () => supportTicketsRelations,
+  userSubscriptions: () => userSubscriptions,
+  userSubscriptionsRelations: () => userSubscriptionsRelations,
   users: () => users,
   usersRelations: () => usersRelations,
   workflowSteps: () => workflowSteps,
@@ -153,7 +163,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-var sessions, garages, users, passwordResetTokens, services, quotes, reviews, quoteItems, invoices, invoiceItems, reservations, reservationServices, notifications, chatConversations, chatParticipants, chatMessages, chatAttachments, invoiceCounters, deliveryNotes, deliveryNoteInvoices, deliveryNoteCounters, quoteMedia, invoiceMedia, applicationSettings, engagements, workflows, workflowSteps, serviceWorkflows, workshopTasks, repairOrders, auditLogs, auditLogChanges, garagesRelations, usersRelations, servicesRelations, quotesRelations, quoteItemsRelations, invoicesRelations, invoiceItemsRelations, reservationsRelations, reservationServicesRelations, notificationsRelations, workflowsRelations, workflowStepsRelations, serviceWorkflowsRelations, workshopTasksRelations, repairOrdersRelations, engagementsRelations, quoteMediaRelations, invoiceMediaRelations, deliveryNotesRelations, deliveryNoteInvoicesRelations, auditLogsRelations, auditLogChangesRelations, chatConversationsRelations, chatParticipantsRelations, chatMessagesRelations, chatAttachmentsRelations, insertGarageSchema, insertUserSchema, insertServiceSchema, insertQuoteSchema, insertInvoiceSchema, insertReservationSchema, insertInvoiceItemSchema, insertQuoteItemSchema, insertReservationServiceSchema, insertNotificationSchema, insertInvoiceCounterSchema, insertDeliveryNoteSchema, insertDeliveryNoteInvoiceSchema, insertDeliveryNoteCounterSchema, insertQuoteMediaSchema, insertInvoiceMediaSchema, insertApplicationSettingsSchema, insertEngagementSchema, insertWorkflowSchema, insertWorkflowStepSchema, insertServiceWorkflowSchema, insertWorkshopTaskSchema, insertRepairOrderSchema, insertReviewSchema, insertAuditLogSchema, insertAuditLogChangeSchema, insertChatConversationSchema, insertChatParticipantSchema, insertChatMessageSchema, insertChatAttachmentSchema, expenseCategories, expenses, creditNotes, creditNoteItems, accountingEntries, accountingLines, fecExports, creditNoteCounters, expenseCounters, expenseCategoriesRelations, expensesRelations, creditNotesRelations, creditNoteItemsRelations, accountingEntriesRelations, accountingLinesRelations, insertExpenseCategorySchema, insertExpenseSchema, insertCreditNoteSchema, insertCreditNoteItemSchema, insertAccountingEntrySchema, insertAccountingLineSchema, insertFecExportSchema, ocrScans, insertOcrScanSchema, smsLogs, insertSmsLogSchema, notificationRules, notificationRulesRelations, insertNotificationRuleSchema, aiReports, aiReportsRelations, insertAiReportSchema, panelUsers, insertPanelUserSchema, landingSettings, repairSheets, insertRepairSheetSchema, insertLandingSettingsSchema;
+var sessions, garages, users, passwordResetTokens, services, quotes, reviews, quoteItems, invoices, invoiceItems, reservations, reservationServices, notifications, chatConversations, chatParticipants, chatMessages, chatAttachments, invoiceCounters, deliveryNotes, deliveryNoteInvoices, deliveryNoteCounters, quoteMedia, invoiceMedia, applicationSettings, engagements, workflows, workflowSteps, serviceWorkflows, workshopTasks, repairOrders, auditLogs, auditLogChanges, garagesRelations, usersRelations, servicesRelations, quotesRelations, quoteItemsRelations, invoicesRelations, invoiceItemsRelations, reservationsRelations, reservationServicesRelations, notificationsRelations, workflowsRelations, workflowStepsRelations, serviceWorkflowsRelations, workshopTasksRelations, repairOrdersRelations, engagementsRelations, quoteMediaRelations, invoiceMediaRelations, deliveryNotesRelations, deliveryNoteInvoicesRelations, auditLogsRelations, auditLogChangesRelations, chatConversationsRelations, chatParticipantsRelations, chatMessagesRelations, chatAttachmentsRelations, insertGarageSchema, insertUserSchema, insertServiceSchema, insertQuoteSchema, insertInvoiceSchema, insertReservationSchema, insertInvoiceItemSchema, insertQuoteItemSchema, insertReservationServiceSchema, insertNotificationSchema, insertInvoiceCounterSchema, insertDeliveryNoteSchema, insertDeliveryNoteInvoiceSchema, insertDeliveryNoteCounterSchema, insertQuoteMediaSchema, insertInvoiceMediaSchema, insertApplicationSettingsSchema, insertEngagementSchema, insertWorkflowSchema, insertWorkflowStepSchema, insertServiceWorkflowSchema, insertWorkshopTaskSchema, insertRepairOrderSchema, insertReviewSchema, insertAuditLogSchema, insertAuditLogChangeSchema, insertChatConversationSchema, insertChatParticipantSchema, insertChatMessageSchema, insertChatAttachmentSchema, expenseCategories, expenses, creditNotes, creditNoteItems, accountingEntries, accountingLines, fecExports, creditNoteCounters, expenseCounters, expenseCategoriesRelations, expensesRelations, creditNotesRelations, creditNoteItemsRelations, accountingEntriesRelations, accountingLinesRelations, insertExpenseCategorySchema, insertExpenseSchema, insertCreditNoteSchema, insertCreditNoteItemSchema, insertAccountingEntrySchema, insertAccountingLineSchema, insertFecExportSchema, ocrScans, insertOcrScanSchema, smsLogs, insertSmsLogSchema, notificationRules, notificationRulesRelations, insertNotificationRuleSchema, aiReports, aiReportsRelations, insertAiReportSchema, panelUsers, insertPanelUserSchema, landingSettings, repairSheets, insertRepairSheetSchema, insertLandingSettingsSchema, featureFlags, insertFeatureFlagSchema, subscriptionPlans, insertSubscriptionPlanSchema, userSubscriptions, userSubscriptionsRelations, insertUserSubscriptionSchema, supportTickets, supportTicketsRelations, insertSupportTicketSchema;
 var init_schema = __esm({
   "shared/schema.ts"() {
     "use strict";
@@ -1244,6 +1254,9 @@ var init_schema = __esm({
       status: varchar("status", { enum: ["generated", "downloaded", "archived"] }).notNull().default("generated"),
       pdfPath: text("pdf_path"),
       metadata: jsonb("metadata"),
+      guestEmail: varchar("guest_email", { length: 255 }),
+      ipAddress: varchar("ip_address", { length: 45 }),
+      isFree: boolean("is_free").notNull().default(true),
       createdAt: timestamp("created_at").defaultNow()
     });
     aiReportsRelations = relations(aiReports, ({ one }) => ({
@@ -1306,6 +1319,64 @@ var init_schema = __esm({
     });
     insertRepairSheetSchema = createInsertSchema(repairSheets).omit({ id: true, createdAt: true, updatedAt: true });
     insertLandingSettingsSchema = createInsertSchema(landingSettings).omit({ id: true, updatedAt: true });
+    featureFlags = pgTable("feature_flags", {
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+      key: varchar("key", { length: 100 }).notNull().unique(),
+      enabled: boolean("enabled").notNull().default(false),
+      description: text("description"),
+      updatedAt: timestamp("updated_at").defaultNow(),
+      updatedBy: varchar("updated_by", { length: 255 })
+    });
+    insertFeatureFlagSchema = createInsertSchema(featureFlags).omit({ id: true, updatedAt: true });
+    subscriptionPlans = pgTable("subscription_plans", {
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+      name: varchar("name", { length: 100 }).notNull(),
+      description: text("description"),
+      price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+      currency: varchar("currency", { length: 3 }).notNull().default("eur"),
+      period: varchar("period", { length: 20 }).notNull().default("monthly"),
+      reportsIncluded: integer("reports_included").notNull().default(5),
+      stripeProductId: varchar("stripe_product_id", { length: 255 }),
+      stripePriceId: varchar("stripe_price_id", { length: 255 }),
+      isActive: boolean("is_active").notNull().default(true),
+      sortOrder: integer("sort_order").notNull().default(0),
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow()
+    });
+    insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({ id: true, createdAt: true, updatedAt: true });
+    userSubscriptions = pgTable("user_subscriptions", {
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+      userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }),
+      guestEmail: varchar("guest_email", { length: 255 }),
+      planId: varchar("plan_id").references(() => subscriptionPlans.id, { onDelete: "set null" }),
+      status: varchar("status", { length: 20 }).notNull().default("pending"),
+      reportsUsed: integer("reports_used").notNull().default(0),
+      reportsIncluded: integer("reports_included").notNull().default(1),
+      stripeSessionId: varchar("stripe_session_id", { length: 255 }),
+      stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
+      currentPeriodEnd: timestamp("current_period_end"),
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow()
+    });
+    userSubscriptionsRelations = relations(userSubscriptions, ({ one }) => ({
+      user: one(users, { fields: [userSubscriptions.userId], references: [users.id] }),
+      plan: one(subscriptionPlans, { fields: [userSubscriptions.planId], references: [subscriptionPlans.id] })
+    }));
+    insertUserSubscriptionSchema = createInsertSchema(userSubscriptions).omit({ id: true, createdAt: true, updatedAt: true });
+    supportTickets = pgTable("support_tickets", {
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+      userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }),
+      email: varchar("email", { length: 255 }).notNull(),
+      subject: varchar("subject", { length: 255 }).notNull(),
+      message: text("message").notNull(),
+      status: varchar("status", { length: 20 }).notNull().default("open"),
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow()
+    });
+    supportTicketsRelations = relations(supportTickets, ({ one }) => ({
+      user: one(users, { fields: [supportTickets.userId], references: [users.id] })
+    }));
+    insertSupportTicketSchema = createInsertSchema(supportTickets).omit({ id: true, createdAt: true, updatedAt: true });
   }
 });
 
@@ -2464,6 +2535,89 @@ var init_storage = __esm({
       async deleteRepairSheet(id) {
         await db.delete(repairSheets).where(eq(repairSheets.id, id));
       }
+      // ===== FREE REPORT LIMITING =====
+      async countFreeReportsByIp(ip) {
+        const result = await db.select({ count: sql2`count(*)` }).from(aiReports).where(and(eq(aiReports.ipAddress, ip), eq(aiReports.isFree, true)));
+        return Number(result[0]?.count ?? 0);
+      }
+      async countFreeReportsByEmail(email) {
+        const result = await db.select({ count: sql2`count(*)` }).from(aiReports).where(and(eq(aiReports.guestEmail, email.toLowerCase()), eq(aiReports.isFree, true)));
+        return Number(result[0]?.count ?? 0);
+      }
+      async countFreeReportsByUser(userId) {
+        const result = await db.select({ count: sql2`count(*)` }).from(aiReports).where(and(eq(aiReports.userId, userId), eq(aiReports.isFree, true)));
+        return Number(result[0]?.count ?? 0);
+      }
+      // ===== SUBSCRIPTION PLANS =====
+      async getSubscriptionPlans(activeOnly = false) {
+        if (activeOnly) {
+          return await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.isActive, true)).orderBy(subscriptionPlans.sortOrder, subscriptionPlans.createdAt);
+        }
+        return await db.select().from(subscriptionPlans).orderBy(subscriptionPlans.sortOrder, subscriptionPlans.createdAt);
+      }
+      async getSubscriptionPlan(id) {
+        const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+        return plan;
+      }
+      async createSubscriptionPlan(data) {
+        const [plan] = await db.insert(subscriptionPlans).values(data).returning();
+        return plan;
+      }
+      async updateSubscriptionPlan(id, data) {
+        const [plan] = await db.update(subscriptionPlans).set({ ...data, updatedAt: /* @__PURE__ */ new Date() }).where(eq(subscriptionPlans.id, id)).returning();
+        return plan;
+      }
+      async deleteSubscriptionPlan(id) {
+        await db.delete(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+      }
+      // ===== USER SUBSCRIPTIONS =====
+      async getUserSubscriptions(userId) {
+        return await db.select().from(userSubscriptions).where(eq(userSubscriptions.userId, userId)).orderBy(desc(userSubscriptions.createdAt));
+      }
+      async getActiveSubscription(userId) {
+        const now = /* @__PURE__ */ new Date();
+        const results = await db.select().from(userSubscriptions).where(and(
+          eq(userSubscriptions.userId, userId),
+          eq(userSubscriptions.status, "active")
+        )).orderBy(desc(userSubscriptions.createdAt));
+        return results.find((s) => {
+          if (!s.currentPeriodEnd) return true;
+          return s.currentPeriodEnd > now;
+        });
+      }
+      async createUserSubscription(data) {
+        const [sub] = await db.insert(userSubscriptions).values(data).returning();
+        return sub;
+      }
+      async updateUserSubscription(id, data) {
+        const [sub] = await db.update(userSubscriptions).set({ ...data, updatedAt: /* @__PURE__ */ new Date() }).where(eq(userSubscriptions.id, id)).returning();
+        return sub;
+      }
+      async getSubscriptionBySessionId(sessionId) {
+        const [sub] = await db.select().from(userSubscriptions).where(eq(userSubscriptions.stripeSessionId, sessionId));
+        return sub;
+      }
+      async getAllSubscriptions() {
+        const subs = await db.select().from(userSubscriptions).orderBy(desc(userSubscriptions.createdAt));
+        const planIds = [...new Set(subs.map((s) => s.planId).filter(Boolean))];
+        const plans = planIds.length ? await db.select().from(subscriptionPlans).where(inArray(subscriptionPlans.id, planIds)) : [];
+        const planMap = new Map(plans.map((p) => [p.id, p]));
+        return subs.map((s) => ({ ...s, plan: s.planId ? planMap.get(s.planId) ?? null : null }));
+      }
+      async createSupportTicket(data) {
+        const [ticket] = await db.insert(supportTickets).values(data).returning();
+        return ticket;
+      }
+      async getSupportTicketsByUser(userId) {
+        return await db.select().from(supportTickets).where(eq(supportTickets.userId, userId)).orderBy(desc(supportTickets.createdAt));
+      }
+      async getAllSupportTickets() {
+        return await db.select().from(supportTickets).orderBy(desc(supportTickets.createdAt));
+      }
+      async updateSupportTicket(id, data) {
+        const [ticket] = await db.update(supportTickets).set({ ...data, updatedAt: /* @__PURE__ */ new Date() }).where(eq(supportTickets.id, id)).returning();
+        return ticket;
+      }
     };
     storage = new DatabaseStorage();
   }
@@ -2839,6 +2993,7 @@ var init_localAuth = __esm({
 // server/emailService.ts
 var emailService_exports = {};
 __export(emailService_exports, {
+  generateAiReportEmailHtml: () => generateAiReportEmailHtml,
   generateInvoiceEmailHtml: () => generateInvoiceEmailHtml,
   generateInvoicePDF: () => generateInvoicePDF,
   generateInvoicePaidEmailHtml: () => generateInvoicePaidEmailHtml,
@@ -2848,6 +3003,7 @@ __export(emailService_exports, {
   generateVoiceDictationEmailHtml: () => generateVoiceDictationEmailHtml2,
   getEmailFooter: () => getEmailFooter,
   getEmailHeader: () => getEmailHeader,
+  sendAiReportEmail: () => sendAiReportEmail,
   sendEmail: () => sendEmail,
   sendReminderEmail: () => sendReminderEmail
 });
@@ -3416,6 +3572,58 @@ function generateVoiceDictationEmailHtml2(data) {
       ${getEmailFooter(data.companyName)}
     </div>
   `;
+}
+function generateAiReportEmailHtml(data) {
+  const company = data.companyName || "AutoReport";
+  const vehicleLabel = `${data.make} ${data.model} (${data.year})${data.mileage ? ` \u2014 ${Number(data.mileage).toLocaleString("fr-FR")} km` : ""}`;
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:30px 10px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e0e0e0;max-width:600px;">
+        <tr>
+          <td style="background-color:#0a0a12;padding:24px 30px;text-align:center;border-bottom:3px solid #CE1126;">
+            <p style="margin:0;color:#CE1126;font-size:18px;font-weight:bold;letter-spacing:1px;">${company}</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:30px;">
+            <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Bonjour,</p>
+            <p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.7;">L'\xE9quipe AutoReport a le plaisir de vous informer que votre rapport est pr\xEAt.</p>
+            <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">Vous trouverez en pi\xE8ce jointe l'analyse compl\xE8te du v\xE9hicule que vous souhaitez acqu\xE9rir.</p>
+            <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.7;">Ce rapport contient :</p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+              <tr><td style="padding:3px 0 3px 16px;font-size:14px;color:#374151;line-height:1.7;">\u2022 les faiblesses connues du mod\xE8le</td></tr>
+              <tr><td style="padding:3px 0 3px 16px;font-size:14px;color:#374151;line-height:1.7;">\u2022 les points essentiels \xE0 v\xE9rifier avant achat</td></tr>
+              <tr><td style="padding:3px 0 3px 16px;font-size:14px;color:#374151;line-height:1.7;">\u2022 des conseils pratiques pour \xE9viter les mauvaises surprises</td></tr>
+            </table>
+            <p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.7;">Nous vous recommandons de le consulter avant votre visite et de l'utiliser comme checklist sur place.</p>
+            <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.7;">Si vous analysez plusieurs v\xE9hicules, vous pouvez g\xE9n\xE9rer d'autres rapports directement depuis le site.</p>
+            <p style="margin:0 0 8px;font-size:15px;color:#374151;line-height:1.7;">Bonne lecture et bon achat \u{1F697}</p>
+            <p style="margin:0 0 24px;font-size:15px;color:#374151;line-height:1.7;">L'\xE9quipe AutoReport</p>
+            <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
+              Ce message a \xE9t\xE9 envoy\xE9 automatiquement par ${company}.<br>
+              <a href="https://autoreport.fr" style="color:#CE1126;text-decoration:none;">autoreport.fr</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#f9fafb;padding:16px 30px;text-align:center;border-top:1px solid #e5e7eb;">
+            <p style="margin:0;font-size:11px;color:#9ca3af;">\xA9 ${(/* @__PURE__ */ new Date()).getFullYear()} ${company}</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+async function sendAiReportEmail(to, data) {
+  const subject = `AutoReport : Votre rapport v\xE9hicule est pr\xEAt`;
+  const html = generateAiReportEmailHtml(data);
+  await sendEmail(to, subject, html);
 }
 async function sendReminderEmail(to, clientName, subject, body2) {
   const html = `
@@ -4348,7 +4556,7 @@ function registerObjectStorageRoutes(app3) {
           filePath: objectPath,
           // The path remains the same but the file content is served via /objects/:path
           fileType: isImage ? "image" : "document",
-          fileSize: processedData.length.toString()
+          fileSize: processedData.length
         });
       } else if (type === "invoice") {
         await storage2.createInvoiceMedia({
@@ -4356,7 +4564,7 @@ function registerObjectStorageRoutes(app3) {
           fileName,
           filePath: objectPath,
           fileType: isImage ? "image" : "document",
-          fileSize: processedData.length.toString()
+          fileSize: processedData.length
         });
       }
       res.json({ success: true, objectPath });
@@ -4780,7 +4988,7 @@ async function getOrCreateRootFolder() {
   } catch (e) {
     console.warn(`[GoogleDrive] Known folder ID not accessible, searching by name...`, e.message);
   }
-  const folderName = process.env.GOOGLE_DRIVE_FOLDER_NAME || "Myjantes";
+  const folderName = process.env.GOOGLE_DRIVE_FOLDER_NAME || "AutoReport";
   console.log(`[GoogleDrive] Searching for root folder: ${folderName}`);
   const list = await drive.files.list({
     q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
@@ -5550,1306 +5758,6 @@ function buildUrl(req, path13) {
 var init_urlHelper = __esm({
   "server/urlHelper.ts"() {
     "use strict";
-  }
-});
-
-// server/uploadMiddleware.ts
-import multer from "multer";
-function createFileFilter(allowedMimes) {
-  return (req, file, cb) => {
-    if (allowedMimes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error(`Type de fichier non autoris\xE9: ${file.mimetype}. Types accept\xE9s: ${allowedMimes.join(", ")}`));
-    }
-  };
-}
-var ALLOWED_IMAGE_MIMES, ALLOWED_DOCUMENT_MIMES, MAX_FILE_SIZE, MAX_FILES, uploadImage, uploadDocument, uploadAny;
-var init_uploadMiddleware = __esm({
-  "server/uploadMiddleware.ts"() {
-    "use strict";
-    ALLOWED_IMAGE_MIMES = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/gif"
-    ];
-    ALLOWED_DOCUMENT_MIMES = [
-      ...ALLOWED_IMAGE_MIMES,
-      "application/pdf",
-      "video/mp4",
-      "video/webm",
-      "video/quicktime"
-    ];
-    MAX_FILE_SIZE = 10 * 1024 * 1024;
-    MAX_FILES = 10;
-    uploadImage = multer({
-      storage: multer.memoryStorage(),
-      limits: { fileSize: MAX_FILE_SIZE, files: MAX_FILES },
-      fileFilter: createFileFilter(ALLOWED_IMAGE_MIMES)
-    });
-    uploadDocument = multer({
-      storage: multer.memoryStorage(),
-      limits: { fileSize: MAX_FILE_SIZE, files: MAX_FILES },
-      fileFilter: createFileFilter(ALLOWED_DOCUMENT_MIMES)
-    });
-    uploadAny = multer({
-      storage: multer.memoryStorage(),
-      limits: { fileSize: MAX_FILE_SIZE, files: MAX_FILES }
-    });
-  }
-});
-
-// server/imageOptimizer.ts
-var imageOptimizer_exports = {};
-__export(imageOptimizer_exports, {
-  optimizeImageBuffer: () => optimizeImageBuffer
-});
-import sharp2 from "sharp";
-async function optimizeImageBuffer(buffer, mimetype) {
-  if (!mimetype.startsWith("image/") || mimetype === "image/gif") {
-    return buffer;
-  }
-  try {
-    const metadata = await sharp2(buffer).metadata();
-    const needsResize = metadata.width && metadata.width > MAX_DIMENSION || metadata.height && metadata.height > MAX_DIMENSION;
-    let pipeline = sharp2(buffer).rotate();
-    if (needsResize) {
-      pipeline = pipeline.resize(MAX_DIMENSION, MAX_DIMENSION, { fit: "inside", withoutEnlargement: true });
-    }
-    let result;
-    if (mimetype === "image/png") {
-      result = await pipeline.png({ quality: PNG_QUALITY, compressionLevel: 8 }).toBuffer();
-    } else if (mimetype === "image/webp") {
-      result = await pipeline.webp({ quality: WEBP_QUALITY }).toBuffer();
-    } else {
-      result = await pipeline.jpeg({ quality: JPEG_QUALITY, mozjpeg: true }).toBuffer();
-    }
-    const originalSize = buffer.length;
-    const newSize = result.length;
-    if (newSize < originalSize) {
-      console.log(`[ImageOptimizer] ${(originalSize / 1024).toFixed(0)}KB -> ${(newSize / 1024).toFixed(0)}KB (${((1 - newSize / originalSize) * 100).toFixed(0)}% saved)`);
-      return result;
-    }
-    return buffer;
-  } catch (error) {
-    console.warn("[ImageOptimizer] Optimization skipped:", error);
-    return buffer;
-  }
-}
-var MAX_DIMENSION, JPEG_QUALITY, PNG_QUALITY, WEBP_QUALITY;
-var init_imageOptimizer = __esm({
-  "server/imageOptimizer.ts"() {
-    "use strict";
-    MAX_DIMENSION = 1920;
-    JPEG_QUALITY = 82;
-    PNG_QUALITY = 85;
-    WEBP_QUALITY = 82;
-  }
-});
-
-// server/aiAssistant.ts
-var aiAssistant_exports = {};
-__export(aiAssistant_exports, {
-  analyzeWheelImage: () => analyzeWheelImage,
-  generateAssistantResponse: () => generateAssistantResponse
-});
-async function getServicesContext() {
-  const now = Date.now();
-  if (now - servicesCacheTime > CACHE_TTL || cachedServices.length === 0) {
-    try {
-      const services2 = await storage.getServices();
-      cachedServices = services2.map((s) => ({
-        name: s.name,
-        description: s.description || null,
-        basePrice: s.basePrice || null,
-        category: s.category || null
-      }));
-      servicesCacheTime = now;
-    } catch (e) {
-      console.error("[AI] Failed to fetch services:", e);
-    }
-  }
-  if (cachedServices.length === 0) {
-    return "Services disponibles: Montage de jantes, R\xE9paration de jantes endommag\xE9es, Changement de pneus, \xC9quilibrage, G\xE9om\xE9trie, Personnalisation de jantes, Peinture de jantes.";
-  }
-  return "Services propos\xE9s par AutoReport:\n" + cachedServices.map((s) => {
-    let line = `- ${s.name}`;
-    if (s.description) line += `: ${s.description}`;
-    if (s.basePrice && parseFloat(s.basePrice) > 0) line += ` (\xE0 partir de ${parseFloat(s.basePrice).toFixed(2)} \u20AC)`;
-    return line;
-  }).join("\n");
-}
-function buildSystemPrompt(servicesContext, userRole) {
-  const roleContext = userRole === "client" ? "L'utilisateur est un client du garage. Aide-le \xE0 comprendre les services, demander un devis, ou suivre ses commandes." : "L'utilisateur est un membre du personnel (administrateur/employ\xE9). Aide-le avec la gestion des op\xE9rations.";
-  return `Tu es l'assistant virtuel intelligent de AutoReport, expert en jantes automobiles et services de r\xE9paration/personnalisation. Tu es toujours disponible et enthousiaste pour aider.
-
-${roleContext}
-
-## Expertise Technique - Jantes Automobiles
-
-Tu poss\xE8des une connaissance approfondie sur les jantes automobiles:
-
-### Types de Jantes
-- **Jantes en alliage (aluminium)**: L\xE9g\xE8res, esth\xE9tiques, bonne dissipation thermique. Sensibles aux chocs et \xE0 la corrosion.
-- **Jantes en acier**: Robustes, \xE9conomiques, r\xE9sistantes aux d\xE9formations. Plus lourdes, moins esth\xE9tiques.
-- **Jantes forg\xE9es**: Tr\xE8s l\xE9g\xE8res et r\xE9sistantes, haut de gamme. Prix plus \xE9lev\xE9.
-- **Jantes en carbone**: Ultra-l\xE9g\xE8res, haute performance, usage sportif/luxe.
-
-### Probl\xE8mes Courants et R\xE9parations
-- **Voile de jante**: D\xE9formation qui provoque des vibrations. R\xE9parable par redressage sur tour.
-- **Fissure/Crack**: N\xE9cessite soudure TIG sp\xE9cialis\xE9e aluminium. Contr\xF4le d'\xE9tanch\xE9it\xE9 obligatoire.
-- **Rayures superficielles**: Pon\xE7age et polissage, possible remise \xE0 neuf compl\xE8te.
-- **\xC9clats/Impacts**: Rechargement mati\xE8re + usinage + finition.
-- **Corrosion/Oxydation**: D\xE9capage chimique ou sablage + traitement anti-corrosion + peinture.
-- **Perte d'\xE9tanch\xE9it\xE9**: Nettoyage des port\xE9es de pneu, v\xE9rification des fissures, joint d'\xE9tanch\xE9it\xE9.
-
-### Personnalisation de Jantes
-- **Peinture**: Changement de couleur, finition mate/brillante/satin\xE9e
-- **Diamond Cut (usinage diamant)**: Finition premium avec face usin\xE9e brillante et flancs peints
-- **Hydrographie / Covering**: Application de motifs (carbone, camouflage, etc.)
-- **Changement de taille**: Passage \xE0 des jantes plus grandes (upsizing) - attention aux compatibilit\xE9s
-
-### Dimensions et Compatibilit\xE9
-- **Diam\xE8tre (pouces)**: 14" \xE0 22" courants, jusqu'\xE0 24" pour SUV
-- **Largeur (pouces)**: 5.5J \xE0 12J selon v\xE9hicule
-- **Entraxe (PCD)**: 4x100, 5x112, 5x120, etc. - DOIT correspondre au v\xE9hicule
-- **D\xE9port (ET)**: Influence le positionnement de la roue, crucial pour la g\xE9om\xE9trie
-- **Al\xE9sage central**: Doit correspondre au moyeu du v\xE9hicule
-
-## Configurateur de Jantes
-
-Tu peux analyser des photos de jantes envoy\xE9es par les utilisateurs. Quand un utilisateur envoie une photo:
-1. Identifie le type de jante (alliage, acier, forg\xE9, etc.)
-2. \xC9value l'\xE9tat (rayures, voile, fissures, corrosion)
-3. Propose des options de personnalisation (couleur, finition, diamond cut)
-4. Estime la faisabilit\xE9 des travaux
-5. Recommande des services AutoReport adapt\xE9s
-
-Si l'utilisateur demande une personnalisation, d\xE9cris en d\xE9tail le rendu attendu (couleur, finition, effet visuel).
-
-## ${servicesContext}
-
-## Navigation de l'Application
-- **Clients**: Tableau de bord (/), Services (/services), Mes Devis (/quotes), Mes Factures (/invoices), Messages (/messages)
-- **Administrateurs**: Dashboard (/admin/dashboard), Devis (/admin/quotes), Factures (/admin/invoices), R\xE9servations (/admin/reservations), Atelier (/admin/workshop), Chat (/admin/chat)
-
-## Processus Client
-1. **Demande de devis**: Le client d\xE9crit son besoin \u2192 l'\xE9quipe AutoReport \xE9value et propose un devis personnalis\xE9
-2. **Approbation**: Le client consulte le devis en ligne et l'approuve
-3. **R\xE9servation**: Prise de rendez-vous pour l'intervention
-4. **Intervention**: R\xE9alisation des travaux en atelier
-5. **Facturation**: Facture g\xE9n\xE9r\xE9e automatiquement, paiement en ligne possible (CB, virement, Klarna, Alma)
-
-## R\xE8gles de Conversation
-- R\xE9ponds TOUJOURS en fran\xE7ais
-- Sois concis, pr\xE9cis et enthousiaste
-- Pour les prix: oriente vers un devis personnalis\xE9, tu peux mentionner les prix de base des services si disponibles
-- Pour un diagnostic: pose des questions sur le type de jante, la nature du dommage, le v\xE9hicule
-- Propose toujours des solutions concr\xE8tes et explique les \xE9tapes de r\xE9paration
-- Si le client h\xE9site entre r\xE9paration et remplacement, aide-le \xE0 comprendre les avantages de chaque option`;
-}
-async function callGemini(contents, systemInstruction) {
-  const url = `${GEMINI_BASE_URL}/models/${GEMINI_MODEL}:generateContent`;
-  const body2 = {
-    contents,
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 8192
-    }
-  };
-  if (systemInstruction) {
-    body2.systemInstruction = { parts: [{ text: systemInstruction }] };
-  }
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": GEMINI_API_KEY
-    },
-    body: JSON.stringify(body2)
-  });
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error("[AI] Gemini API error:", response.status, errText);
-    throw new Error(`Gemini API error: ${response.status}`);
-  }
-  const data = await response.json();
-  const text2 = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text2) {
-    throw new Error("Pas de r\xE9ponse de l'IA");
-  }
-  return text2;
-}
-async function generateAssistantResponse(messages, userRole) {
-  const servicesContext = await getServicesContext();
-  const systemPrompt = buildSystemPrompt(servicesContext, userRole);
-  const geminiContents = messages.map((m) => {
-    const parts = [];
-    if (m.imageBase64 && m.imageMimeType) {
-      parts.push({
-        inlineData: {
-          mimeType: m.imageMimeType,
-          data: m.imageBase64
-        }
-      });
-    }
-    parts.push({ text: m.content });
-    return {
-      role: m.role === "user" ? "user" : "model",
-      parts
-    };
-  });
-  return callGemini(geminiContents, systemPrompt);
-}
-async function analyzeWheelImage(imageBase64, imageMimeType, userPrompt, conversationHistory = []) {
-  const analysisSystemPrompt = `Tu es un expert en jantes automobiles chez AutoReport. Tu analyses des photos de jantes envoy\xE9es par les clients.
-
-Quand tu re\xE7ois une photo de jante:
-1. **Identification**: Type de jante (alliage, acier, forg\xE9), marque si identifiable, nombre de branches, design
-2. **\xC9tat**: \xC9value l'\xE9tat visible (rayures, corrosion, voile, fissures, usure)
-3. **Personnalisation**: Propose des options r\xE9alistes de personnalisation:
-   - Couleurs possibles (noir mat, noir brillant, gris anthracite, bronze, or, blanc, rouge, bleu, etc.)
-   - Finitions (mat, brillant, satin\xE9, bross\xE9)
-   - Diamond Cut (face usin\xE9e + flancs peints)
-   - Hydrographie (motifs carbone, camouflage, etc.)
-4. **Recommandation**: Sugg\xE8re le meilleur traitement et oriente vers un devis AutoReport
-5. **Visualisation**: D\xE9cris en d\xE9tail comment la jante appara\xEEtrait apr\xE8s chaque option de personnalisation propos\xE9e
-
-R\xE9ponds TOUJOURS en fran\xE7ais. Sois enthousiaste et professionnel.
-Si l'image n'est pas une jante, indique-le poliment et demande une photo de jante.`;
-  const contents = [];
-  for (const msg of conversationHistory) {
-    const parts = [];
-    if (msg.imageBase64 && msg.imageMimeType) {
-      parts.push({ inlineData: { mimeType: msg.imageMimeType, data: msg.imageBase64 } });
-    }
-    parts.push({ text: msg.content });
-    contents.push({ role: msg.role === "user" ? "user" : "model", parts });
-  }
-  const userParts = [
-    { inlineData: { mimeType: imageMimeType, data: imageBase64 } },
-    { text: userPrompt || "Analyse cette jante et propose des options de personnalisation." }
-  ];
-  contents.push({ role: "user", parts: userParts });
-  return callGemini(contents, analysisSystemPrompt);
-}
-var GEMINI_BASE_URL, GEMINI_API_KEY, GEMINI_MODEL, cachedServices, servicesCacheTime, CACHE_TTL;
-var init_aiAssistant = __esm({
-  "server/aiAssistant.ts"() {
-    "use strict";
-    init_storage();
-    GEMINI_BASE_URL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || "http://localhost:1106/modelfarm/gemini";
-    GEMINI_API_KEY = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || "dummy-key";
-    GEMINI_MODEL = "gemini-2.5-flash";
-    cachedServices = [];
-    servicesCacheTime = 0;
-    CACHE_TTL = 5 * 60 * 1e3;
-  }
-});
-
-// server/mobileRoutes.ts
-var mobileRoutes_exports = {};
-__export(mobileRoutes_exports, {
-  registerMobileRoutes: () => registerMobileRoutes
-});
-function registerMobileRoutes(app3, uploadToStorage2) {
-  app3.post("/api/mobile/auth/login", async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      const user = await storage.getUserByEmail(email);
-      if (!user || !user.password) {
-        return res.status(401).json({ message: "Email ou mot de passe incorrect" });
-      }
-      const { verifyPassword: verifyPassword2, signAccessToken: signAccessToken2, signRefreshToken: signRefreshToken2 } = await Promise.resolve().then(() => (init_localAuth(), localAuth_exports));
-      const isValid = await verifyPassword2(password, user.password);
-      if (!isValid) {
-        return res.status(401).json({ message: "Email ou mot de passe incorrect" });
-      }
-      const payload = { userId: user.id, email: user.email, role: user.role };
-      const accessToken = signAccessToken2(payload);
-      const refreshToken = signRefreshToken2(payload);
-      const { password: _, ...safeUser } = user;
-      res.json({
-        user: safeUser,
-        accessToken,
-        refreshToken,
-        tokenType: "Bearer"
-      });
-    } catch (error) {
-      console.error("[MobileAuth] Login error:", error);
-      res.status(500).json({ message: "Erreur serveur" });
-    }
-  });
-  app3.post("/api/mobile/login", async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      const user = await storage.getUserByEmail(email);
-      if (!user || !user.password) {
-        return res.status(401).json({ message: "Email ou mot de passe incorrect" });
-      }
-      const { verifyPassword: verifyPassword2, signAccessToken: signAccessToken2, signRefreshToken: signRefreshToken2 } = await Promise.resolve().then(() => (init_localAuth(), localAuth_exports));
-      const isValid = await verifyPassword2(password, user.password);
-      if (!isValid) {
-        return res.status(401).json({ message: "Email ou mot de passe incorrect" });
-      }
-      const payload = { userId: user.id, email: user.email, role: user.role };
-      const accessToken = signAccessToken2(payload);
-      const refreshToken = signRefreshToken2(payload);
-      const { password: _, ...safeUser } = user;
-      res.json({
-        user: safeUser,
-        accessToken,
-        refreshToken,
-        tokenType: "Bearer"
-      });
-    } catch (error) {
-      console.error("[MobileLoginAlias] error:", error);
-      res.status(500).json({ message: "Erreur serveur" });
-    }
-  });
-  app3.get("/api/mobile/auth/me", isAuthenticated, async (req, res) => {
-    res.json(req.user);
-  });
-  app3.get("/api/mobile/profile", isAuthenticated, async (req, res) => {
-    try {
-      const user = await storage.getUser(req.user.id);
-      if (!user) return res.status(404).json({ message: "Utilisateur introuvable" });
-      const { password, ...safeUser } = user;
-      res.json(safeUser);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.patch("/api/mobile/profile", isAuthenticated, async (req, res) => {
-    try {
-      const { firstName, lastName, phone, address, postalCode, city } = req.body;
-      const updated = await storage.updateUser(req.user.id, {
-        firstName,
-        lastName,
-        phone,
-        address,
-        postalCode,
-        city
-      });
-      if (!updated) return res.status(404).json({ message: "Utilisateur introuvable" });
-      const { password, ...safeUser } = updated;
-      res.json(safeUser);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.post("/api/mobile/profile/avatar", isAuthenticated, uploadImage.single("avatar"), async (req, res) => {
-    try {
-      const file = req.file;
-      if (!file) return res.status(400).json({ message: "Aucune image fournie" });
-      const optimized = await optimizeImageBuffer(file.buffer, file.mimetype);
-      const url = await uploadToStorage2(optimized, `avatar_${req.user.id}.jpg`, "avatars");
-      await storage.updateUser(req.user.id, { profileImageUrl: url });
-      res.json({ success: true, url });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/services", isAuthenticated, async (req, res) => {
-    try {
-      const garageId = req.user?.garageId;
-      const servicesList = await storage.getServices(garageId);
-      res.json(servicesList);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/quotes", isAuthenticated, async (req, res) => {
-    try {
-      const user = req.user;
-      const garageId = user.role === "superadmin" ? void 0 : user.garageId;
-      let quotesList;
-      if (user.role === "admin" || user.role === "superadmin" || user.role === "employe") {
-        quotesList = await storage.getQuotes(void 0, garageId);
-      } else {
-        quotesList = await storage.getUserQuotes(user.id);
-      }
-      res.json(quotesList);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/quotes/:id", isAuthenticated, async (req, res) => {
-    try {
-      const quote = await storage.getQuote(req.params.id);
-      if (!quote) return res.status(404).json({ message: "Devis non trouv\xE9" });
-      const user = req.user;
-      if ((user.role === "client" || user.role === "client_professionnel") && quote.clientId !== user.id) {
-        return res.status(403).json({ message: "Acc\xE8s refus\xE9" });
-      }
-      const items = await storage.getQuoteItems(req.params.id);
-      const media = await storage.getQuoteMedia(req.params.id);
-      const client = await storage.getUser(quote.clientId);
-      const service = await storage.getService(quote.serviceId);
-      res.json({
-        ...quote,
-        items,
-        media,
-        client: client ? { id: client.id, email: client.email, firstName: client.firstName, lastName: client.lastName, phone: client.phone } : null,
-        service
-      });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.post("/api/mobile/quotes", isAuthenticated, uploadImage.array("images", 10), async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const files = req.files;
-      if (!files || files.length === 0) {
-        return res.status(400).json({ message: "Au moins 1 photo est requise" });
-      }
-      const imageFiles = files.filter((f) => f.mimetype.startsWith("image/") || f.originalname.match(/\.(jpg|jpeg|png|webp|heic)$/i));
-      if (imageFiles.length < 1) {
-        return res.status(400).json({ message: "Au moins 1 photo est requise (formats support\xE9s: JPG, PNG, WEBP, HEIC)" });
-      }
-      const { serviceId, paymentMethod, requestDetails, vehicleRegistration, vehicleMake, vehicleModel, vehicleVin, vehicleFuelType, vehicleFiscalPower, vehicleFirstRegDate, vehicleColor } = req.body;
-      if (!serviceId) {
-        return res.status(400).json({ message: "Le service est requis" });
-      }
-      const now = /* @__PURE__ */ new Date();
-      const mm = String(now.getMonth() + 1).padStart(2, "0");
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const allQuotes = await storage.getQuotes();
-      const count2 = allQuotes.filter((q) => {
-        const qDate = new Date(q.createdAt || "");
-        return qDate >= startOfMonth;
-      }).length + 1;
-      const reference = `DEV-${mm}-${String(count2).padStart(5, "0")}`;
-      let parsedDetails = requestDetails;
-      if (typeof requestDetails === "string") {
-        try {
-          parsedDetails = JSON.parse(requestDetails);
-        } catch {
-          parsedDetails = { message: requestDetails };
-        }
-      }
-      const quoteData = {
-        serviceId,
-        reference,
-        clientId: userId,
-        garageId: req.user.garageId,
-        status: "pending",
-        paymentMethod: paymentMethod || "wire_transfer",
-        requestDetails: parsedDetails
-      };
-      if (vehicleRegistration) quoteData.vehicleRegistration = vehicleRegistration;
-      if (vehicleMake) quoteData.vehicleMake = vehicleMake;
-      if (vehicleModel) quoteData.vehicleModel = vehicleModel;
-      if (vehicleVin) quoteData.vehicleVin = vehicleVin;
-      if (vehicleFuelType) quoteData.vehicleFuelType = vehicleFuelType;
-      if (vehicleFiscalPower) quoteData.vehicleFiscalPower = vehicleFiscalPower;
-      if (vehicleFirstRegDate) quoteData.vehicleFirstRegDate = vehicleFirstRegDate;
-      if (vehicleColor) quoteData.vehicleColor = vehicleColor;
-      const validatedData = insertQuoteSchema.parse(quoteData);
-      const quote = await storage.createQuote(validatedData);
-      const mediaResults = [];
-      for (const file of files) {
-        const optimized = await optimizeImageBuffer(file.buffer, file.mimetype);
-        const url = await uploadToStorage2(optimized, file.originalname, "quotes");
-        const media = await storage.createQuoteMedia({
-          quoteId: quote.id,
-          fileName: file.originalname,
-          filePath: url,
-          fileType: file.mimetype.startsWith("image/") ? "image" : "video",
-          fileSize: optimized.length
-        });
-        mediaResults.push(media);
-      }
-      res.json({ ...quote, media: mediaResults });
-    } catch (error) {
-      console.error("[MobileCreateQuote] Error:", error);
-      res.status(400).json({ message: error.message || "Erreur lors de la cr\xE9ation du devis" });
-    }
-  });
-  app3.get("/api/mobile/quotes/:id/media", isAuthenticated, async (req, res) => {
-    try {
-      const media = await storage.getQuoteMedia(req.params.id);
-      res.json(media);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/invoices", isAuthenticated, async (req, res) => {
-    try {
-      const user = req.user;
-      const garageId = user.role === "superadmin" ? void 0 : user.garageId;
-      let invoicesList;
-      if (user.role === "admin" || user.role === "superadmin" || user.role === "employe") {
-        invoicesList = await storage.getInvoices(void 0, garageId);
-      } else {
-        invoicesList = await storage.getUserInvoices(user.id);
-      }
-      res.json(invoicesList);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/invoices/:id", isAuthenticated, async (req, res) => {
-    try {
-      const invoice = await storage.getInvoice(req.params.id);
-      if (!invoice) return res.status(404).json({ message: "Facture non trouv\xE9e" });
-      const user = req.user;
-      if ((user.role === "client" || user.role === "client_professionnel") && invoice.clientId !== user.id) {
-        return res.status(403).json({ message: "Acc\xE8s refus\xE9" });
-      }
-      const items = await storage.getInvoiceItems(req.params.id);
-      const media = await storage.getInvoiceMedia(req.params.id);
-      const client = await storage.getUser(invoice.clientId);
-      res.json({
-        ...invoice,
-        items,
-        media,
-        client: client ? { id: client.id, email: client.email, firstName: client.firstName, lastName: client.lastName, phone: client.phone } : null
-      });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/invoices/:id/media", isAuthenticated, async (req, res) => {
-    try {
-      const media = await storage.getInvoiceMedia(req.params.id);
-      res.json(media);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/reservations", isAuthenticated, async (req, res) => {
-    try {
-      const user = req.user;
-      const garageId = user.role === "superadmin" ? void 0 : user.garageId;
-      let reservationsList;
-      if (user.role === "admin" || user.role === "superadmin" || user.role === "employe") {
-        reservationsList = await storage.getReservations(void 0, garageId);
-      } else {
-        reservationsList = await storage.getUserReservations(user.id);
-      }
-      res.json(reservationsList);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/reservations/:id", isAuthenticated, async (req, res) => {
-    try {
-      const reservation = await storage.getReservation(req.params.id);
-      if (!reservation) return res.status(404).json({ message: "R\xE9servation non trouv\xE9e" });
-      const user = req.user;
-      if ((user.role === "client" || user.role === "client_professionnel") && reservation.clientId !== user.id) {
-        return res.status(403).json({ message: "Acc\xE8s refus\xE9" });
-      }
-      const client = await storage.getUser(reservation.clientId);
-      const service = await storage.getService(reservation.serviceId);
-      res.json({
-        ...reservation,
-        client: client ? { id: client.id, email: client.email, firstName: client.firstName, lastName: client.lastName, phone: client.phone } : null,
-        service
-      });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/notifications", isAuthenticated, async (req, res) => {
-    try {
-      const notifs = await storage.getUserNotifications(req.user.id);
-      res.json(notifs);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/notifications/unread-count", isAuthenticated, async (req, res) => {
-    try {
-      const notifs = await storage.getUserNotifications(req.user.id);
-      const unread = notifs.filter((n) => !n.isRead).length;
-      res.json({ count: unread });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.patch("/api/mobile/notifications/:id/read", isAuthenticated, async (req, res) => {
-    try {
-      await storage.markNotificationRead(req.params.id);
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.post("/api/mobile/notifications/mark-all-read", isAuthenticated, async (req, res) => {
-    try {
-      await storage.markAllNotificationsRead(req.user.id);
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/admin/clients", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      const garageId = req.user?.role === "superadmin" ? void 0 : req.user?.garageId;
-      const clients = garageId ? await storage.getUsersByGarage(garageId) : await storage.getUsers();
-      const safeClients = clients.map((u) => {
-        const { password, ...safe } = u;
-        return safe;
-      });
-      res.json(safeClients);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/admin/clients/:id", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      const client = await storage.getUser(req.params.id);
-      if (!client) return res.status(404).json({ message: "Client introuvable" });
-      const { password, ...safe } = client;
-      res.json(safe);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.patch("/api/mobile/admin/quotes/:id/status", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      const { status } = req.body;
-      const updated = await storage.updateQuote(req.params.id, { status });
-      if (!updated) return res.status(404).json({ message: "Devis non trouv\xE9" });
-      res.json(updated);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.patch("/api/mobile/admin/invoices/:id/status", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      const { status } = req.body;
-      const updated = await storage.updateInvoice(req.params.id, { status });
-      if (!updated) return res.status(404).json({ message: "Facture non trouv\xE9e" });
-      res.json(updated);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.patch("/api/mobile/admin/reservations/:id/status", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      const { status } = req.body;
-      const updated = await storage.updateReservation(req.params.id, { status });
-      if (!updated) return res.status(404).json({ message: "R\xE9servation non trouv\xE9e" });
-      res.json(updated);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/admin/dashboard", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      const garageId = req.user?.role === "superadmin" ? void 0 : req.user?.garageId;
-      const [quotes2, invoices2, reservations2, users2] = await Promise.all([
-        storage.getQuotes(void 0, garageId),
-        storage.getInvoices(void 0, garageId),
-        storage.getReservations(void 0, garageId),
-        garageId ? storage.getUsersByGarage(garageId) : storage.getUsers()
-      ]);
-      const pendingQuotes = quotes2.filter((q) => q.status === "pending").length;
-      const pendingInvoices = invoices2.filter((i) => i.status === "pending").length;
-      const todayReservations = reservations2.filter((r) => {
-        const d = new Date(r.scheduledDate);
-        const now = /* @__PURE__ */ new Date();
-        return d.toDateString() === now.toDateString();
-      }).length;
-      const totalRevenue = invoices2.filter((i) => i.status === "paid").reduce((sum, i) => sum + parseFloat(i.amount || "0"), 0);
-      const paidAmount = totalRevenue;
-      const pendingAmount = invoices2.filter((i) => i.status === "pending" || i.status === "overdue").reduce((sum, i) => sum + parseFloat(i.amount || "0"), 0);
-      const forecastAmount = quotes2.filter((q) => q.status === "pending" || q.status === "approved").reduce((sum, q) => sum + parseFloat(q.quoteAmount || "0"), 0);
-      res.json({
-        totalClients: users2.filter((u) => u.role === "client" || u.role === "client_professionnel").length,
-        totalQuotes: quotes2.length,
-        totalInvoices: invoices2.length,
-        totalReservations: reservations2.length,
-        pendingQuotes,
-        pendingInvoices,
-        todayReservations,
-        totalRevenue: totalRevenue.toFixed(2),
-        paidAmount: paidAmount.toFixed(2),
-        pendingAmount: pendingAmount.toFixed(2),
-        forecastAmount: forecastAmount.toFixed(2)
-      });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/wheel-simulator/config", isAuthenticated, async (req, res) => {
-    try {
-      const garageId = req.user?.garageId;
-      if (!garageId) return res.status(400).json({ message: "Garage non sp\xE9cifi\xE9" });
-      const garage = await storage.getGarage(garageId);
-      if (!garage) return res.status(404).json({ message: "Garage introuvable" });
-      res.json(garage.simulatorSettings || {});
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.post("/api/mobile/wheel-simulator/analyze", isAuthenticated, uploadImage.single("image"), async (req, res) => {
-    try {
-      const file = req.file;
-      if (!file) return res.status(400).json({ message: "Aucune image fournie" });
-      const { analyzeWheelParams } = await import("./openai");
-      const base64 = file.buffer.toString("base64");
-      const result = await analyzeWheelParams(base64, file.mimetype);
-      res.json(result);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.post("/api/mobile/ar/detect-wheels", isAuthenticated, uploadImage.single("image"), async (req, res) => {
-    try {
-      const file = req.file;
-      if (!file) return res.status(400).json({ message: "Aucune image fournie" });
-      const base64 = file.buffer.toString("base64");
-      const mimeType = file.mimetype || "image/jpeg";
-      const GEMINI_BASE_URL4 = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || "http://localhost:1106/modelfarm/gemini";
-      const GEMINI_API_KEY3 = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || "dummy-key";
-      const prompt = `Analyse cette photo de voiture et identifie les positions des roues/jantes visibles.
-Pour chaque roue visible, retourne ses coordonn\xE9es normalis\xE9es (entre 0 et 1) par rapport \xE0 l'image:
-- x: position horizontale du centre de la roue (0 = gauche, 1 = droite)
-- y: position verticale du centre de la roue (0 = haut, 1 = bas)
-- radius: rayon approximatif de la roue en proportion de la largeur de l'image
-
-R\xE9ponds UNIQUEMENT en JSON valide avec ce format exact:
-{"positions": [{"x": 0.25, "y": 0.7, "radius": 0.08}, {"x": 0.75, "y": 0.7, "radius": 0.08}]}
-
-Si ce n'est pas une photo de voiture ou si aucune roue n'est visible, r\xE9ponds: {"positions": []}`;
-      const response = await fetch(`${GEMINI_BASE_URL4}/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY3}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{
-            role: "user",
-            parts: [
-              { inlineData: { mimeType, data: base64 } },
-              { text: prompt }
-            ]
-          }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 500 }
-        })
-      });
-      if (!response.ok) throw new Error(`Gemini API error: ${response.status}`);
-      const data = await response.json();
-      const text2 = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      const jsonMatch = text2.match(/\{[\s\S]*"positions"[\s\S]*\}/);
-      if (jsonMatch) {
-        const result = JSON.parse(jsonMatch[0]);
-        if (Array.isArray(result.positions)) {
-          result.positions = result.positions.filter((p) => typeof p.x === "number" && typeof p.y === "number").map((p) => ({
-            x: Math.max(0, Math.min(1, p.x)),
-            y: Math.max(0, Math.min(1, p.y)),
-            radius: Math.max(0.03, Math.min(0.3, p.radius || 0.08))
-          }));
-        }
-        res.json(result);
-      } else {
-        res.json({ positions: [] });
-      }
-    } catch (error) {
-      console.error("[Mobile AR] Wheel detection error:", error.message);
-      res.json({ positions: [] });
-    }
-  });
-  app3.post("/api/mobile/upload", isAuthenticated, uploadImage.single("image"), async (req, res) => {
-    try {
-      const file = req.file;
-      if (!file) {
-        return res.status(400).json({ success: false, message: "Aucune image fournie" });
-      }
-      const folder = req.body.folder || "uploads";
-      const optimizedBuffer = await optimizeImageBuffer(file.buffer, file.mimetype);
-      const url = await uploadToStorage2(optimizedBuffer, file.originalname, folder);
-      res.json({
-        success: true,
-        url,
-        objectPath: url,
-        fileName: file.originalname,
-        size: optimizedBuffer.length,
-        contentType: file.mimetype
-      });
-    } catch (error) {
-      console.error("[MobileUpload] Error:", error);
-      res.status(500).json({ success: false, message: "Erreur lors de l'upload", error: error.message });
-    }
-  });
-  app3.post("/api/mobile/upload/multiple", isAuthenticated, uploadImage.array("images", 10), async (req, res) => {
-    try {
-      const files = req.files;
-      if (!files || files.length === 0) {
-        return res.status(400).json({ success: false, message: "Aucune image fournie" });
-      }
-      const folder = req.body.folder || "uploads";
-      const results = [];
-      for (const file of files) {
-        const optimized = await optimizeImageBuffer(file.buffer, file.mimetype);
-        const url = await uploadToStorage2(optimized, file.originalname, folder);
-        results.push({
-          url,
-          fileName: file.originalname,
-          size: optimized.length,
-          contentType: file.mimetype
-        });
-      }
-      res.json({ success: true, files: results });
-    } catch (error) {
-      console.error("[MobileUpload] Error:", error);
-      res.status(500).json({ success: false, message: "Erreur lors de l'upload", error: error.message });
-    }
-  });
-  app3.post("/api/mobile/quotes/:id/media", isAuthenticated, uploadImage.array("images", 10), async (req, res) => {
-    try {
-      const { id } = req.params;
-      const quote = await storage.getQuote(id);
-      if (!quote) return res.status(404).json({ message: "Devis non trouv\xE9" });
-      const files = req.files;
-      if (!files || files.length === 0) {
-        return res.status(400).json({ message: "Aucune image fournie" });
-      }
-      const results = [];
-      for (const file of files) {
-        const optimized = await optimizeImageBuffer(file.buffer, file.mimetype);
-        const url = await uploadToStorage2(optimized, file.originalname, "quotes");
-        const media = await storage.createQuoteMedia({
-          quoteId: id,
-          fileName: file.originalname,
-          filePath: url,
-          fileType: file.mimetype.startsWith("image/") ? "image" : "document",
-          fileSize: optimized.length
-        });
-        results.push(media);
-      }
-      res.json({ success: true, media: results });
-    } catch (error) {
-      console.error("[MobileQuoteMedia] Error:", error);
-      res.status(500).json({ message: "Erreur lors de l'upload", error: error.message });
-    }
-  });
-  app3.post("/api/mobile/invoices/:id/media", isAuthenticated, uploadImage.array("images", 10), async (req, res) => {
-    try {
-      const { id } = req.params;
-      const invoice = await storage.getInvoice(id);
-      if (!invoice) return res.status(404).json({ message: "Facture non trouv\xE9e" });
-      const files = req.files;
-      if (!files || files.length === 0) {
-        return res.status(400).json({ message: "Aucune image fournie" });
-      }
-      const results = [];
-      for (const file of files) {
-        const optimized = await optimizeImageBuffer(file.buffer, file.mimetype);
-        const url = await uploadToStorage2(optimized, file.originalname, "invoices");
-        const media = await storage.createInvoiceMedia({
-          invoiceId: id,
-          fileName: file.originalname,
-          filePath: url,
-          fileType: file.mimetype.startsWith("image/") ? "image" : "document",
-          fileSize: optimized.length
-        });
-        results.push(media);
-      }
-      res.json({ success: true, media: results });
-    } catch (error) {
-      console.error("[MobileInvoiceMedia] Error:", error);
-      res.status(500).json({ message: "Erreur lors de l'upload", error: error.message });
-    }
-  });
-  app3.post("/api/mobile/upload/presigned", isAuthenticated, async (req, res) => {
-    try {
-      const { fileName, contentType, folder } = req.body;
-      if (!fileName) {
-        return res.status(400).json({ message: "fileName requis" });
-      }
-      const { isCloudflareR2Configured: isCloudflareR2Configured2, getPresignedUploadUrl: getPresignedUploadUrl2 } = await Promise.resolve().then(() => (init_cloudflareR2Service(), cloudflareR2Service_exports));
-      if (!isCloudflareR2Configured2()) {
-        return res.status(503).json({ message: "Cloudflare R2 non configur\xE9" });
-      }
-      const key = `${folder || "uploads"}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}_${fileName}`;
-      const uploadUrl = await getPresignedUploadUrl2(key, contentType || "image/jpeg", 3600);
-      const publicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL;
-      const fileUrl = publicUrl ? `${publicUrl.replace(/\/$/, "")}/${key}` : `/r2/${key}`;
-      res.json({
-        success: true,
-        uploadUrl,
-        key,
-        fileUrl
-      });
-    } catch (error) {
-      console.error("[PresignedUpload] Error:", error);
-      res.status(500).json({ message: "Erreur lors de la g\xE9n\xE9ration de l'URL", error: error.message });
-    }
-  });
-  app3.get("/api/mobile/storage/status", isAuthenticated, async (_req, res) => {
-    try {
-      const { isCloudflareR2Configured: isCloudflareR2Configured2 } = await Promise.resolve().then(() => (init_cloudflareR2Service(), cloudflareR2Service_exports));
-      const { isGoogleDriveConfigured: isGoogleDriveConfigured2 } = await Promise.resolve().then(() => (init_googleDriveStorage(), googleDriveStorage_exports));
-      res.json({
-        cloudflareR2: isCloudflareR2Configured2(),
-        googleDrive: isGoogleDriveConfigured2(),
-        localStorage: true
-      });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/settings", isAuthenticated, async (_req, res) => {
-    try {
-      const settings = await storage.getApplicationSettings();
-      res.json(settings);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.post("/api/mobile/chat/conversations", isAuthenticated, async (req, res) => {
-    try {
-      const { title, participantIds, type } = req.body;
-      if (!participantIds || !Array.isArray(participantIds) || participantIds.length === 0) {
-        return res.status(400).json({ message: "Participants requis" });
-      }
-      const conversationType = type || "client_admin";
-      const allParticipantIds = [.../* @__PURE__ */ new Set([req.user.id, ...participantIds])];
-      const conversation = await storage.createChatConversation({
-        title: title || "Conversation",
-        type: conversationType,
-        createdBy: req.user.id
-      });
-      for (const pid of allParticipantIds) {
-        await storage.addChatParticipant({ conversationId: conversation.id, userId: pid });
-      }
-      res.json(conversation);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/chat/conversations", isAuthenticated, async (req, res) => {
-    try {
-      const conversations = await storage.getChatConversations(req.user.id);
-      res.json(conversations);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.get("/api/mobile/chat/conversations/:id/messages", isAuthenticated, async (req, res) => {
-    try {
-      const participants = await storage.getChatParticipants(req.params.id);
-      if (!participants.some((p) => p.userId === req.user.id)) {
-        return res.status(403).json({ message: "Non autoris\xE9" });
-      }
-      const messages = await storage.getChatMessages(req.params.id, 50, 0);
-      await storage.updateLastRead(req.params.id, req.user.id);
-      res.json(messages);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.post("/api/mobile/chat/conversations/:id/messages", isAuthenticated, async (req, res) => {
-    try {
-      const participants = await storage.getChatParticipants(req.params.id);
-      if (!participants.some((p) => p.userId === req.user.id)) {
-        return res.status(403).json({ message: "Non autoris\xE9" });
-      }
-      const { content } = req.body;
-      if (!content?.trim()) return res.status(400).json({ message: "Message vide" });
-      const message = await storage.createChatMessage({
-        conversationId: req.params.id,
-        senderId: req.user.id,
-        content: content.trim()
-      });
-      const sender = await storage.getUser(req.user.id);
-      res.json({ ...message, sender, attachments: [] });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.post("/api/mobile/ai/assistant", isAuthenticated, async (req, res) => {
-    try {
-      const { messages } = req.body;
-      if (!messages || !Array.isArray(messages) || messages.length === 0) {
-        return res.status(400).json({ message: "Messages requis" });
-      }
-      const { generateAssistantResponse: generateAssistantResponse2 } = await Promise.resolve().then(() => (init_aiAssistant(), aiAssistant_exports));
-      const response = await generateAssistantResponse2(messages, req.user.role);
-      res.json({ response });
-    } catch (error) {
-      res.status(500).json({ message: "Assistant indisponible" });
-    }
-  });
-  app3.post("/api/mobile/quotes/:id/view-link", isAuthenticated, async (req, res) => {
-    try {
-      const quote = await storage.getQuote(req.params.id);
-      if (!quote) return res.status(404).json({ message: "Devis non trouv\xE9" });
-      const user = req.user;
-      if (user.role !== "admin" && user.role !== "superadmin" && quote.clientId !== user.id) {
-        return res.status(403).json({ message: "Non autoris\xE9" });
-      }
-      let viewToken = quote.viewToken;
-      if (!viewToken) {
-        const crypto2 = await import("crypto");
-        viewToken = crypto2.randomBytes(32).toString("hex");
-        await storage.updateQuote(quote.id, { viewToken });
-      }
-      res.json({ viewUrl: buildUrl(req, `/devis/${viewToken}`) });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.post("/api/mobile/invoices/:id/view-link", isAuthenticated, async (req, res) => {
-    try {
-      const invoice = await storage.getInvoice(req.params.id);
-      if (!invoice) return res.status(404).json({ message: "Facture non trouv\xE9e" });
-      const user = req.user;
-      if (user.role !== "admin" && user.role !== "superadmin" && invoice.clientId !== user.id) {
-        return res.status(403).json({ message: "Non autoris\xE9" });
-      }
-      let viewToken = invoice.viewToken;
-      if (!viewToken) {
-        const crypto2 = await import("crypto");
-        viewToken = crypto2.randomBytes(32).toString("hex");
-        await storage.updateInvoice(invoice.id, { viewToken });
-      }
-      res.json({ viewUrl: buildUrl(req, `/facture/${viewToken}`) });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-  app3.all("/api/mobile/admin/*", isAuthenticated, (req, res, next) => {
-    const originalUrl = req.originalUrl;
-    const newPath = originalUrl.replace("/api/mobile/admin/", "/api/admin/");
-    req.url = newPath;
-    req.originalUrl = newPath;
-    req.path = newPath;
-    req.app.handle(req, res, next);
-  });
-  app3.get("/api/mobile/routes", isAuthenticated, (_req, res) => {
-    const routes = {
-      auth: {
-        login: { method: "POST", path: "/api/mobile/auth/login" },
-        me: { method: "GET", path: "/api/mobile/auth/me" },
-        refreshToken: { method: "POST", path: "/api/mobile/refresh-token" }
-      },
-      profile: {
-        get: { method: "GET", path: "/api/mobile/profile" },
-        update: { method: "PATCH", path: "/api/mobile/profile" },
-        avatar: { method: "POST", path: "/api/mobile/profile/avatar" }
-      },
-      quotes: {
-        list: { method: "GET", path: "/api/mobile/quotes" },
-        detail: { method: "GET", path: "/api/mobile/quotes/:id" },
-        create: { method: "POST", path: "/api/mobile/quotes" },
-        media: { method: "GET", path: "/api/mobile/quotes/:id/media" },
-        addMedia: { method: "POST", path: "/api/mobile/quotes/:id/media" },
-        viewLink: { method: "POST", path: "/api/mobile/quotes/:id/view-link" }
-      },
-      invoices: {
-        list: { method: "GET", path: "/api/mobile/invoices" },
-        detail: { method: "GET", path: "/api/mobile/invoices/:id" },
-        media: { method: "GET", path: "/api/mobile/invoices/:id/media" },
-        addMedia: { method: "POST", path: "/api/mobile/invoices/:id/media" },
-        viewLink: { method: "POST", path: "/api/mobile/invoices/:id/view-link" }
-      },
-      reservations: {
-        list: { method: "GET", path: "/api/mobile/reservations" },
-        detail: { method: "GET", path: "/api/mobile/reservations/:id" }
-      },
-      notifications: {
-        list: { method: "GET", path: "/api/mobile/notifications" },
-        unreadCount: { method: "GET", path: "/api/mobile/notifications/unread-count" },
-        markRead: { method: "PATCH", path: "/api/mobile/notifications/:id/read" },
-        markAllRead: { method: "POST", path: "/api/mobile/notifications/mark-all-read" }
-      },
-      chat: {
-        createConversation: { method: "POST", path: "/api/mobile/chat/conversations" },
-        listConversations: { method: "GET", path: "/api/mobile/chat/conversations" },
-        getMessages: { method: "GET", path: "/api/mobile/chat/conversations/:id/messages" },
-        sendMessage: { method: "POST", path: "/api/mobile/chat/conversations/:id/messages" }
-      },
-      admin: {
-        _description: "All /api/admin/* routes are available via /api/mobile/admin/* with Bearer token auth",
-        dashboard: { method: "GET", path: "/api/mobile/admin/analytics" },
-        advancedAnalytics: { method: "GET", path: "/api/mobile/admin/advanced-analytics" },
-        users: {
-          list: { method: "GET", path: "/api/mobile/admin/users" },
-          detail: { method: "GET", path: "/api/mobile/admin/users/:id" },
-          create: { method: "POST", path: "/api/mobile/admin/users" },
-          update: { method: "PATCH", path: "/api/mobile/admin/users/:id" },
-          delete: { method: "DELETE", path: "/api/mobile/admin/users/:id" }
-        },
-        clients: {
-          list: { method: "GET", path: "/api/mobile/admin/clients" },
-          create: { method: "POST", path: "/api/mobile/admin/clients" }
-        },
-        services: {
-          list: { method: "GET", path: "/api/mobile/admin/services" },
-          create: { method: "POST", path: "/api/mobile/admin/services" },
-          update: { method: "PATCH", path: "/api/mobile/admin/services/:id" },
-          delete: { method: "DELETE", path: "/api/mobile/admin/services/:id" }
-        },
-        quotes: {
-          list: { method: "GET", path: "/api/mobile/admin/quotes" },
-          detail: { method: "GET", path: "/api/mobile/admin/quotes/:id" },
-          create: { method: "POST", path: "/api/mobile/admin/quotes" },
-          update: { method: "PATCH", path: "/api/mobile/admin/quotes/:id" },
-          delete: { method: "DELETE", path: "/api/mobile/admin/quotes/:id" },
-          sendEmail: { method: "POST", path: "/api/mobile/admin/quotes/:id/send-email" },
-          items: { method: "GET", path: "/api/mobile/admin/quotes/:id/items" },
-          addItem: { method: "POST", path: "/api/mobile/admin/quotes/:id/items" },
-          media: { method: "GET", path: "/api/mobile/admin/quotes/:id/media" },
-          addMedia: { method: "POST", path: "/api/mobile/admin/quotes/:id/media" }
-        },
-        invoices: {
-          list: { method: "GET", path: "/api/mobile/admin/invoices" },
-          detail: { method: "GET", path: "/api/mobile/admin/invoices/:id" },
-          create: { method: "POST", path: "/api/mobile/admin/invoices" },
-          createDirect: { method: "POST", path: "/api/mobile/admin/invoices/direct" },
-          update: { method: "PATCH", path: "/api/mobile/admin/invoices/:id" },
-          delete: { method: "DELETE", path: "/api/mobile/admin/invoices/:id" },
-          sendEmail: { method: "POST", path: "/api/mobile/admin/invoices/:id/send-email" },
-          items: { method: "GET", path: "/api/mobile/admin/invoices/:id/items" },
-          addItem: { method: "POST", path: "/api/mobile/admin/invoices/:id/items" },
-          media: { method: "GET", path: "/api/mobile/admin/invoices/:id/media" },
-          addMedia: { method: "POST", path: "/api/mobile/admin/invoices/:id/media" }
-        },
-        reservations: {
-          list: { method: "GET", path: "/api/mobile/admin/reservations" },
-          create: { method: "POST", path: "/api/mobile/admin/reservations" },
-          update: { method: "PATCH", path: "/api/mobile/admin/reservations/:id" },
-          delete: { method: "DELETE", path: "/api/mobile/admin/reservations/:id" }
-        },
-        settings: {
-          get: { method: "GET", path: "/api/mobile/admin/settings" },
-          update: { method: "PATCH", path: "/api/mobile/admin/settings" }
-        },
-        garageLegal: {
-          get: { method: "GET", path: "/api/mobile/admin/garage-legal" },
-          update: { method: "PATCH", path: "/api/mobile/admin/garage-legal" }
-        },
-        engagements: {
-          list: { method: "GET", path: "/api/mobile/admin/engagements" },
-          detail: { method: "GET", path: "/api/mobile/admin/engagements/:id" },
-          create: { method: "POST", path: "/api/mobile/admin/engagements" },
-          update: { method: "PATCH", path: "/api/mobile/admin/engagements/:id" },
-          delete: { method: "DELETE", path: "/api/mobile/admin/engagements/:id" }
-        },
-        workflows: {
-          list: { method: "GET", path: "/api/mobile/admin/workflows" },
-          detail: { method: "GET", path: "/api/mobile/admin/workflows/:id" },
-          create: { method: "POST", path: "/api/mobile/admin/workflows" },
-          update: { method: "PATCH", path: "/api/mobile/admin/workflows/:id" },
-          delete: { method: "DELETE", path: "/api/mobile/admin/workflows/:id" }
-        },
-        repairOrders: {
-          list: { method: "GET", path: "/api/mobile/admin/repair-orders" },
-          detail: { method: "GET", path: "/api/mobile/admin/repair-orders/:id" },
-          create: { method: "POST", path: "/api/mobile/admin/repair-orders" },
-          update: { method: "PATCH", path: "/api/mobile/admin/repair-orders/:id" },
-          delete: { method: "DELETE", path: "/api/mobile/admin/repair-orders/:id" }
-        },
-        backups: {
-          list: { method: "GET", path: "/api/mobile/admin/backups" },
-          create: { method: "POST", path: "/api/mobile/admin/backups" },
-          download: { method: "GET", path: "/api/mobile/admin/backups/:name/download" },
-          stats: { method: "GET", path: "/api/mobile/admin/backups/stats" }
-        },
-        auditLogs: {
-          list: { method: "GET", path: "/api/mobile/admin/audit-logs" },
-          detail: { method: "GET", path: "/api/mobile/admin/audit-logs/:id" }
-        },
-        accounting: {
-          entries: { method: "GET", path: "/api/mobile/admin/accounting/entries" },
-          createEntry: { method: "POST", path: "/api/mobile/admin/accounting/entries" },
-          tvaReport: { method: "GET", path: "/api/mobile/admin/accounting/tva-report" },
-          profitLoss: { method: "GET", path: "/api/mobile/admin/accounting/profit-loss" },
-          cashFlow: { method: "GET", path: "/api/mobile/admin/accounting/cash-flow" }
-        },
-        notificationRules: {
-          list: { method: "GET", path: "/api/mobile/admin/notification-rules" },
-          create: { method: "POST", path: "/api/mobile/admin/notification-rules" },
-          update: { method: "PATCH", path: "/api/mobile/admin/notification-rules/:id" },
-          delete: { method: "DELETE", path: "/api/mobile/admin/notification-rules/:id" }
-        },
-        deliveryNotes: {
-          list: { method: "GET", path: "/api/mobile/admin/delivery-notes" },
-          detail: { method: "GET", path: "/api/mobile/admin/delivery-notes/:id" },
-          create: { method: "POST", path: "/api/mobile/admin/delivery-notes" },
-          update: { method: "PATCH", path: "/api/mobile/admin/delivery-notes/:id" },
-          delete: { method: "DELETE", path: "/api/mobile/admin/delivery-notes/:id" }
-        },
-        reviews: {
-          list: { method: "GET", path: "/api/mobile/admin/reviews" },
-          approve: { method: "PATCH", path: "/api/mobile/admin/reviews/:id/approve" },
-          delete: { method: "DELETE", path: "/api/mobile/admin/reviews/:id" }
-        },
-        expenses: {
-          list: { method: "GET", path: "/api/mobile/admin/expenses" },
-          detail: { method: "GET", path: "/api/mobile/admin/expenses/:id" },
-          create: { method: "POST", path: "/api/mobile/admin/expenses" },
-          update: { method: "PATCH", path: "/api/mobile/admin/expenses/:id" },
-          delete: { method: "DELETE", path: "/api/mobile/admin/expenses/:id" }
-        },
-        expenseCategories: {
-          list: { method: "GET", path: "/api/mobile/admin/expense-categories" },
-          create: { method: "POST", path: "/api/mobile/admin/expense-categories" },
-          update: { method: "PATCH", path: "/api/mobile/admin/expense-categories/:id" },
-          delete: { method: "DELETE", path: "/api/mobile/admin/expense-categories/:id" }
-        },
-        creditNotes: {
-          list: { method: "GET", path: "/api/mobile/admin/credit-notes" },
-          detail: { method: "GET", path: "/api/mobile/admin/credit-notes/:id" },
-          create: { method: "POST", path: "/api/mobile/admin/credit-notes" },
-          update: { method: "PATCH", path: "/api/mobile/admin/credit-notes/:id" }
-        },
-        ocr: {
-          history: { method: "GET", path: "/api/mobile/admin/ocr/history" },
-          createQuote: { method: "POST", path: "/api/mobile/admin/ocr/create-quote" },
-          createInvoice: { method: "POST", path: "/api/mobile/admin/ocr/create-invoice" },
-          createExpense: { method: "POST", path: "/api/mobile/admin/ocr/create-expense" }
-        },
-        payments: {
-          list: { method: "GET", path: "/api/mobile/admin/payments" },
-          generateLink: { method: "POST", path: "/api/mobile/admin/payment/generate-link" }
-        },
-        sms: {
-          logs: { method: "GET", path: "/api/mobile/admin/sms/logs" },
-          stats: { method: "GET", path: "/api/mobile/admin/sms/stats" },
-          test: { method: "POST", path: "/api/mobile/admin/sms/test" }
-        },
-        exports: {
-          data: { method: "GET", path: "/api/mobile/admin/export-data" },
-          database: { method: "GET", path: "/api/mobile/admin/export-database" },
-          quotesCSV: { method: "GET", path: "/api/mobile/admin/export/quotes" },
-          invoicesCSV: { method: "GET", path: "/api/mobile/admin/export/invoices" }
-        },
-        storage: {
-          status: { method: "GET", path: "/api/mobile/admin/storage/status" },
-          r2Files: { method: "GET", path: "/api/mobile/admin/r2/files" }
-        },
-        search: { method: "GET", path: "/api/mobile/admin/search-entity" },
-        cache: { method: "POST", path: "/api/mobile/admin/cache/clear" }
-      },
-      upload: {
-        single: { method: "POST", path: "/api/mobile/upload" },
-        multiple: { method: "POST", path: "/api/mobile/upload/multiple" },
-        presigned: { method: "POST", path: "/api/mobile/upload/presigned" }
-      },
-      services: { method: "GET", path: "/api/mobile/services" },
-      settings: { method: "GET", path: "/api/mobile/settings" },
-      ai: { method: "POST", path: "/api/mobile/ai/assistant" }
-    };
-    res.json({ routes, version: "2.0" });
-  });
-  console.log("[Mobile] Routes mobiles enregistrees (auth JWT + session + admin proxy)");
-}
-var init_mobileRoutes = __esm({
-  "server/mobileRoutes.ts"() {
-    "use strict";
-    init_localAuth();
-    init_uploadMiddleware();
-    init_storage();
-    init_imageOptimizer();
-    init_schema();
-    init_urlHelper();
   }
 });
 
@@ -7644,22 +6552,25 @@ __export(aiReportService_exports, {
   generateAiReport: () => generateAiReport,
   generateReportHtml: () => generateReportHtml
 });
-async function callGemini2(prompt, systemPromptOverride) {
-  const url = `${GEMINI_BASE_URL2}/models/${GEMINI_MODEL2}:generateContent`;
+async function callGemini(prompt, systemPromptOverride) {
+  const url = USE_INTEGRATION ? `${GEMINI_BASE_URL}/models/${GEMINI_MODEL}:generateContent` : `${GEMINI_BASE_URL}/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const headers = { "Content-Type": "application/json" };
+  if (USE_INTEGRATION) {
+    headers["x-goog-api-key"] = GEMINI_API_KEY;
+  }
   const body2 = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     systemInstruction: { parts: [{ text: systemPromptOverride || SYSTEM_PROMPT }] },
     generationConfig: {
-      temperature: 0.4,
-      maxOutputTokens: 4096
+      temperature: 0.65,
+      maxOutputTokens: 8192,
+      topP: 0.92,
+      topK: 40
     }
   };
   const response = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": GEMINI_API_KEY2
-    },
+    headers,
     body: JSON.stringify(body2)
   });
   if (!response.ok) {
@@ -7674,75 +6585,263 @@ async function callGemini2(prompt, systemPromptOverride) {
   }
   return text2;
 }
+function inferMotorization(make, model, year) {
+  const m = model.toLowerCase();
+  const mk = make.toLowerCase();
+  const y = parseInt(year, 10);
+  if (m.includes("tdi") || m.includes("hdi") || m.includes("cdti") || m.includes("dci") || m.includes("bluehdi") || m.includes("bluehdI")) return "diesel";
+  if (m.includes("tsi") || m.includes("tfsi") || m.includes("gti") || m.includes("turbo") || m.includes("t5") || m.includes("t6")) return "essence turbo";
+  if (m.includes("hybrid") || m.includes("hybride") || m.includes("phev") || m.includes("e-power") || m.includes("prius") || m.includes("lexus h")) return "hybride";
+  if (m.includes("electric") || m.includes("\xE9lectrique") || m.includes("ev") || m.includes("bev") || m.includes("ioniq") || m.includes("model ") || mk.includes("tesla")) return "\xE9lectrique";
+  if ((mk.includes("bmw") || mk.includes("mercedes") || mk.includes("audi") || mk.includes("volkswagen")) && (m.includes(" d") || m.includes("d "))) return "diesel";
+  if (mk.includes("renault") && (m.includes("dci") || m.includes("tce"))) return m.includes("dci") ? "diesel" : "essence turbo";
+  if (mk.includes("peugeot") && m.includes("hdi")) return "diesel";
+  if (y >= 2022 && (mk.includes("renault") || mk.includes("peugeot") || mk.includes("opel"))) return "essence";
+  return "essence";
+}
+function getUsageContext(usage) {
+  if (!usage) return "";
+  const arr2 = Array.isArray(usage) ? usage : [usage];
+  const filtered = arr2.filter(Boolean);
+  return filtered.length ? filtered.join(", ") : "";
+}
 function buildPrompt(vehicleInfo) {
-  let prompt = `Analyse ce v\xE9hicule et g\xE9n\xE8re un rapport de diagnostic complet:
+  const currentYear = (/* @__PURE__ */ new Date()).getFullYear();
+  const ageYears = Math.max(0, currentYear - parseInt(vehicleInfo.year || "0", 10));
+  const km = vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/\D/g, ""), 10) : null;
+  const motorization = vehicleInfo.carburant || inferMotorization(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year);
+  const engineSpec = vehicleInfo.motorisation || null;
+  const usageContext = getUsageContext(vehicleInfo.usage);
+  let prompt = `## V\xC9HICULE \xC0 ANALYSER (RAPPORT PR\xC9-ACHAT)
 
 `;
-  prompt += `V\xE9hicule: ${vehicleInfo.make} ${vehicleInfo.model}
+  prompt += `| Champ | Valeur |
+|---|---|
 `;
-  prompt += `Ann\xE9e: ${vehicleInfo.year}
+  prompt += `| Marque | **${vehicleInfo.make}** |
 `;
-  if (vehicleInfo.mileage) {
-    prompt += `Kilom\xE9trage: ${vehicleInfo.mileage} km
+  prompt += `| Mod\xE8le | **${vehicleInfo.model}** |
+`;
+  prompt += `| Ann\xE9e | **${vehicleInfo.year}** (${ageYears > 0 ? `${ageYears} an${ageYears > 1 ? "s" : ""} d'\xE2ge` : "r\xE9cent"}) |
+`;
+  if (vehicleInfo.finition) prompt += `| Finition | ${vehicleInfo.finition} |
+`;
+  if (engineSpec) prompt += `| Motorisation | ${engineSpec} |
+`;
+  prompt += `| Carburant | ${motorization} |
+`;
+  if (vehicleInfo.gearbox) prompt += `| Bo\xEEte | ${vehicleInfo.gearbox} |
+`;
+  if (usageContext) prompt += `| Usage pr\xE9vu | ${usageContext} |
+`;
+  if (km !== null && !isNaN(km)) {
+    const avgKmPerYear = ageYears > 0 ? Math.round(km / ageYears) : km;
+    let kmComment = "";
+    if (km < 3e4) kmComment = "tr\xE8s faible \u2192 v\xE9rifier usure par vieillissement/stockage plut\xF4t que par km";
+    else if (km < 8e4) kmComment = "faible \xE0 moyen \u2192 bonne phase de vie, entretiens pr\xE9ventifs \xE0 contr\xF4ler";
+    else if (km < 15e4) kmComment = "moyen-\xE9lev\xE9 \u2192 distribution, embrayage, amortisseurs \xE0 v\xE9rifier";
+    else if (km < 25e4) kmComment = "\xE9lev\xE9 \u2192 vigilance moteur, transmission, \xE9lectronique ancienne";
+    else kmComment = "tr\xE8s \xE9lev\xE9 \u2192 certains composants majeurs potentiellement en fin de vie";
+    prompt += `| Kilom\xE9trage | **${km.toLocaleString("fr-FR")} km** (\u2248 ${avgKmPerYear.toLocaleString("fr-FR")} km/an) \u2014 ${kmComment} |
 `;
   }
   prompt += `
-Probl\xE8me signal\xE9 par le propri\xE9taire:
-${vehicleInfo.issue}
+## CONTEXTE D'ACHAT
 `;
-  prompt += `
-G\xE9n\xE8re un rapport de diagnostic d\xE9taill\xE9 en JSON.`;
+  if (vehicleInfo.issue && vehicleInfo.issue !== "Analyse pr\xE9-achat v\xE9hicule d'occasion") {
+    const cleanIssue = vehicleInfo.issue.replace(/^Analyse pré-achat véhicule d'occasion\s*\|?\s*/i, "").trim();
+    if (cleanIssue) prompt += `Informations compl\xE9mentaires du client : "${cleanIssue}"
+
+`;
+  }
+  prompt += `Objectif : rapport pr\xE9-achat complet pour aider un particulier \xE0 d\xE9cider s'il doit acheter ce v\xE9hicule, \xE0 quel prix et avec quelles pr\xE9cautions.
+
+`;
+  prompt += `## INSTRUCTIONS SP\xC9CIFIQUES POUR CE RAPPORT
+
+`;
+  prompt += `### 1. Fiabilit\xE9 & d\xE9fauts de s\xE9rie
+`;
+  prompt += `Mobilise tes connaissances pr\xE9cises sur le **${vehicleInfo.make} ${vehicleInfo.model}** mill\xE9sime **${vehicleInfo.year}** avec motorisation **${motorization}**${engineSpec ? ` (${engineSpec})` : ""}. Cite les d\xE9fauts de s\xE9rie document\xE9s et leur fr\xE9quence r\xE9elle (pas hypoth\xE9tiques). Sources accept\xE9es : forums sp\xE9cialis\xE9s (Turbo.fr, Caradisiac, M\xE9capassion), ADAC Zuverl\xE4ssigkeitsreport, Que Choisir, TSB constructeur, Rappel.fr.
+
+`;
+  if (motorization === "diesel") {
+    prompt += `### 2. Points sp\xE9cifiques diesel
+`;
+    prompt += `Analyse la cha\xEEne FAP/EGR/AdBlue (si applicable), la fiabilit\xE9 du turbocompresseur, l'injection haute pression (pompe HP, injecteurs), et les risques li\xE9s \xE0 un usage urbain court-trajets (encrassement FAP, dilution huile). Pour ce mod\xE8le : y a-t-il des d\xE9fauts de s\xE9rie document\xE9s sur ces composants ?
+
+`;
+  } else if (motorization === "hybride") {
+    prompt += `### 2. Points sp\xE9cifiques hybride
+`;
+    prompt += `Analyse la d\xE9gradation probable de la batterie HT selon l'\xE2ge (${ageYears} ans) et le kilom\xE9trage${km ? ` (${km.toLocaleString("fr-FR")} km)` : ""}. Donne la capacit\xE9 de batterie d'origine vs. d\xE9gradation estim\xE9e, le co\xFBt de remplacement batterie en 2026 et la disponibilit\xE9 des pi\xE8ces. Quelle est la garantie batterie constructeur pour ce mod\xE8le ?
+
+`;
+  } else if (motorization === "\xE9lectrique") {
+    prompt += `### 2. Points sp\xE9cifiques \xE9lectrique
+`;
+    prompt += `\xC9value la d\xE9gradation probable de la batterie HT (SOH estim\xE9 selon ${ageYears} ans / ${km ? `${km.toLocaleString("fr-FR")} km` : "km inconnu"}). Donne le co\xFBt de remplacement batterie pour ce mod\xE8le en 2026. Couvre aussi la disponibilit\xE9 des chargeurs AC/DC compatibles et la compatibilit\xE9 r\xE9seau de charge.
+
+`;
+  } else {
+    prompt += `### 2. Points sp\xE9cifiques essence
+`;
+    prompt += `Analyse la distribution (courroie/cha\xEEne \u2014 co\xFBt et fr\xE9quence de remplacement sur ce moteur), les risques d'encrassement injecteurs/soupapes (injection directe GDI ?), et la fiabilit\xE9 du turbo si applicable. Y a-t-il des d\xE9fauts connus sur cette g\xE9n\xE9ration moteur ?
+
+`;
+  }
+  prompt += `### 3. Analyse kilom\xE9trage & \xE2ge
+`;
+  if (km !== null && !isNaN(km)) {
+    if (km > 1e5) {
+      prompt += `\xC0 **${km.toLocaleString("fr-FR")} km**, liste pr\xE9cis\xE9ment quels entretiens ont normalement \xE9t\xE9 effectu\xE9s selon les pr\xE9conisations constructeur et lesquels sont imminents. L'acheteur doit demander les factures pour : `;
+      const checkItems = ["vidanges", "filtres (air, habitacle, carburant)", "distribution/cha\xEEne"];
+      if (km > 15e4) checkItems.push("embrayage (si thermique)", "amortisseurs", "joints moteur");
+      prompt += checkItems.join(", ") + `.
+
+`;
+    } else {
+      prompt += `\xC0 **${km.toLocaleString("fr-FR")} km**, le v\xE9hicule est encore en phase d'entretien courant. V\xE9rifie si les vidanges et filtres ont \xE9t\xE9 respect\xE9s selon le carnet constructeur.
+
+`;
+    }
+  }
+  if (ageYears >= 7) {
+    prompt += `Avec **${ageYears} ans** d'\xE2ge : int\xE8gre obligatoirement le vieillissement des durites (refroidissement, direction assist\xE9e), joints d'\xE9tanch\xE9it\xE9 caoutchouc, capteurs (sonde lambda, d\xE9bitm\xE8tre air), et la corrosion des connecteurs \xE9lectriques.
+
+`;
+  }
+  prompt += `### 4. Budget entretien 24 mois
+`;
+  prompt += `Liste les interventions probables dans les 24 prochains mois avec co\xFBts r\xE9alistes en France 2026 (pi\xE8ce + main d'\u0153uvre, garage ind\xE9pendant vs. sp\xE9cialiste). Sois pr\xE9cis : pas "r\xE9vision" mais "vidange + filtre huile + filtre air = 120-180 \u20AC ind\xE9pendant".
+
+`;
+  prompt += `### 5. Valeur march\xE9
+`;
+  prompt += `Estime la cote march\xE9 de ce **${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.year}**${km ? ` \xE0 ${km.toLocaleString("fr-FR")} km` : ""}${vehicleInfo.finition ? `, finition ${vehicleInfo.finition}` : ""} selon AutoScout24/LaCentrale/Argus en mai 2026. Indique si le prix demand\xE9 (si connu) est juste, bas ou \xE9lev\xE9. Donne la fourchette r\xE9aliste.
+
+`;
+  if (usageContext) {
+    prompt += `### 6. Ad\xE9quation \xE0 l'usage pr\xE9vu
+`;
+    prompt += `L'acheteur pr\xE9voit un usage : **${usageContext}**. Ce v\xE9hicule (${motorization}, ${km ? `${km.toLocaleString("fr-FR")} km` : "km inconnu"}) est-il bien adapt\xE9 \xE0 cet usage ? Y a-t-il des risques sp\xE9cifiques (ex : diesel court-trajet en ville = FAP encrass\xE9, hybride autoroute = batterie peu recharg\xE9e, etc.) ?
+
+`;
+  }
+  prompt += `### Score d'achat
+`;
+  prompt += `Calcule le score (0-10) selon : \xE9tat m\xE9canique probable (40%) + kilom\xE9trage/\xE2ge (30%) + fiabilit\xE9 document\xE9e du mod\xE8le (20%) + rapport qualit\xE9-prix estim\xE9 (10%).
+`;
+  prompt += `Produis des negotiationTips CHIFFR\xC9S en \u20AC bas\xE9s sur les d\xE9fauts/risques identifi\xE9s.
+`;
+  prompt += `Produis une inspectionChecklist de points v\xE9rifiables par un particulier lors de la visite/essai, SP\xC9CIFIQUES \xE0 ce mod\xE8le.
+
+`;
+  prompt += `Produis le rapport JSON complet selon le format impos\xE9. Sois PR\xC9CIS, SP\xC9CIFIQUE et UTILE pour un acheteur particulier. Aucune phrase g\xE9n\xE9rique.`;
   return prompt;
 }
+function generateFallbackPurchaseRecommendation(vehicleInfo) {
+  const motorization = inferMotorization(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year);
+  const km = vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/\D/g, ""), 10) : null;
+  const ageYears = Math.max(0, (/* @__PURE__ */ new Date()).getFullYear() - parseInt(vehicleInfo.year || "0", 10));
+  const baseChecklist = [
+    "V\xE9rifier la couleur de l'huile sur la jauge \u2014 huile noire tr\xE8s \xE9paisse = entretiens n\xE9glig\xE9s, traces laiteuses = joint de culasse suspect",
+    "Demander le carnet d'entretien complet avec les factures \u2014 refuser si entretiens non document\xE9s",
+    "Lancer le moteur \xE0 froid pour observer fum\xE9es et vibrations anormales au d\xE9marrage",
+    "Tester tous les \xE9quipements \xE9lectriques (vitres, r\xE9tros, clim, chauffage, autoradio) \u2014 les pannes \xE9lectroniques sont co\xFBteuses",
+    "Observer sous le v\xE9hicule moteur chaud : toute fuite d'huile, de liquide de refroidissement ou de liquide de direction",
+    "Faire scanner le v\xE9hicule par un garage avant achat (40-80 \u20AC) \u2014 lire tous les codes d\xE9faut actifs et m\xE9moris\xE9s"
+  ];
+  if (motorization === "diesel") {
+    baseChecklist.push("Tester une acc\xE9l\xE9ration franche \xE0 80 km/h \u2014 absence de fum\xE9e noire/bleue et progression fluide = bon signe");
+    baseChecklist.push("Demander la date du dernier nettoyage FAP ou remplacement \u2014 FAP colmat\xE9 = r\xE9paration 400-1 200 \u20AC");
+  } else if (motorization === "\xE9lectrique" || motorization === "hybride") {
+    baseChecklist.push("Demander le rapport SOH (State of Health) de la batterie \u2014 refuser si inf\xE9rieur \xE0 80% ou non disponible");
+    baseChecklist.push("Tester la charge AC (borne 7 kW) et v\xE9rifier le temps de charge r\xE9el vs. th\xE9orique");
+  } else {
+    baseChecklist.push("V\xE9rifier la date de remplacement de la courroie de distribution (ou l'\xE9tat de la cha\xEEne si applicable) sur les factures");
+  }
+  if (km && km > 1e5) {
+    baseChecklist.push(`\xC0 ${km.toLocaleString("fr-FR")} km : demander les factures de remplacement amortisseurs, embrayage, courroie de distribution et accessoires`);
+  }
+  return {
+    score: 5.5,
+    verdict: "N\xE9gocier",
+    negotiationTips: [
+      "Faites scanner le v\xE9hicule par un garage avant achat (40-80 \u20AC) \u2014 utilisez tout d\xE9faut trouv\xE9 pour n\xE9gocier une remise \xE9quivalente au co\xFBt de r\xE9paration",
+      "Demandez un rapport Histovec (gratuit) ou CarVertical \u2014 ant\xE9c\xE9dents d'accident non d\xE9clar\xE9s = levier de -10 \xE0 -20% du prix",
+      "Absence de factures d'entretien = risque = n\xE9gociation minimale de 300-500 \u20AC pour couvrir les interventions \xE0 pr\xE9voir"
+    ],
+    inspectionChecklist: baseChecklist
+  };
+}
 function generateFallbackReport(vehicleInfo) {
+  const motorization = inferMotorization(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year);
+  const km = vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/\D/g, ""), 10) : null;
+  const ageYears = Math.max(0, (/* @__PURE__ */ new Date()).getFullYear() - parseInt(vehicleInfo.year || "0", 10));
   return {
     vehicleInfo,
-    summary: `Rapport de diagnostic pr\xE9liminaire pour ${vehicleInfo.make} ${vehicleInfo.model} (${vehicleInfo.year}). L'analyse automatique a identifi\xE9 plusieurs points d'attention bas\xE9s sur la description du probl\xE8me.`,
+    summary: `Rapport pr\xE9-achat pour le ${vehicleInfo.make} ${vehicleInfo.model} (${vehicleInfo.year}${km ? `, ${km.toLocaleString("fr-FR")} km` : ""}), motorisation ${motorization}. ${ageYears > 5 ? `Avec ${ageYears} ans d'\xE2ge, certains composants d'usure m\xE9ritent une v\xE9rification approfondie avant acquisition. ` : ""}Une inspection physique du v\xE9hicule reste indispensable avant de signer, id\xE9alement accompagn\xE9e d'un scan \xE9lectronique complet par un garage de confiance (40-80 \u20AC).`,
     sections: [
       {
-        title: "Analyse du probl\xE8me signal\xE9",
-        content: `Le propri\xE9taire signale le probl\xE8me suivant sur son ${vehicleInfo.make} ${vehicleInfo.model} : ${vehicleInfo.issue}. Une inspection visuelle et un diagnostic \xE9lectronique sont recommand\xE9s pour confirmer l'origine exacte du probl\xE8me.`,
+        title: `Profil fiabilit\xE9 \u2014 ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.year}`,
+        content: `Ce ${vehicleInfo.make} ${vehicleInfo.model} de ${vehicleInfo.year} en motorisation ${motorization}${km ? ` \xE0 ${km.toLocaleString("fr-FR")} km` : ""} n\xE9cessite une \xE9valuation compl\xE8te avant achat. Consultez les retours d'exp\xE9rience sur les forums sp\xE9cialis\xE9s (Caradisiac, Turbo.fr) pour ce mod\xE8le et ce mill\xE9sime pr\xE9cis. V\xE9rifiez notamment les rappels constructeur sur Rappel.fr (gratuit) en entrant le num\xE9ro de s\xE9rie du v\xE9hicule.`,
         severity: "medium"
       },
       {
-        title: "Points de contr\xF4le recommand\xE9s",
-        content: "Il est conseill\xE9 de v\xE9rifier les \xE9l\xE9ments suivants : syst\xE8me de freinage, niveaux de fluides, \xE9tat des filtres, courroie de distribution, syst\xE8me de refroidissement, et \xE9tat g\xE9n\xE9ral de la suspension.",
-        severity: "low"
+        title: "Points d'entretien \xE0 v\xE9rifier selon kilom\xE9trage et \xE2ge",
+        content: `${ageYears >= 5 ? `V\xE9hicule de ${ageYears} ans : les durites de refroidissement, joints d'\xE9tanch\xE9it\xE9 et capteurs \xE9lectroniques vieillissent ind\xE9pendamment du kilom\xE9trage. ` : ""}${km && km > 1e5 ? `\xC0 ${km.toLocaleString("fr-FR")} km, demandez imp\xE9rativement les factures prouvant le remplacement de la distribution, de l'embrayage et des amortisseurs. ` : ""}Exigez le carnet d'entretien complet avec toutes les factures pour valider l'historique d'entretien.`,
+        severity: km && km > 15e4 ? "high" : "low"
       },
       {
-        title: "Historique v\xE9hicule",
-        content: `Le ${vehicleInfo.make} ${vehicleInfo.model} de ${vehicleInfo.year}${vehicleInfo.mileage ? ` avec ${vehicleInfo.mileage} km` : ""} n\xE9cessite un suivi r\xE9gulier des points d'usure courants pour ce mod\xE8le. Consultez le carnet d'entretien constructeur.`,
+        title: "Budget entretien \xE0 anticiper",
+        content: `Pr\xE9voir un budget d'entretien courant (vidange + filtres) de 120-200 \u20AC par an en garage ind\xE9pendant. Si la distribution n'a pas \xE9t\xE9 chang\xE9e et approche de son \xE9ch\xE9ance constructeur, comptez 400-900 \u20AC selon le mod\xE8le. Consultez un garage de confiance pour chiffrer l'ensemble des interventions \xE0 pr\xE9voir.`,
         severity: "low"
       }
     ],
     recommendations: [
-      "Effectuer un diagnostic \xE9lectronique complet (OBD-II) pour identifier les codes d\xE9faut",
-      "V\xE9rifier l'\xE9tat des pi\xE8ces d'usure (plaquettes, disques, amortisseurs)",
-      "Contr\xF4ler les niveaux de tous les fluides (huile, liquide de refroidissement, liquide de frein)",
-      "Planifier un rendez-vous chez un m\xE9canicien qualifi\xE9 pour une inspection approfondie"
+      "AVANT DE SIGNER : faire scanner le v\xE9hicule par un garage ind\xE9pendant (40-80 \u20AC) \u2014 lire tous les codes d\xE9faut actifs et m\xE9moris\xE9s",
+      "PENDANT LA VISITE : v\xE9rifier la couleur et le niveau d'huile sur la jauge \u2014 huile noire = entretiens n\xE9glig\xE9s",
+      "DEMANDER : toutes les factures d'entretien + carnet constructeur tamponn\xE9",
+      "V\xC9RIFIER : ant\xE9c\xE9dents sur Histovec.fr (gratuit) ou SIV pour d\xE9tecter un sinistre non d\xE9clar\xE9",
+      "BUDGET : pr\xE9voir 300-600 \u20AC d'entretien dans les 6-12 premiers mois (r\xE9vision de reprise)"
     ],
-    estimatedCost: "50-200 EUR (diagnostic initial)",
+    estimatedCost: "Budget entretien pr\xE9visible sur 24 mois : 400-800 \u20AC (garage ind\xE9pendant). Hors r\xE9parations impr\xE9vues.",
     urgencyLevel: "medium",
+    purchaseRecommendation: generateFallbackPurchaseRecommendation(vehicleInfo),
     generatedAt: (/* @__PURE__ */ new Date()).toISOString()
   };
 }
 async function generateAiReport(vehicleInfo, customSystemPrompt) {
   try {
     const prompt = buildPrompt(vehicleInfo);
-    const rawResponse = await callGemini2(prompt, customSystemPrompt || void 0);
+    const rawResponse = await callGemini(prompt, customSystemPrompt || void 0);
     let cleanJson = rawResponse.trim();
     const jsonMatch = cleanJson.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) {
       cleanJson = jsonMatch[1].trim();
     }
+    const firstBrace = cleanJson.indexOf("{");
+    const lastBrace = cleanJson.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      cleanJson = cleanJson.slice(firstBrace, lastBrace + 1);
+    }
     const parsed = JSON.parse(cleanJson);
+    const purchaseRec = parsed.purchaseRecommendation;
+    const validVerdicts = ["Acheter", "N\xE9gocier", "\xC9viter"];
     const report = {
       vehicleInfo,
-      summary: parsed.summary || "Rapport de diagnostic g\xE9n\xE9r\xE9 par IA.",
+      summary: parsed.summary || "Rapport d'analyse pr\xE9-achat g\xE9n\xE9r\xE9 par AutoReport.",
       sections: Array.isArray(parsed.sections) ? parsed.sections : [],
       recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
       estimatedCost: parsed.estimatedCost || void 0,
       urgencyLevel: parsed.urgencyLevel || "medium",
+      purchaseRecommendation: purchaseRec && typeof purchaseRec.score === "number" && validVerdicts.includes(purchaseRec.verdict) ? {
+        score: Math.min(10, Math.max(0, purchaseRec.score)),
+        verdict: purchaseRec.verdict,
+        negotiationTips: Array.isArray(purchaseRec.negotiationTips) ? purchaseRec.negotiationTips : [],
+        inspectionChecklist: Array.isArray(purchaseRec.inspectionChecklist) ? purchaseRec.inspectionChecklist : []
+      } : generateFallbackPurchaseRecommendation(vehicleInfo),
       generatedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
     return report;
@@ -7758,21 +6857,56 @@ function generateReportHtml(report) {
     high: "#f97316",
     critical: "#ef4444"
   };
-  const urgencyLabels = {
-    low: "Faible",
-    medium: "Moyen",
-    high: "\xC9lev\xE9",
-    critical: "Critique"
+  const riskLabels = {
+    low: "Risque faible",
+    medium: "Risque mod\xE9r\xE9",
+    high: "Risque \xE9lev\xE9",
+    critical: "Risque critique"
+  };
+  const verdictColors = {
+    Acheter: "#22c55e",
+    N\u00E9gocier: "#f59e0b",
+    \u00C9viter: "#ef4444"
   };
   const sectionsHtml = report.sections.map(
     (s) => `
     <div style="margin-bottom: 20px; padding: 16px; border-left: 4px solid ${severityColors[s.severity || "medium"]}; background: #f8f9fa; border-radius: 4px;">
       <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1a1a1a;">${s.title}</h3>
       <p style="margin: 0; color: #444; line-height: 1.6; font-size: 13px;">${s.content}</p>
-      ${s.severity ? `<span style="display: inline-block; margin-top: 8px; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; color: white; background: ${severityColors[s.severity]};">${urgencyLabels[s.severity]}</span>` : ""}
+      ${s.severity ? `<span style="display: inline-block; margin-top: 8px; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; color: white; background: ${severityColors[s.severity]};">${riskLabels[s.severity]}</span>` : ""}
     </div>`
   ).join("");
-  const recsHtml = report.recommendations.map((r) => `<li style="margin-bottom: 8px; color: #333; font-size: 13px;">${r}</li>`).join("");
+  const recsHtml = report.recommendations.map((r, i) => `<li style="margin-bottom: 10px; color: #333; font-size: 13px; line-height:1.6;"><strong style="color:#dc2626;">#${i + 1}</strong> ${r}</li>`).join("");
+  const pr = report.purchaseRecommendation;
+  const purchaseHtml = pr ? `
+    <div style="margin-bottom: 30px; padding: 20px; border-radius: 8px; border: 2px solid ${verdictColors[pr.verdict] || "#f59e0b"}; background: ${verdictColors[pr.verdict] || "#f59e0b"}08;">
+      <h2 style="font-size: 16px; font-weight: 700; margin-bottom: 14px; color: #0a0a0a; text-transform: uppercase; letter-spacing: 1px;">Recommandation d'achat</h2>
+      <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 16px; flex-wrap: wrap;">
+        <div style="text-align: center;">
+          <div style="width: 64px; height: 64px; border-radius: 50%; border: 4px solid ${verdictColors[pr.verdict] || "#f59e0b"}; display: flex; align-items: center; justify-content: center;">
+            <span style="font-size: 22px; font-weight: 800; color: ${verdictColors[pr.verdict] || "#f59e0b"};">${pr.score.toFixed(1)}</span>
+          </div>
+          <p style="font-size: 10px; color: #888; margin-top: 4px;">/ 10</p>
+        </div>
+        <div>
+          <span style="display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 16px; font-weight: 800; color: white; background: ${verdictColors[pr.verdict] || "#f59e0b"};">${pr.verdict}</span>
+        </div>
+      </div>
+      ${pr.negotiationTips.length > 0 ? `
+      <div style="margin-bottom: 14px;">
+        <h3 style="font-size: 13px; font-weight: 700; color: #0a0a0a; margin-bottom: 8px;">\u{1F4B0} Arguments de n\xE9gociation</h3>
+        <ul style="padding-left: 16px; margin: 0;">
+          ${pr.negotiationTips.map((t) => `<li style="font-size: 12px; color: #444; margin-bottom: 6px; line-height: 1.5;">${t}</li>`).join("")}
+        </ul>
+      </div>` : ""}
+      ${pr.inspectionChecklist.length > 0 ? `
+      <div>
+        <h3 style="font-size: 13px; font-weight: 700; color: #0a0a0a; margin-bottom: 8px;">\u2705 Points \xE0 v\xE9rifier avant signature</h3>
+        <ul style="padding-left: 16px; margin: 0; list-style: none;">
+          ${pr.inspectionChecklist.map((item) => `<li style="font-size: 12px; color: #444; margin-bottom: 6px; line-height: 1.5; padding-left: 4px;">\u2610 ${item}</li>`).join("")}
+        </ul>
+      </div>` : ""}
+    </div>` : "";
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -7789,7 +6923,7 @@ function generateReportHtml(report) {
     <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 24px; border-bottom: 3px solid #dc2626; margin-bottom: 30px;">
       <div>
         <h1 style="font-size: 28px; font-weight: 800; letter-spacing: 1px;">Auto<span style="color: #dc2626;">Report</span></h1>
-        <p style="font-size: 11px; color: #888; letter-spacing: 3px; text-transform: uppercase; margin-top: 2px;">Rapport IA Automobile</p>
+        <p style="font-size: 11px; color: #888; letter-spacing: 3px; text-transform: uppercase; margin-top: 2px;">Rapport Pr\xE9-Achat V\xE9hicule d'Occasion</p>
       </div>
       <div style="text-align: right;">
         <p style="font-size: 12px; color: #666;">Date: ${new Date(report.generatedAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}</p>
@@ -7816,23 +6950,20 @@ function generateReportHtml(report) {
       </div>
     </div>
 
-    <!-- Urgency -->
+    <!-- Risk Level -->
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding: 14px 18px; border-radius: 8px; background: ${severityColors[report.urgencyLevel]}15; border: 1px solid ${severityColors[report.urgencyLevel]}30;">
       <div style="width: 12px; height: 12px; border-radius: 50%; background: ${severityColors[report.urgencyLevel]};"></div>
-      <span style="font-weight: 600; font-size: 14px;">Niveau d'urgence : ${urgencyLabels[report.urgencyLevel]}</span>
-      ${report.estimatedCost ? `<span style="margin-left: auto; font-weight: 600; font-size: 14px; color: #555;">Estimation : ${report.estimatedCost}</span>` : ""}
+      <span style="font-weight: 600; font-size: 14px;">Niveau de risque : ${riskLabels[report.urgencyLevel]}</span>
+      ${report.estimatedCost ? `<span style="margin-left: auto; font-weight: 600; font-size: 14px; color: #555;">${report.estimatedCost}</span>` : ""}
     </div>
+
+    <!-- Purchase Recommendation -->
+    ${purchaseHtml}
 
     <!-- Summary -->
     <div style="margin-bottom: 30px;">
-      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 12px; color: #0a0a0a;">R\xE9sum\xE9 du diagnostic</h2>
+      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 12px; color: #0a0a0a;">Synth\xE8se de l'analyse</h2>
       <p style="line-height: 1.7; color: #444; font-size: 14px;">${report.summary}</p>
-    </div>
-
-    <!-- Problem -->
-    <div style="margin-bottom: 30px; padding: 16px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
-      <h3 style="font-size: 14px; color: #dc2626; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Probl\xE8me signal\xE9</h3>
-      <p style="color: #333; line-height: 1.6; font-size: 13px;">${report.vehicleInfo.issue}</p>
     </div>
 
     <!-- Sections -->
@@ -7843,7 +6974,7 @@ function generateReportHtml(report) {
 
     <!-- Recommendations -->
     <div style="margin-bottom: 30px;">
-      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #0a0a0a;">Recommandations</h2>
+      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #0a0a0a;">Actions recommand\xE9es avant achat</h2>
       <ol style="padding-left: 20px; line-height: 1.8;">
         ${recsHtml}
       </ol>
@@ -7851,48 +6982,287 @@ function generateReportHtml(report) {
 
     <!-- Footer -->
     <div style="border-top: 2px solid #e5e5e5; padding-top: 20px; margin-top: 40px; text-align: center;">
-      <p style="font-size: 11px; color: #999; margin-bottom: 4px;">Ce rapport a \xE9t\xE9 g\xE9n\xE9r\xE9 automatiquement par AutoReport - Intelligence Artificielle</p>
-      <p style="font-size: 11px; color: #999;">support@autoreport.com | +33 (0)1 21 40 80 80 | www.autoreport.com</p>
+      <p style="font-size: 11px; color: #999; margin-bottom: 4px;">Ce rapport a \xE9t\xE9 g\xE9n\xE9r\xE9 automatiquement par AutoReport \u2014 Analyse IA Pr\xE9-Achat Automobile</p>
+      <p style="font-size: 11px; color: #999;">support@autoreport.com | www.autoreport.com</p>
     </div>
   </div>
 </body>
 </html>`;
 }
-var GEMINI_BASE_URL2, GEMINI_API_KEY2, GEMINI_MODEL2, SYSTEM_PROMPT;
+var USE_INTEGRATION, GEMINI_BASE_URL, GEMINI_API_KEY, GEMINI_MODEL, SYSTEM_PROMPT;
 var init_aiReportService = __esm({
   "server/aiReportService.ts"() {
     "use strict";
-    GEMINI_BASE_URL2 = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || "http://localhost:1106/modelfarm/gemini";
-    GEMINI_API_KEY2 = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || "dummy-key";
-    GEMINI_MODEL2 = "gemini-2.5-flash";
-    SYSTEM_PROMPT = `Tu es un expert en diagnostic automobile chez AutoReport. Tu analyses les probl\xE8mes de v\xE9hicules et g\xE9n\xE8res des rapports de diagnostic professionnels et d\xE9taill\xE9s.
+    USE_INTEGRATION = !!(process.env.AI_INTEGRATIONS_GEMINI_BASE_URL && process.env.AI_INTEGRATIONS_GEMINI_API_KEY);
+    GEMINI_BASE_URL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || "https://generativelanguage.googleapis.com";
+    GEMINI_API_KEY = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
+    GEMINI_MODEL = "gemini-2.0-flash";
+    if (!USE_INTEGRATION && !GEMINI_API_KEY) {
+      console.warn("[AIReport] No Gemini API key configured \u2014 report generation will fail. Set AI_INTEGRATIONS_GEMINI_API_KEY or GEMINI_API_KEY.");
+    }
+    console.info(`[AIReport] Gemini provider: ${USE_INTEGRATION ? "Replit integration proxy" : "Google direct API"}`);
+    SYSTEM_PROMPT = `Tu es ALEXIS, expert senior en analyse pr\xE9-achat automobile chez AutoReport \u2014 consultant ind\xE9pendant avec 30 ans d'exp\xE9rience dans l'\xE9valuation des v\xE9hicules d'occasion. Tu es certifi\xE9 multi-constructeurs (VW Group, PSA, Stellantis, BMW Group, Mercedes, Renault-Nissan, Toyota, Ford, Hyundai-Kia), expert en fiabilit\xE9 des mod\xE8les, historique de sinistralit\xE9, d\xE9fauts de s\xE9rie document\xE9s, TSB (Technical Service Bulletins) et rappels constructeur. Tu connais parfaitement les co\xFBts d'entretien r\xE9els par r\xE9seau (ind\xE9pendant, sp\xE9cialiste marque, concession officielle) et les tendances du march\xE9 occasion en France en 2026.
 
-Tu DOIS r\xE9pondre UNIQUEMENT en JSON valide avec la structure suivante (pas de markdown, pas de texte autour):
+## TON R\xD4LE : CONSEILLER L'ACHETEUR, PAS LE M\xC9CANICIEN
+Tu r\xE9diges des rapports d'analyse pr\xE9-achat destin\xE9s \xE0 des particuliers qui souhaitent acheter un v\xE9hicule d'occasion. Tu ne diagnostiques PAS une panne en atelier. Tu analyses le profil de fiabilit\xE9 et de risque du v\xE9hicule AVANT l'achat pour aider l'acheteur \xE0 prendre la meilleure d\xE9cision.
+
+## INTELLIGENCE CONTEXTUELLE REQUISE
+Pour chaque v\xE9hicule, tu DOIS mobiliser :
+- Les **d\xE9fauts de s\xE9rie document\xE9s** et leur fr\xE9quence (ex : turbo N47 BMW, EGR 2.0 TDI EA189, cha\xEEne de distribution 1.6 HDi, bo\xEEte DSG7 DQ200, joints culasse 1.8 TFSI, etc.)
+- Les **rappels constructeur** connus sur ce mill\xE9sime (informations publiques NHTSA/RAPEX/RAPPEL.FR)
+- La **r\xE9putation fiabilit\xE9** du mod\xE8le selon les statistiques de sinistralit\xE9 (Que Choisir, ADAC, Consumer Reports, forums sp\xE9cialis\xE9s)
+- Les **intervalles d'entretien constructeur** et les co\xFBts r\xE9els en France en 2026
+- La **valeur march\xE9** du v\xE9hicule selon l'Argus, AutoScout24, LaCentrale \u2014 d\xE9pr\xE9ciation et prix juste
+- Les **points de vigilance sp\xE9cifiques** \xE0 ce mill\xE9sime/motorisation que l'acheteur doit imp\xE9rativement v\xE9rifier lors de l'essai
+
+## FORMAT DE R\xC9PONSE \u2014 JSON STRICT
+R\xE9ponds UNIQUEMENT en JSON valide (z\xE9ro markdown, z\xE9ro texte hors JSON) :
 {
-  "summary": "R\xE9sum\xE9 concis du diagnostic en 2-3 phrases",
+  "summary": "Synth\xE8se pr\xE9-achat en 5-7 phrases : pr\xE9sente le v\xE9hicule pr\xE9cis\xE9ment (marque/mod\xE8le/ann\xE9e/motorisation), \xE9value sa r\xE9putation fiabilit\xE9 globale, cite les 2-3 points forts et faibles principaux, donne un avis clair sur l'opportunit\xE9 d'achat au regard du kilom\xE9trage et de l'\xE2ge. Cite le mod\xE8le exact et l'ann\xE9e. Ton doit \xEAtre celui d'un ami expert qui donne un vrai avis.",
   "sections": [
     {
-      "title": "Titre de la section (ex: Analyse du moteur)",
-      "content": "Description d\xE9taill\xE9e du probl\xE8me identifi\xE9, causes possibles et explication technique",
+      "title": "Titre pr\xE9cis et accrocheur \u2014 ex: 'Fiabilit\xE9 moteur : point fort reconnu de cette g\xE9n\xE9ration' ou 'Bo\xEEte DSG7 DQ200 : d\xE9faut de s\xE9rie co\xFBteux \xE0 surveiller imp\xE9rativement'",
+      "content": "Analyse approfondie en 4-6 phrases : contexte document\xE9 (sources : forums sp\xE9cialis\xE9s, ADAC, Que Choisir, TSB constructeur), fr\xE9quence du probl\xE8me ou de la qualit\xE9, impact financier r\xE9el si d\xE9faillance, ce que l'acheteur doit demander ou v\xE9rifier concr\xE8tement (sans n\xE9cessiter d'\xE9quipement de diagnostic professionnel), et si ce point doit influencer la n\xE9gociation du prix.",
       "severity": "low|medium|high|critical"
     }
   ],
   "recommendations": [
-    "Recommandation 1 avec action concr\xE8te",
-    "Recommandation 2 avec action concr\xE8te"
+    "Action pr\xE9-achat n\xB01 \u2014 AVANT DE SIGNER : [v\xE9rification concr\xE8te] \u2014 pourquoi c'est important \u2014 co\xFBt de r\xE9paration si probl\xE8me : [X-Y \u20AC] (r\xE9f. co\xFBts 2026 France)",
+    "Action n\xB02 \u2014 PENDANT L'ESSAI : ...",
+    "Action n\xB03 \u2014 BUDGET \xC0 PR\xC9VOIR dans les 12 mois : [entretien/pi\xE8ce] \u2014 co\xFBt estim\xE9 : [X \u20AC]",
+    "Action n\xB04 \u2014 ARGUMENT DE N\xC9GOCIATION : ..."
   ],
-  "estimatedCost": "Fourchette de prix estim\xE9e (ex: 200-500 EUR)",
-  "urgencyLevel": "low|medium|high|critical"
+  "estimatedCost": "Budget entretien pr\xE9visible sur 24 mois : XXX-YYY \u20AC (garage ind\xE9pendant) / XXX-YYY \u20AC (r\xE9seau sp\xE9cialis\xE9). Hors r\xE9parations impr\xE9vues.",
+  "urgencyLevel": "low|medium|high|critical",
+  "purchaseRecommendation": {
+    "score": 7.5,
+    "verdict": "N\xE9gocier",
+    "negotiationTips": [
+      "Argument chiffr\xE9 n\xB01 : [d\xE9faut document\xE9] \u2192 co\xFBt de remise en \xE9tat [X-Y \u20AC] \u2192 demandez une remise de [montant \u20AC] sur le prix affich\xE9",
+      "Argument n\xB02 : kilom\xE9trage [X km] implique remplacement imminent [pi\xE8ce] dans [d\xE9lai] \u2192 valoris\xE9 [X \u20AC]"
+    ],
+    "inspectionChecklist": [
+      "Point \xE0 v\xE9rifier lors de l'essai physique \u2014 sp\xE9cifique \xE0 ce mod\xE8le/motorisation (sans \xE9quipement pro)",
+      "Document \xE0 demander au vendeur : [facture/carnet/rapport...]",
+      "Comportement \xE0 tester pendant l'essai : [description pr\xE9cise de ce qu'on \xE9coute/ressent/observe]"
+    ]
+  }
 }
 
-R\xE8gles:
-- Toujours r\xE9pondre en fran\xE7ais
-- Fournir au moins 3 sections d'analyse
-- Fournir au moins 3 recommandations
-- Les estimations de co\xFBts doivent \xEAtre r\xE9alistes pour le march\xE9 fran\xE7ais
-- Adapter le niveau de d\xE9tail technique au type de v\xE9hicule
-- Si le kilom\xE9trage est fourni, en tenir compte dans l'analyse
-- \xCAtre pr\xE9cis et professionnel`;
+## STRUCTURE DES SECTIONS \u2014 5 \xC0 6 OBLIGATOIRES, ORIENT\xC9ES ACHETEUR
+1. **Fiabilit\xE9 g\xE9n\xE9rale & r\xE9putation du mod\xE8le** \u2014 bilan objectif (forces et faiblesses connues de cette g\xE9n\xE9ration, stats sinistralit\xE9, avis communaut\xE9s)
+2. **Point(s) faible(s) sp\xE9cifique(s) \xE0 surveiller** \u2014 d\xE9faut(s) de s\xE9rie document\xE9(s) sur cette motorisation/mill\xE9sime avec impact financier r\xE9el
+3. **Analyse kilom\xE9trage & \xE2ge \u2014 usure probable** \u2014 quels composants ont probablement \xE9t\xE9 sollicit\xE9s, quels entretiens sont \xE0 v\xE9rifier ou \xE0 planifier imminemment
+4. **Budget d'entretien r\xE9aliste sur 24 mois** \u2014 liste des interventions probables avec co\xFBts 2026 (distribution, embrayage, freins, amortisseurs, etc.)
+5. **Position march\xE9 & valeur de ce v\xE9hicule** \u2014 est-il au bon prix ? d\xE9pr\xE9ciation, cote Argus/AutoScout24 estim\xE9e, rapport qualit\xE9-prix pour l'acheteur
+6. (Optionnelle) **Point sp\xE9cifique motorisation** \u2014 diesel/essence/hybride/\xE9lectrique : avantages et inconv\xE9nients propres \xE0 ce type pour un usage [usage d\xE9clar\xE9]
+
+## R\xC8GLES NON N\xC9GOCIABLES
+1. **PAS de jargon OBD, pas de codes d\xE9faut P0XXX** \u2014 l'acheteur n'a pas de valise de diagnostic. Remplacement : "faire scanner par un garage avant achat (40-80 \u20AC)"
+2. **PAS de proc\xE9dures d'atelier** (ex: "d\xE9poser le turbo", "mesurer la compression") \u2014 l'acheteur est un particulier
+3. **5 \xE0 8 recommandations** concr\xE8tes, actionnables sans \xE9quipement pro, avec co\xFBts en \u20AC
+4. **Co\xFBts en euros TTC 2026** \u2014 toujours diff\xE9rencier garage ind\xE9pendant et r\xE9seau sp\xE9cialis\xE9/concession
+5. **Jamais de g\xE9n\xE9rique** : "v\xE9rifier les niveaux" \u2192 interdit. \xC0 la place : "V\xE9rifiez la couleur de l'huile sur la jauge : huile noire tr\xE8s \xE9paisse = entretiens n\xE9glig\xE9s (pr\xE9voir vidange 80-120 \u20AC), traces laiteuses = joint de culasse (r\xE9paration 800-2 000 \u20AC)"
+6. **V\xE9hicules premium/sportifs** (Ferrari, Porsche, BMW M, AMG, RS, Maserati) : co\xFBts \xD7 2-5, pr\xE9ciser "r\xE9seau agr\xE9\xE9 constructeur recommand\xE9"
+7. **V\xE9hicules \xE9lectriques/hybrides** : \xE9valuer la d\xE9gradation batterie HT probable selon \xE2ge/km, co\xFBt de remplacement batterie, statut de garantie constructeur
+8. **purchaseRecommendation OBLIGATOIRE** :
+   - score 0-10 : \xE9tat g\xE9n\xE9ral (40%) + kilom\xE9trage/\xE2ge (30%) + fiabilit\xE9 mod\xE8le (20%) + rapport qualit\xE9-prix (10%)
+   - verdict : "Acheter" (\u22657), "N\xE9gocier" (4-6.9), "\xC9viter" (<4)
+   - negotiationTips : 3-5 arguments CHIFFR\xC9S en \u20AC bas\xE9s sur les d\xE9fauts identifi\xE9s
+   - inspectionChecklist : 6-10 points v\xE9rifiables par un particulier lors de l'essai/visite
+9. **urgencyLevel** = niveau de risque global pour l'acheteur : low (v\xE9hicule fiable, bonne affaire), medium (quelques points \xE0 surveiller), high (risques significatifs, n\xE9gociation importante), critical (risques majeurs, d\xE9conseill\xE9 sauf prix tr\xE8s bas)
+10. **R\xE9ponds toujours en FRAN\xC7AIS professionnel mais accessible**`;
+  }
+});
+
+// server/stripeService.ts
+var stripeService_exports = {};
+__export(stripeService_exports, {
+  constructWebhookEvent: () => constructWebhookEvent,
+  createCheckoutSession: () => createCheckoutSession,
+  createInstallmentPaymentIntent: () => createInstallmentPaymentIntent,
+  createSEPAPaymentIntent: () => createSEPAPaymentIntent,
+  getPaymentIntent: () => getPaymentIntent,
+  getStripe: () => getStripe,
+  isStripeConfigured: () => isStripeConfigured,
+  listPayments: () => listPayments,
+  mapStripePaymentMethod: () => mapStripePaymentMethod,
+  retrievePaymentIntentWithCharge: () => retrievePaymentIntentWithCharge,
+  retrieveSession: () => retrieveSession
+});
+import Stripe from "stripe";
+function getStripe() {
+  const secretKey = process.env.STRIPE_SECRET_KEY_PROD || process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    return null;
+  }
+  if (!stripeInstance) {
+    stripeInstance = new Stripe(secretKey, {
+      apiVersion: "2025-01-27.acacia"
+    });
+  }
+  return stripeInstance;
+}
+function isStripeConfigured() {
+  return !!(process.env.STRIPE_SECRET_KEY_PROD || process.env.STRIPE_SECRET_KEY);
+}
+async function createCheckoutSession(options) {
+  const stripe = getStripe();
+  if (!stripe) {
+    throw new Error("Stripe n'est pas configur\xE9. Veuillez ajouter STRIPE_SECRET_KEY.");
+  }
+  const session2 = await stripe.checkout.sessions.create({
+    payment_method_configuration: "pmc_1T0mKfPJqqJIj81kvE4fVmGF",
+    line_items: [
+      {
+        price_data: {
+          currency: "eur",
+          product_data: {
+            name: `Facture ${options.invoiceNumber}`,
+            description: options.description || `Paiement facture ${options.invoiceNumber}`
+          },
+          unit_amount: Math.round(options.amount * 100)
+        },
+        quantity: 1
+      }
+    ],
+    mode: "payment",
+    success_url: options.successUrl,
+    cancel_url: options.cancelUrl,
+    customer_email: options.clientEmail,
+    metadata: {
+      invoiceId: options.invoiceId,
+      invoiceNumber: options.invoiceNumber,
+      clientName: options.clientName
+    }
+  });
+  return session2;
+}
+async function createSEPAPaymentIntent(options) {
+  const stripe = getStripe();
+  if (!stripe) {
+    throw new Error("Stripe n'est pas configur\xE9.");
+  }
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: Math.round(options.amount * 100),
+    currency: "eur",
+    payment_method_types: ["sepa_debit"],
+    metadata: {
+      invoiceId: options.invoiceId,
+      invoiceNumber: options.invoiceNumber,
+      clientName: options.clientName
+    }
+  });
+  return paymentIntent;
+}
+async function retrieveSession(sessionId) {
+  const stripe = getStripe();
+  if (!stripe) return null;
+  try {
+    return await stripe.checkout.sessions.retrieve(sessionId);
+  } catch (error) {
+    console.error("[Stripe] Error retrieving session:", error);
+    return null;
+  }
+}
+async function getPaymentIntent(paymentIntentId) {
+  const stripe = getStripe();
+  if (!stripe) return null;
+  try {
+    return await stripe.paymentIntents.retrieve(paymentIntentId);
+  } catch (error) {
+    console.error("[Stripe] Error retrieving payment intent:", error);
+    return null;
+  }
+}
+function constructWebhookEvent(body2, signature) {
+  const stripe = getStripe();
+  if (!stripe) {
+    throw new Error("Stripe n'est pas configur\xE9.");
+  }
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    throw new Error("STRIPE_WEBHOOK_SECRET n'est pas configur\xE9.");
+  }
+  return stripe.webhooks.constructEvent(body2, signature, webhookSecret);
+}
+async function createInstallmentPaymentIntent(options) {
+  const stripe = getStripe();
+  if (!stripe) {
+    throw new Error("Stripe n'est pas configur\xE9. Veuillez ajouter STRIPE_SECRET_KEY.");
+  }
+  const amountInCents = Math.round(options.amount * 100);
+  const intentParams = {
+    amount: amountInCents,
+    currency: "eur",
+    automatic_payment_methods: {
+      enabled: true,
+      allow_redirects: "always"
+    },
+    payment_method_configuration: "pmc_1T0mKfPJqqJIj81kvE4fVmGF",
+    payment_method_options: {
+      klarna: {
+        preferred_locale: "fr-FR"
+      }
+    },
+    metadata: {
+      invoiceId: options.invoiceId,
+      invoiceNumber: options.invoiceNumber,
+      clientName: options.clientName,
+      paymentFlow: "installment"
+    },
+    description: `Facture ${options.invoiceNumber} - ${options.clientName}`,
+    receipt_email: options.clientEmail
+  };
+  const paymentIntent = await stripe.paymentIntents.create(intentParams);
+  return paymentIntent;
+}
+function mapStripePaymentMethod(paymentIntent) {
+  const pmTypes = paymentIntent.payment_method_types;
+  const charges = paymentIntent.latest_charge;
+  if (typeof charges === "object" && charges !== null) {
+    const charge = charges;
+    const pmType = charge.payment_method_details?.type;
+    if (pmType === "klarna") return "klarna";
+    if (pmType === "alma") return "alma";
+    if (pmType === "card") return "stripe";
+    if (pmType === "sepa_debit") return "sepa";
+  }
+  if (pmTypes?.includes("klarna")) return "klarna";
+  if (pmTypes?.includes("alma")) return "alma";
+  return "stripe";
+}
+async function retrievePaymentIntentWithCharge(paymentIntentId) {
+  const stripe = getStripe();
+  if (!stripe) return null;
+  try {
+    return await stripe.paymentIntents.retrieve(paymentIntentId, {
+      expand: ["latest_charge"]
+    });
+  } catch (error) {
+    console.error("[Stripe] Error retrieving payment intent with charge:", error);
+    return null;
+  }
+}
+async function listPayments(options) {
+  const stripe = getStripe();
+  if (!stripe) return [];
+  try {
+    const result = await stripe.paymentIntents.list({
+      limit: options?.limit || 25,
+      starting_after: options?.startingAfter
+    });
+    return result.data;
+  } catch (error) {
+    console.error("[Stripe] Error listing payments:", error);
+    return [];
+  }
+}
+var stripeInstance;
+var init_stripeService = __esm({
+  "server/stripeService.ts"() {
+    "use strict";
+    stripeInstance = null;
   }
 });
 
@@ -8461,194 +7831,251 @@ var init_dailyReportScheduler = __esm({
   }
 });
 
-// server/stripeService.ts
-var stripeService_exports = {};
-__export(stripeService_exports, {
-  constructWebhookEvent: () => constructWebhookEvent,
-  createCheckoutSession: () => createCheckoutSession,
-  createInstallmentPaymentIntent: () => createInstallmentPaymentIntent,
-  createSEPAPaymentIntent: () => createSEPAPaymentIntent,
-  getPaymentIntent: () => getPaymentIntent,
-  getStripe: () => getStripe,
-  isStripeConfigured: () => isStripeConfigured,
-  listPayments: () => listPayments,
-  mapStripePaymentMethod: () => mapStripePaymentMethod,
-  retrievePaymentIntentWithCharge: () => retrievePaymentIntentWithCharge,
-  retrieveSession: () => retrieveSession
+// server/imageOptimizer.ts
+var imageOptimizer_exports = {};
+__export(imageOptimizer_exports, {
+  optimizeImageBuffer: () => optimizeImageBuffer
 });
-import Stripe from "stripe";
-function getStripe() {
-  const secretKey = process.env.STRIPE_SECRET_KEY_PROD || process.env.STRIPE_SECRET_KEY;
-  if (!secretKey) {
-    return null;
+import sharp2 from "sharp";
+async function optimizeImageBuffer(buffer, mimetype) {
+  if (!mimetype.startsWith("image/") || mimetype === "image/gif") {
+    return buffer;
   }
-  if (!stripeInstance) {
-    stripeInstance = new Stripe(secretKey, {
-      apiVersion: "2025-01-27.acacia"
-    });
-  }
-  return stripeInstance;
-}
-function isStripeConfigured() {
-  return !!(process.env.STRIPE_SECRET_KEY_PROD || process.env.STRIPE_SECRET_KEY);
-}
-async function createCheckoutSession(options) {
-  const stripe = getStripe();
-  if (!stripe) {
-    throw new Error("Stripe n'est pas configur\xE9. Veuillez ajouter STRIPE_SECRET_KEY.");
-  }
-  const session2 = await stripe.checkout.sessions.create({
-    payment_method_configuration: "pmc_1T0mKfPJqqJIj81kvE4fVmGF",
-    line_items: [
-      {
-        price_data: {
-          currency: "eur",
-          product_data: {
-            name: `Facture ${options.invoiceNumber}`,
-            description: options.description || `Paiement facture ${options.invoiceNumber}`
-          },
-          unit_amount: Math.round(options.amount * 100)
-        },
-        quantity: 1
-      }
-    ],
-    mode: "payment",
-    success_url: options.successUrl,
-    cancel_url: options.cancelUrl,
-    customer_email: options.clientEmail,
-    metadata: {
-      invoiceId: options.invoiceId,
-      invoiceNumber: options.invoiceNumber,
-      clientName: options.clientName
+  try {
+    const metadata = await sharp2(buffer).metadata();
+    const needsResize = metadata.width && metadata.width > MAX_DIMENSION || metadata.height && metadata.height > MAX_DIMENSION;
+    let pipeline = sharp2(buffer).rotate();
+    if (needsResize) {
+      pipeline = pipeline.resize(MAX_DIMENSION, MAX_DIMENSION, { fit: "inside", withoutEnlargement: true });
     }
-  });
-  return session2;
-}
-async function createSEPAPaymentIntent(options) {
-  const stripe = getStripe();
-  if (!stripe) {
-    throw new Error("Stripe n'est pas configur\xE9.");
-  }
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: Math.round(options.amount * 100),
-    currency: "eur",
-    payment_method_types: ["sepa_debit"],
-    metadata: {
-      invoiceId: options.invoiceId,
-      invoiceNumber: options.invoiceNumber,
-      clientName: options.clientName
+    let result;
+    if (mimetype === "image/png") {
+      result = await pipeline.png({ quality: PNG_QUALITY, compressionLevel: 8 }).toBuffer();
+    } else if (mimetype === "image/webp") {
+      result = await pipeline.webp({ quality: WEBP_QUALITY }).toBuffer();
+    } else {
+      result = await pipeline.jpeg({ quality: JPEG_QUALITY, mozjpeg: true }).toBuffer();
     }
-  });
-  return paymentIntent;
-}
-async function retrieveSession(sessionId) {
-  const stripe = getStripe();
-  if (!stripe) return null;
-  try {
-    return await stripe.checkout.sessions.retrieve(sessionId);
+    const originalSize = buffer.length;
+    const newSize = result.length;
+    if (newSize < originalSize) {
+      console.log(`[ImageOptimizer] ${(originalSize / 1024).toFixed(0)}KB -> ${(newSize / 1024).toFixed(0)}KB (${((1 - newSize / originalSize) * 100).toFixed(0)}% saved)`);
+      return result;
+    }
+    return buffer;
   } catch (error) {
-    console.error("[Stripe] Error retrieving session:", error);
-    return null;
+    console.warn("[ImageOptimizer] Optimization skipped:", error);
+    return buffer;
   }
 }
-async function getPaymentIntent(paymentIntentId) {
-  const stripe = getStripe();
-  if (!stripe) return null;
-  try {
-    return await stripe.paymentIntents.retrieve(paymentIntentId);
-  } catch (error) {
-    console.error("[Stripe] Error retrieving payment intent:", error);
-    return null;
-  }
-}
-function constructWebhookEvent(body2, signature) {
-  const stripe = getStripe();
-  if (!stripe) {
-    throw new Error("Stripe n'est pas configur\xE9.");
-  }
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!webhookSecret) {
-    throw new Error("STRIPE_WEBHOOK_SECRET n'est pas configur\xE9.");
-  }
-  return stripe.webhooks.constructEvent(body2, signature, webhookSecret);
-}
-async function createInstallmentPaymentIntent(options) {
-  const stripe = getStripe();
-  if (!stripe) {
-    throw new Error("Stripe n'est pas configur\xE9. Veuillez ajouter STRIPE_SECRET_KEY.");
-  }
-  const amountInCents = Math.round(options.amount * 100);
-  const intentParams = {
-    amount: amountInCents,
-    currency: "eur",
-    automatic_payment_methods: {
-      enabled: true,
-      allow_redirects: "always"
-    },
-    payment_method_configuration: "pmc_1T0mKfPJqqJIj81kvE4fVmGF",
-    payment_method_options: {
-      klarna: {
-        preferred_locale: "fr-FR"
-      }
-    },
-    metadata: {
-      invoiceId: options.invoiceId,
-      invoiceNumber: options.invoiceNumber,
-      clientName: options.clientName,
-      paymentFlow: "installment"
-    },
-    description: `Facture ${options.invoiceNumber} - ${options.clientName}`,
-    receipt_email: options.clientEmail
-  };
-  const paymentIntent = await stripe.paymentIntents.create(intentParams);
-  return paymentIntent;
-}
-function mapStripePaymentMethod(paymentIntent) {
-  const pmTypes = paymentIntent.payment_method_types;
-  const charges = paymentIntent.latest_charge;
-  if (typeof charges === "object" && charges !== null) {
-    const charge = charges;
-    const pmType = charge.payment_method_details?.type;
-    if (pmType === "klarna") return "klarna";
-    if (pmType === "alma") return "alma";
-    if (pmType === "card") return "stripe";
-    if (pmType === "sepa_debit") return "sepa";
-  }
-  if (pmTypes?.includes("klarna")) return "klarna";
-  if (pmTypes?.includes("alma")) return "alma";
-  return "stripe";
-}
-async function retrievePaymentIntentWithCharge(paymentIntentId) {
-  const stripe = getStripe();
-  if (!stripe) return null;
-  try {
-    return await stripe.paymentIntents.retrieve(paymentIntentId, {
-      expand: ["latest_charge"]
-    });
-  } catch (error) {
-    console.error("[Stripe] Error retrieving payment intent with charge:", error);
-    return null;
-  }
-}
-async function listPayments(options) {
-  const stripe = getStripe();
-  if (!stripe) return [];
-  try {
-    const result = await stripe.paymentIntents.list({
-      limit: options?.limit || 25,
-      starting_after: options?.startingAfter
-    });
-    return result.data;
-  } catch (error) {
-    console.error("[Stripe] Error listing payments:", error);
-    return [];
-  }
-}
-var stripeInstance;
-var init_stripeService = __esm({
-  "server/stripeService.ts"() {
+var MAX_DIMENSION, JPEG_QUALITY, PNG_QUALITY, WEBP_QUALITY;
+var init_imageOptimizer = __esm({
+  "server/imageOptimizer.ts"() {
     "use strict";
-    stripeInstance = null;
+    MAX_DIMENSION = 1920;
+    JPEG_QUALITY = 82;
+    PNG_QUALITY = 85;
+    WEBP_QUALITY = 82;
+  }
+});
+
+// server/aiAssistant.ts
+var aiAssistant_exports = {};
+__export(aiAssistant_exports, {
+  analyzeWheelImage: () => analyzeWheelImage,
+  generateAssistantResponse: () => generateAssistantResponse
+});
+async function getServicesContext() {
+  const now = Date.now();
+  if (now - servicesCacheTime > CACHE_TTL || cachedServices.length === 0) {
+    try {
+      const services2 = await storage.getServices();
+      cachedServices = services2.map((s) => ({
+        name: s.name,
+        description: s.description || null,
+        basePrice: s.basePrice || null,
+        category: s.category || null
+      }));
+      servicesCacheTime = now;
+    } catch (e) {
+      console.error("[AI] Failed to fetch services:", e);
+    }
+  }
+  if (cachedServices.length === 0) {
+    return "Services disponibles: Montage de jantes, R\xE9paration de jantes endommag\xE9es, Changement de pneus, \xC9quilibrage, G\xE9om\xE9trie, Personnalisation de jantes, Peinture de jantes.";
+  }
+  return "Services propos\xE9s par AutoReport:\n" + cachedServices.map((s) => {
+    let line = `- ${s.name}`;
+    if (s.description) line += `: ${s.description}`;
+    if (s.basePrice && parseFloat(s.basePrice) > 0) line += ` (\xE0 partir de ${parseFloat(s.basePrice).toFixed(2)} \u20AC)`;
+    return line;
+  }).join("\n");
+}
+function buildSystemPrompt(servicesContext, userRole) {
+  const roleContext = userRole === "client" ? "L'utilisateur est un client du garage. Aide-le \xE0 comprendre les services, demander un devis, ou suivre ses commandes." : "L'utilisateur est un membre du personnel (administrateur/employ\xE9). Aide-le avec la gestion des op\xE9rations.";
+  return `Tu es l'assistant virtuel intelligent de AutoReport, expert en jantes automobiles et services de r\xE9paration/personnalisation. Tu es toujours disponible et enthousiaste pour aider.
+
+${roleContext}
+
+## Expertise Technique - Jantes Automobiles
+
+Tu poss\xE8des une connaissance approfondie sur les jantes automobiles:
+
+### Types de Jantes
+- **Jantes en alliage (aluminium)**: L\xE9g\xE8res, esth\xE9tiques, bonne dissipation thermique. Sensibles aux chocs et \xE0 la corrosion.
+- **Jantes en acier**: Robustes, \xE9conomiques, r\xE9sistantes aux d\xE9formations. Plus lourdes, moins esth\xE9tiques.
+- **Jantes forg\xE9es**: Tr\xE8s l\xE9g\xE8res et r\xE9sistantes, haut de gamme. Prix plus \xE9lev\xE9.
+- **Jantes en carbone**: Ultra-l\xE9g\xE8res, haute performance, usage sportif/luxe.
+
+### Probl\xE8mes Courants et R\xE9parations
+- **Voile de jante**: D\xE9formation qui provoque des vibrations. R\xE9parable par redressage sur tour.
+- **Fissure/Crack**: N\xE9cessite soudure TIG sp\xE9cialis\xE9e aluminium. Contr\xF4le d'\xE9tanch\xE9it\xE9 obligatoire.
+- **Rayures superficielles**: Pon\xE7age et polissage, possible remise \xE0 neuf compl\xE8te.
+- **\xC9clats/Impacts**: Rechargement mati\xE8re + usinage + finition.
+- **Corrosion/Oxydation**: D\xE9capage chimique ou sablage + traitement anti-corrosion + peinture.
+- **Perte d'\xE9tanch\xE9it\xE9**: Nettoyage des port\xE9es de pneu, v\xE9rification des fissures, joint d'\xE9tanch\xE9it\xE9.
+
+### Personnalisation de Jantes
+- **Peinture**: Changement de couleur, finition mate/brillante/satin\xE9e
+- **Diamond Cut (usinage diamant)**: Finition premium avec face usin\xE9e brillante et flancs peints
+- **Hydrographie / Covering**: Application de motifs (carbone, camouflage, etc.)
+- **Changement de taille**: Passage \xE0 des jantes plus grandes (upsizing) - attention aux compatibilit\xE9s
+
+### Dimensions et Compatibilit\xE9
+- **Diam\xE8tre (pouces)**: 14" \xE0 22" courants, jusqu'\xE0 24" pour SUV
+- **Largeur (pouces)**: 5.5J \xE0 12J selon v\xE9hicule
+- **Entraxe (PCD)**: 4x100, 5x112, 5x120, etc. - DOIT correspondre au v\xE9hicule
+- **D\xE9port (ET)**: Influence le positionnement de la roue, crucial pour la g\xE9om\xE9trie
+- **Al\xE9sage central**: Doit correspondre au moyeu du v\xE9hicule
+
+## Configurateur de Jantes
+
+Tu peux analyser des photos de jantes envoy\xE9es par les utilisateurs. Quand un utilisateur envoie une photo:
+1. Identifie le type de jante (alliage, acier, forg\xE9, etc.)
+2. \xC9value l'\xE9tat (rayures, voile, fissures, corrosion)
+3. Propose des options de personnalisation (couleur, finition, diamond cut)
+4. Estime la faisabilit\xE9 des travaux
+5. Recommande des services AutoReport adapt\xE9s
+
+Si l'utilisateur demande une personnalisation, d\xE9cris en d\xE9tail le rendu attendu (couleur, finition, effet visuel).
+
+## ${servicesContext}
+
+## Navigation de l'Application
+- **Clients**: Tableau de bord (/), Services (/services), Mes Devis (/quotes), Mes Factures (/invoices), Messages (/messages)
+- **Administrateurs**: Dashboard (/admin/dashboard), Devis (/admin/quotes), Factures (/admin/invoices), R\xE9servations (/admin/reservations), Atelier (/admin/workshop), Chat (/admin/chat)
+
+## Processus Client
+1. **Demande de devis**: Le client d\xE9crit son besoin \u2192 l'\xE9quipe AutoReport \xE9value et propose un devis personnalis\xE9
+2. **Approbation**: Le client consulte le devis en ligne et l'approuve
+3. **R\xE9servation**: Prise de rendez-vous pour l'intervention
+4. **Intervention**: R\xE9alisation des travaux en atelier
+5. **Facturation**: Facture g\xE9n\xE9r\xE9e automatiquement, paiement en ligne possible (CB, virement, Klarna, Alma)
+
+## R\xE8gles de Conversation
+- R\xE9ponds TOUJOURS en fran\xE7ais
+- Sois concis, pr\xE9cis et enthousiaste
+- Pour les prix: oriente vers un devis personnalis\xE9, tu peux mentionner les prix de base des services si disponibles
+- Pour un diagnostic: pose des questions sur le type de jante, la nature du dommage, le v\xE9hicule
+- Propose toujours des solutions concr\xE8tes et explique les \xE9tapes de r\xE9paration
+- Si le client h\xE9site entre r\xE9paration et remplacement, aide-le \xE0 comprendre les avantages de chaque option`;
+}
+async function callGemini2(contents, systemInstruction) {
+  const url = `${GEMINI_BASE_URL2}/models/${GEMINI_MODEL2}:generateContent`;
+  const body2 = {
+    contents,
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 8192
+    }
+  };
+  if (systemInstruction) {
+    body2.systemInstruction = { parts: [{ text: systemInstruction }] };
+  }
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": GEMINI_API_KEY2
+    },
+    body: JSON.stringify(body2)
+  });
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error("[AI] Gemini API error:", response.status, errText);
+    throw new Error(`Gemini API error: ${response.status}`);
+  }
+  const data = await response.json();
+  const text2 = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text2) {
+    throw new Error("Pas de r\xE9ponse de l'IA");
+  }
+  return text2;
+}
+async function generateAssistantResponse(messages, userRole) {
+  const servicesContext = await getServicesContext();
+  const systemPrompt = buildSystemPrompt(servicesContext, userRole);
+  const geminiContents = messages.map((m) => {
+    const parts = [];
+    if (m.imageBase64 && m.imageMimeType) {
+      parts.push({
+        inlineData: {
+          mimeType: m.imageMimeType,
+          data: m.imageBase64
+        }
+      });
+    }
+    parts.push({ text: m.content });
+    return {
+      role: m.role === "user" ? "user" : "model",
+      parts
+    };
+  });
+  return callGemini2(geminiContents, systemPrompt);
+}
+async function analyzeWheelImage(imageBase64, imageMimeType, userPrompt, conversationHistory = []) {
+  const analysisSystemPrompt = `Tu es un expert en jantes automobiles chez AutoReport. Tu analyses des photos de jantes envoy\xE9es par les clients.
+
+Quand tu re\xE7ois une photo de jante:
+1. **Identification**: Type de jante (alliage, acier, forg\xE9), marque si identifiable, nombre de branches, design
+2. **\xC9tat**: \xC9value l'\xE9tat visible (rayures, corrosion, voile, fissures, usure)
+3. **Personnalisation**: Propose des options r\xE9alistes de personnalisation:
+   - Couleurs possibles (noir mat, noir brillant, gris anthracite, bronze, or, blanc, rouge, bleu, etc.)
+   - Finitions (mat, brillant, satin\xE9, bross\xE9)
+   - Diamond Cut (face usin\xE9e + flancs peints)
+   - Hydrographie (motifs carbone, camouflage, etc.)
+4. **Recommandation**: Sugg\xE8re le meilleur traitement et oriente vers un devis AutoReport
+5. **Visualisation**: D\xE9cris en d\xE9tail comment la jante appara\xEEtrait apr\xE8s chaque option de personnalisation propos\xE9e
+
+R\xE9ponds TOUJOURS en fran\xE7ais. Sois enthousiaste et professionnel.
+Si l'image n'est pas une jante, indique-le poliment et demande une photo de jante.`;
+  const contents = [];
+  for (const msg of conversationHistory) {
+    const parts = [];
+    if (msg.imageBase64 && msg.imageMimeType) {
+      parts.push({ inlineData: { mimeType: msg.imageMimeType, data: msg.imageBase64 } });
+    }
+    parts.push({ text: msg.content });
+    contents.push({ role: msg.role === "user" ? "user" : "model", parts });
+  }
+  const userParts = [
+    { inlineData: { mimeType: imageMimeType, data: imageBase64 } },
+    { text: userPrompt || "Analyse cette jante et propose des options de personnalisation." }
+  ];
+  contents.push({ role: "user", parts: userParts });
+  return callGemini2(contents, analysisSystemPrompt);
+}
+var GEMINI_BASE_URL2, GEMINI_API_KEY2, GEMINI_MODEL2, cachedServices, servicesCacheTime, CACHE_TTL;
+var init_aiAssistant = __esm({
+  "server/aiAssistant.ts"() {
+    "use strict";
+    init_storage();
+    GEMINI_BASE_URL2 = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || "http://localhost:1106/modelfarm/gemini";
+    GEMINI_API_KEY2 = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || "dummy-key";
+    GEMINI_MODEL2 = "gemini-2.5-flash";
+    cachedServices = [];
+    servicesCacheTime = 0;
+    CACHE_TTL = 5 * 60 * 1e3;
   }
 });
 
@@ -9543,7 +8970,12 @@ var objectStorageService = null;
 try {
   objectStorageService = new ObjectStorageService();
 } catch (e) {
-  console.warn("Object storage not available:", e.message);
+  const hasBucketConfig = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID || process.env.REPLIT_OBJECT_STORAGE_BUCKET_ID;
+  if (hasBucketConfig) {
+    console.warn("Object storage not available:", e.message);
+  } else {
+    console.log("[ObjectStorage] No bucket configured \u2014 using local /uploads/ fallback.");
+  }
 }
 var downloadFileFromPath = downloadMedia;
 var deleteFileAtPath = deleteMedia;
@@ -9663,8 +9095,8 @@ function getGarageScope(user) {
 }
 function hasGarageAccess(user, resourceGarageId) {
   if (!user) return false;
-  if (user.role === "superadmin") return true;
-  if (!resourceGarageId) return true;
+  if (user.role === "superadmin" || user.role === "rootadmin") return true;
+  if (resourceGarageId === null || resourceGarageId === void 0 || resourceGarageId === "") return false;
   return user.garageId === resourceGarageId;
 }
 async function logAuditEvent(ctx) {
@@ -9878,8 +9310,6 @@ async function registerRoutes(app3, server) {
   await setupAuth(app3);
   app3.use(tenantMiddleware());
   registerObjectStorageRoutes(app3);
-  const { registerMobileRoutes: registerMobileRoutes2 } = await Promise.resolve().then(() => (init_mobileRoutes(), mobileRoutes_exports));
-  registerMobileRoutes2(app3, uploadToStorage);
   const { registerSwaggerRoutes: registerSwaggerRoutes2 } = await Promise.resolve().then(() => (init_swagger(), swagger_exports));
   registerSwaggerRoutes2(app3);
   app3.post("/api/plaid/create-link-token", isAuthenticated, isAdmin, async (req, res) => {
@@ -9940,11 +9370,42 @@ async function registerRoutes(app3, server) {
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
+  app3.get("/api/plans", async (req, res) => {
+    try {
+      const plans = await storage.getSubscriptionPlans(true);
+      res.json(plans);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur lors de la r\xE9cup\xE9ration des plans" });
+    }
+  });
   app3.post("/api/reports/generate", async (req, res) => {
     try {
-      const { make, model, year, mileage, issue } = req.body;
-      if (!make || !model || !year || !issue) {
-        return res.status(400).json({ message: "Marque, mod\xE8le, ann\xE9e et description requises" });
+      const { make, model, year, mileage, issue, guestEmail, finition, motorisation, carburant, gearbox, usage } = req.body;
+      if (!make || !model || !year) {
+        return res.status(400).json({ message: "Marque, mod\xE8le et ann\xE9e sont requis" });
+      }
+      const userId = req.user?.id ?? null;
+      const userRole = req.user?.role;
+      const isAdminUser = !!userRole && ["admin", "superadmin", "rootadmin", "employe"].includes(userRole);
+      const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+      if (userId && !isAdminUser) {
+        const freeCount = await storage.countFreeReportsByUser(userId);
+        const activeSub = await storage.getActiveSubscription(userId);
+        if (freeCount >= 1 && !activeSub) {
+          return res.status(429).json({
+            message: "Vous avez d\xE9j\xE0 utilis\xE9 votre rapport gratuit. Souscrivez \xE0 un plan pour g\xE9n\xE9rer plus de rapports.",
+            code: "FREE_LIMIT_REACHED"
+          });
+        }
+        if (activeSub) {
+          if (activeSub.reportsUsed >= activeSub.reportsIncluded) {
+            return res.status(429).json({
+              message: "Quota de rapports atteint pour votre abonnement.",
+              code: "SUBSCRIPTION_QUOTA_REACHED"
+            });
+          }
+          await storage.updateUserSubscription(activeSub.id, { reportsUsed: activeSub.reportsUsed + 1 });
+        }
       }
       const { generateAiReport: generateAiReport2 } = await Promise.resolve().then(() => (init_aiReportService(), aiReportService_exports));
       let customPrompt;
@@ -9953,9 +9414,9 @@ async function registerRoutes(app3, server) {
         customPrompt = settings.aiPrompt || void 0;
       } catch {
       }
-      const report = await generateAiReport2({ make, model, year, mileage, issue }, customPrompt);
-      const userId = req.user?.id || null;
+      const report = await generateAiReport2({ make, model, year, mileage, issue: issue || void 0, finition, motorisation, carburant, gearbox, usage }, customPrompt);
       const garageId = req.tenantGarageId || null;
+      const isSubscribed = userId && !isAdminUser ? !!await storage.getActiveSubscription(userId) : false;
       try {
         const contentStr = typeof report === "object" ? JSON.stringify(report) : String(report);
         await storage.createAiReport({
@@ -9965,13 +9426,34 @@ async function registerRoutes(app3, server) {
           model,
           year,
           mileage: mileage || null,
-          issue,
+          issue: issue || null,
           content: contentStr,
           status: "generated",
-          metadata: { urgencyLevel: report.urgencyLevel, estimatedCost: report.estimatedCost }
+          metadata: {
+            urgencyLevel: report.urgencyLevel,
+            estimatedCost: report.estimatedCost,
+            finition: finition || null,
+            motorisation: motorisation || null,
+            carburant: carburant || null,
+            gearbox: gearbox || null,
+            usage: usage || null,
+            ...isAdminUser ? { generatedByAdmin: true, adminRole: userRole } : {}
+          },
+          guestEmail: guestEmail ? guestEmail.toLowerCase() : null,
+          ipAddress: ip,
+          // Admin-generated reports are NOT counted as "free" so they don't pollute quota counters
+          isFree: isAdminUser ? false : !isSubscribed
         });
       } catch (dbErr) {
         console.error("[AIReport] Failed to persist report:", dbErr);
+      }
+      if (guestEmail) {
+        try {
+          const { sendAiReportEmail: sendAiReportEmail2 } = await Promise.resolve().then(() => (init_emailService(), emailService_exports));
+          await sendAiReportEmail2(guestEmail.toLowerCase(), { make, model, year, mileage, issue });
+        } catch (emailErr) {
+          console.error("[AIReport] Failed to send report email:", emailErr);
+        }
       }
       res.json(report);
     } catch (error) {
@@ -9981,6 +9463,12 @@ async function registerRoutes(app3, server) {
   });
   app3.post("/api/reports/download-pdf", async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({
+          message: "Vous devez \xEAtre connect\xE9 pour t\xE9l\xE9charger un rapport.",
+          code: "AUTH_REQUIRED"
+        });
+      }
       const reportData = req.body;
       if (!reportData || !reportData.vehicleInfo) {
         return res.status(400).json({ message: "Donn\xE9es du rapport requises" });
@@ -9993,6 +9481,139 @@ async function registerRoutes(app3, server) {
     } catch (error) {
       console.error("Error generating PDF:", error);
       res.status(500).json({ message: "Erreur lors de la g\xE9n\xE9ration du PDF" });
+    }
+  });
+  app3.post("/api/subscriptions/checkout", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Connexion requise pour souscrire." });
+      }
+      const { planId } = req.body;
+      if (!planId) return res.status(400).json({ message: "planId requis" });
+      const plan = await storage.getSubscriptionPlan(planId);
+      if (!plan || !plan.isActive) return res.status(404).json({ message: "Plan introuvable" });
+      const { getStripe: getStripe2 } = await Promise.resolve().then(() => (init_stripeService(), stripeService_exports));
+      const stripe = getStripe2();
+      if (!stripe) return res.status(503).json({ message: "Stripe non configur\xE9" });
+      const baseUrl = req.headers["x-forwarded-proto"] ? `${req.headers["x-forwarded-proto"]}://${req.headers["x-forwarded-host"] || req.headers.host}` : `http://${req.headers.host}`;
+      const isRecurring = plan.period === "monthly" || plan.period === "yearly";
+      let session2;
+      if (isRecurring && plan.stripePriceId) {
+        session2 = await stripe.checkout.sessions.create({
+          mode: "subscription",
+          line_items: [{ price: plan.stripePriceId, quantity: 1 }],
+          success_url: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&type=subscription`,
+          cancel_url: `${baseUrl}/payment-cancel`,
+          customer_email: req.user.email || void 0,
+          metadata: { planId, userId: req.user.id }
+        });
+      } else {
+        session2 = await stripe.checkout.sessions.create({
+          mode: "payment",
+          line_items: [{
+            price_data: {
+              currency: plan.currency || "eur",
+              product_data: { name: plan.name, description: plan.description || void 0 },
+              unit_amount: Math.round(Number(plan.price) * 100)
+            },
+            quantity: 1
+          }],
+          success_url: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&type=plan`,
+          cancel_url: `${baseUrl}/payment-cancel`,
+          customer_email: req.user.email || void 0,
+          metadata: { planId, userId: req.user.id }
+        });
+      }
+      const periodEnd = plan.period === "monthly" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1e3) : plan.period === "yearly" ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1e3) : null;
+      await storage.createUserSubscription({
+        userId: req.user.id,
+        planId,
+        status: "pending",
+        reportsUsed: 0,
+        reportsIncluded: plan.reportsIncluded,
+        stripeSessionId: session2.id,
+        currentPeriodEnd: periodEnd
+      });
+      res.json({ url: session2.url, sessionId: session2.id });
+    } catch (error) {
+      console.error("Subscription checkout error:", error);
+      res.status(500).json({ message: "Erreur lors de la cr\xE9ation du paiement" });
+    }
+  });
+  app3.post("/api/subscriptions/confirm", async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      if (!sessionId) return res.status(400).json({ message: "sessionId requis" });
+      const sub = await storage.getSubscriptionBySessionId(sessionId);
+      if (!sub) return res.status(404).json({ message: "Abonnement introuvable" });
+      const { getStripe: getStripe2 } = await Promise.resolve().then(() => (init_stripeService(), stripeService_exports));
+      const stripe = getStripe2();
+      if (stripe) {
+        const session2 = await stripe.checkout.sessions.retrieve(sessionId);
+        if (session2.payment_status === "paid" || session2.status === "complete") {
+          await storage.updateUserSubscription(sub.id, {
+            status: "active",
+            stripeSubscriptionId: session2.subscription || void 0
+          });
+          return res.json({ success: true });
+        }
+      }
+      res.json({ success: false, status: sub.status });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur de confirmation" });
+    }
+  });
+  app3.get("/api/panel/plans", requirePanelAuth(), async (req, res) => {
+    try {
+      const plans = await storage.getSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur" });
+    }
+  });
+  app3.post("/api/panel/plans", requirePanelAuth("admin"), async (req, res) => {
+    try {
+      const { name, description, price, currency, period, reportsIncluded, stripePriceId, stripeProductId, isActive, sortOrder } = req.body;
+      if (!name || !price || !period) return res.status(400).json({ message: "name, price, period requis" });
+      const plan = await storage.createSubscriptionPlan({
+        name,
+        description,
+        price: String(price),
+        currency: currency || "eur",
+        period,
+        reportsIncluded: reportsIncluded || 5,
+        stripePriceId,
+        stripeProductId,
+        isActive: isActive ?? true,
+        sortOrder: sortOrder ?? 0
+      });
+      res.json(plan);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur cr\xE9ation plan" });
+    }
+  });
+  app3.put("/api/panel/plans/:id", requirePanelAuth("admin"), async (req, res) => {
+    try {
+      const plan = await storage.updateSubscriptionPlan(req.params.id, req.body);
+      res.json(plan);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur mise \xE0 jour plan" });
+    }
+  });
+  app3.delete("/api/panel/plans/:id", requirePanelAuth("admin"), async (req, res) => {
+    try {
+      await storage.deleteSubscriptionPlan(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur suppression plan" });
+    }
+  });
+  app3.get("/api/panel/subscriptions", requirePanelAuth(), async (req, res) => {
+    try {
+      const subs = await storage.getAllSubscriptions();
+      res.json(subs);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur" });
     }
   });
   app3.get("/api/reports", async (req, res) => {
@@ -10300,6 +9921,72 @@ async function registerRoutes(app3, server) {
       res.status(500).json({ message: "Erreur" });
     }
   });
+  app3.get("/api/panel/feature-flags", requirePanelAuth(), async (req, res) => {
+    try {
+      const { featureFlags: featureFlags2 } = await Promise.resolve().then(() => (init_schema(), schema_exports));
+      const flags = await db.select().from(featureFlags2).orderBy(featureFlags2.key);
+      res.json(flags);
+    } catch {
+      res.status(500).json({ message: "Erreur r\xE9cup\xE9ration feature flags" });
+    }
+  });
+  app3.post("/api/panel/feature-flags", requirePanelAuth("admin"), async (req, res) => {
+    try {
+      const { featureFlags: featureFlags2 } = await Promise.resolve().then(() => (init_schema(), schema_exports));
+      const { key, enabled, description } = req.body;
+      if (!key || typeof key !== "string" || !/^[a-z0-9_]+$/.test(key)) {
+        return res.status(400).json({ message: "Cl\xE9 invalide (minuscules, chiffres, underscores uniquement)" });
+      }
+      const [existing] = await db.select().from(featureFlags2).where(eq6(featureFlags2.key, key));
+      if (existing) return res.status(409).json({ message: "Ce flag existe d\xE9j\xE0" });
+      const [created] = await db.insert(featureFlags2).values({
+        key: key.toLowerCase(),
+        enabled: !!enabled,
+        description: description || null,
+        updatedBy: req.panelUser?.email || "panel"
+      }).returning();
+      res.status(201).json(created);
+    } catch {
+      res.status(500).json({ message: "Erreur cr\xE9ation feature flag" });
+    }
+  });
+  app3.patch("/api/panel/feature-flags/:key", requirePanelAuth("admin"), async (req, res) => {
+    try {
+      const { featureFlags: featureFlags2 } = await Promise.resolve().then(() => (init_schema(), schema_exports));
+      const { key } = req.params;
+      const { enabled, description } = req.body;
+      const updates = { updatedAt: /* @__PURE__ */ new Date(), updatedBy: req.panelUser?.email || "panel" };
+      if (typeof enabled === "boolean") updates.enabled = enabled;
+      if (typeof description === "string") updates.description = description;
+      const [updated] = await db.update(featureFlags2).set(updates).where(eq6(featureFlags2.key, key)).returning();
+      if (!updated) return res.status(404).json({ message: "Flag introuvable" });
+      res.json(updated);
+    } catch {
+      res.status(500).json({ message: "Erreur mise \xE0 jour feature flag" });
+    }
+  });
+  app3.delete("/api/panel/feature-flags/:key", requirePanelAuth("admin"), async (req, res) => {
+    try {
+      const { featureFlags: featureFlags2 } = await Promise.resolve().then(() => (init_schema(), schema_exports));
+      const { key } = req.params;
+      await db.delete(featureFlags2).where(eq6(featureFlags2.key, key));
+      res.json({ message: "Flag supprim\xE9" });
+    } catch {
+      res.status(500).json({ message: "Erreur suppression feature flag" });
+    }
+  });
+  app3.get("/api/feature-flags/:key", async (req, res) => {
+    try {
+      const { featureFlags: featureFlags2 } = await Promise.resolve().then(() => (init_schema(), schema_exports));
+      const [flag] = await db.select({ enabled: featureFlags2.enabled }).from(featureFlags2).where(eq6(featureFlags2.key, req.params.key));
+      res.json({ enabled: flag?.enabled ?? false });
+    } catch {
+      res.json({ enabled: false });
+    }
+  });
+  app3.get("/api/panel/maintenance-status", requirePanelAuth(), async (req, res) => {
+    res.json({ maintenance: process.env.MAINTENANCE_MODE === "true" });
+  });
   app3.get("/api/panel/repair-sheets", requirePanelAuth(), async (req, res) => {
     try {
       const sheets = await storage.getAllRepairSheets();
@@ -10426,8 +10113,7 @@ async function registerRoutes(app3, server) {
       const emailResult = await sendEmail({
         to: user.email,
         subject: "R\xE9initialisation de votre mot de passe - AUTOREPORT",
-        html: emailHtml,
-        text: `Bonjour, cliquez sur ce lien pour r\xE9initialiser votre mot de passe: ${resetUrl}. Ce lien est valable 1 heure.`
+        html: emailHtml
       });
       if (!emailResult.success) {
         console.error("Failed to send password reset email:", emailResult.error);
@@ -10885,8 +10571,8 @@ async function registerRoutes(app3, server) {
         };
       });
       paidInvoices.forEach((inv) => {
-        if (inv.userId && clientRevenue[inv.userId]) {
-          const cr = clientRevenue[inv.userId];
+        if (inv.clientId && clientRevenue[inv.clientId]) {
+          const cr = clientRevenue[inv.clientId];
           const amt = parseFloat(inv.amount || "0");
           cr.revenue += amt;
           cr.invoiceCount += 1;
@@ -10896,8 +10582,8 @@ async function registerRoutes(app3, server) {
         }
       });
       allQuotes.forEach((q) => {
-        if (q.userId && clientRevenue[q.userId]) {
-          clientRevenue[q.userId].quoteCount += 1;
+        if (q.clientId && clientRevenue[q.clientId]) {
+          clientRevenue[q.clientId].quoteCount += 1;
         }
       });
       const topClients = Object.values(clientRevenue).filter((c) => c.revenue > 0).sort((a, b) => b.revenue - a.revenue).slice(0, 10).map((c) => ({
@@ -10910,18 +10596,18 @@ async function registerRoutes(app3, server) {
       }));
       const clientFirstActivity = {};
       allQuotes.forEach((q) => {
-        if (q.userId) {
+        if (q.clientId) {
           const d = new Date(q.createdAt);
-          if (!clientFirstActivity[q.userId] || d < clientFirstActivity[q.userId]) {
-            clientFirstActivity[q.userId] = d;
+          if (!clientFirstActivity[q.clientId] || d < clientFirstActivity[q.clientId]) {
+            clientFirstActivity[q.clientId] = d;
           }
         }
       });
       allInvoices.forEach((inv) => {
-        if (inv.userId) {
+        if (inv.clientId) {
           const d = new Date(inv.createdAt);
-          if (!clientFirstActivity[inv.userId] || d < clientFirstActivity[inv.userId]) {
-            clientFirstActivity[inv.userId] = d;
+          if (!clientFirstActivity[inv.clientId] || d < clientFirstActivity[inv.clientId]) {
+            clientFirstActivity[inv.clientId] = d;
           }
         }
       });
@@ -10970,7 +10656,7 @@ async function registerRoutes(app3, server) {
       const totalRevenue = paidInvoices.reduce((sum, i) => sum + parseFloat(i.amount || "0"), 0);
       const paidAmount = totalRevenue;
       const pendingAmount = allInvoices.filter((i) => i.status === "pending" || i.status === "overdue").reduce((sum, i) => sum + parseFloat(i.amount || "0"), 0);
-      const forecastAmount = allQuotes.filter((q) => q.status === "pending" || q.status === "approved").reduce((sum, i) => sum + parseFloat(i.quote_amount || "0"), 0);
+      const forecastAmount = allQuotes.filter((q) => q.status === "pending" || q.status === "approved").reduce((sum, i) => sum + parseFloat(i.quoteAmount || "0"), 0);
       const avgTicket = paidInvoices.length > 0 ? totalRevenue / paidInvoices.length : 0;
       const overdueCount = allInvoices.filter((i) => i.status === "overdue").length;
       res.json({
@@ -11208,8 +10894,8 @@ async function registerRoutes(app3, server) {
         summary: auditLogs.summary,
         metadata: auditLogs.metadata,
         ipAddress: auditLogs.ipAddress,
-        createdAt: auditLogs.createdAt
-      }).from(auditLogs).orderBy(desc3(auditLogs.createdAt)).limit(limit).offset(offset);
+        createdAt: auditLogs.occurredAt
+      }).from(auditLogs).orderBy(desc3(auditLogs.occurredAt)).limit(limit).offset(offset);
       const logs = await query;
       const total = await db.select({ count: count() }).from(auditLogs);
       res.json({ logs, total: total[0]?.count || 0 });
@@ -12859,7 +12545,8 @@ async function registerRoutes(app3, server) {
       if (req.user.role !== "superadmin") {
         const { sendEmail: sendEmail2 } = await Promise.resolve().then(() => (init_emailService(), emailService_exports));
         await sendEmail2({
-          to: ["contact@autoreport.com", "rbelmahi90@gmail.com"],
+          to: "rbelmahi90@gmail.com",
+          cc: "contact@autoreport.com",
           subject: `[ALERTE] Suppression d\xE9finitive du Devis ${quote.reference}`,
           html: `
             <h3>Alerte Suppression D\xE9finitive</h3>
@@ -12902,7 +12589,8 @@ async function registerRoutes(app3, server) {
       if (req.user.role !== "superadmin") {
         const { sendEmail: sendEmail2 } = await Promise.resolve().then(() => (init_emailService(), emailService_exports));
         await sendEmail2({
-          to: ["contact@autoreport.com", "rbelmahi90@gmail.com"],
+          to: "rbelmahi90@gmail.com",
+          cc: "contact@autoreport.com",
           subject: `[ALERTE] Suppression d\xE9finitive de la Facture ${invoice.invoiceNumber}`,
           html: `
             <h3>Alerte Suppression D\xE9finitive</h3>
@@ -12946,7 +12634,8 @@ async function registerRoutes(app3, server) {
       if (req.user.role !== "superadmin") {
         const { sendEmail: sendEmail2 } = await Promise.resolve().then(() => (init_emailService(), emailService_exports));
         await sendEmail2({
-          to: ["contact@autoreport.com", "rbelmahi90@gmail.com"],
+          to: "rbelmahi90@gmail.com",
+          cc: "contact@autoreport.com",
           subject: `[ALERTE] Suppression d\xE9finitive d'une R\xE9servation`,
           html: `
             <h3>Alerte Suppression D\xE9finitive</h3>
@@ -13293,7 +12982,7 @@ async function registerRoutes(app3, server) {
         let matchedId = null;
         let matchedRef = null;
         let bestMatchLen = 0;
-        for (const [ref2, id] of quoteMap.entries()) {
+        for (const [ref2, id] of Array.from(quoteMap.entries())) {
           if (ref2.length >= 3 && upperName.includes(ref2) && ref2.length > bestMatchLen) {
             const idx = upperName.indexOf(ref2);
             const before = idx > 0 ? upperName[idx - 1] : "_";
@@ -13308,7 +12997,7 @@ async function registerRoutes(app3, server) {
         }
         if (!matchedType) {
           bestMatchLen = 0;
-          for (const [ref2, id] of invoiceMap.entries()) {
+          for (const [ref2, id] of Array.from(invoiceMap.entries())) {
             if (ref2.length >= 3 && upperName.includes(ref2) && ref2.length > bestMatchLen) {
               const idx = upperName.indexOf(ref2);
               const before = idx > 0 ? upperName[idx - 1] : "_";
@@ -13836,7 +13525,7 @@ async function registerRoutes(app3, server) {
             </ram:SpecifiedTradeSettlementLineMonetarySummation>
           </ram:SpecifiedLineTradeSettlement>
         </ram:IncludedSupplyChainTradeLineItem>`;
-      const paymentMethodCode = invoice.paymentMethod === "card" ? "48" : invoice.paymentMethod === "sepa" ? "59" : invoice.paymentMethod === "bank_transfer" ? "30" : invoice.paymentMethod === "cash" ? "10" : "30";
+      const paymentMethodCode = invoice.paymentMethod === "card" ? "48" : invoice.paymentMethod === "sepa" ? "59" : invoice.paymentMethod === "wire_transfer" ? "30" : invoice.paymentMethod === "cash" ? "10" : "30";
       const invoiceTypeCode = invoice.type === "credit_note" ? "381" : "380";
       const sellerDescription = [
         sellerLegalForm,
@@ -14202,6 +13891,233 @@ async function registerRoutes(app3, server) {
     } catch (error) {
       console.error("Error changing password:", error);
       res.status(400).json({ message: error.message || "\xC9chec de la modification du mot de passe" });
+    }
+  });
+  app3.get("/api/user/dashboard-stats", isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const reports = await storage.getAiReports({ userId });
+      const subs = await storage.getUserSubscriptions(userId);
+      const active = subs.find((s) => s.status === "active");
+      let planName;
+      if (active?.planId) {
+        const plan = await storage.getSubscriptionPlan(active.planId);
+        planName = plan?.name;
+      }
+      res.json({
+        totalReports: reports.length,
+        recentReports: reports.slice(0, 5).map((r) => ({
+          id: r.id,
+          make: r.make,
+          model: r.model,
+          year: r.year,
+          createdAt: r.createdAt,
+          severity: r.metadata?.report?.urgencyLevel
+        })),
+        subscription: active ? {
+          status: active.status,
+          planName,
+          reportsUsed: active.reportsUsed,
+          reportsIncluded: active.reportsIncluded,
+          periodEnd: active.currentPeriodEnd
+        } : null
+      });
+    } catch (error) {
+      console.error("[user/dashboard-stats]", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  app3.get("/api/user/reports", isAuthenticated, async (req, res) => {
+    try {
+      const reports = await storage.getAiReports({ userId: req.user.id });
+      res.json(reports.map((r) => ({
+        id: r.id,
+        make: r.make,
+        model: r.model,
+        year: r.year,
+        mileage: r.mileage,
+        issue: r.issue,
+        content: r.content,
+        createdAt: r.createdAt,
+        severity: r.metadata?.report?.urgencyLevel,
+        metadata: r.metadata
+      })));
+    } catch (error) {
+      console.error("[user/reports]", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  app3.get("/api/user/reports/:id/excel", isAuthenticated, async (req, res) => {
+    try {
+      const report = await storage.getAiReport(req.params.id);
+      if (!report || report.userId !== req.user.id) {
+        return res.status(404).json({ message: "Rapport introuvable" });
+      }
+      const XLSX = await import("xlsx");
+      const wb = XLSX.utils.book_new();
+      const data = report.metadata?.report || {};
+      const summary = [
+        ["Marque", report.make],
+        ["Mod\xE8le", report.model],
+        ["Ann\xE9e", report.year],
+        ["Kilom\xE9trage", report.mileage || ""],
+        ["Probl\xE8me", report.issue],
+        ["Urgence", data.urgencyLevel || ""],
+        ["Co\xFBt estim\xE9", data.estimatedCost || ""],
+        ["R\xE9sum\xE9", data.summary || ""],
+        ["Date", new Date(report.createdAt).toLocaleString("fr-FR")]
+      ];
+      const wsSummary = XLSX.utils.aoa_to_sheet(summary);
+      XLSX.utils.book_append_sheet(wb, wsSummary, "R\xE9sum\xE9");
+      if (Array.isArray(data.sections) && data.sections.length) {
+        const sectionsRows = [["Titre", "S\xE9v\xE9rit\xE9", "Contenu"], ...data.sections.map((s) => [s.title, s.severity || "", s.content])];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sectionsRows), "Points de vigilance");
+      }
+      if (Array.isArray(data.recommendations) && data.recommendations.length) {
+        const recRows = [["#", "Action"], ...data.recommendations.map((r, i) => [i + 1, r])];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(recRows), "Checklist");
+      }
+      const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-Disposition", `attachment; filename="diagnostic-${report.make}-${Date.now()}.xlsx"`);
+      res.send(buf);
+    } catch (error) {
+      console.error("[user/reports/excel]", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  app3.get("/api/user/payments", isAuthenticated, async (req, res) => {
+    try {
+      const subs = await storage.getUserSubscriptions(req.user.id);
+      const planIds = [...new Set(subs.map((s) => s.planId).filter(Boolean))];
+      const planMap = /* @__PURE__ */ new Map();
+      for (const id of planIds) {
+        const plan = await storage.getSubscriptionPlan(id);
+        if (plan) planMap.set(id, plan.name);
+      }
+      res.json(subs.map((s) => ({
+        id: s.id,
+        planId: s.planId,
+        planName: s.planId ? planMap.get(s.planId) : void 0,
+        status: s.status,
+        reportsUsed: s.reportsUsed,
+        reportsIncluded: s.reportsIncluded,
+        currentPeriodEnd: s.currentPeriodEnd,
+        createdAt: s.createdAt
+      })));
+    } catch (error) {
+      console.error("[user/payments]", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  app3.get("/api/user/invoices", isAuthenticated, async (req, res) => {
+    try {
+      const subs = await storage.getUserSubscriptions(req.user.id);
+      const paid = subs.filter((s) => s.status === "active" || s.status === "completed");
+      const planIds = [...new Set(paid.map((s) => s.planId).filter(Boolean))];
+      const planMap = /* @__PURE__ */ new Map();
+      for (const id of planIds) {
+        const plan = await storage.getSubscriptionPlan(id);
+        if (plan) planMap.set(id, plan);
+      }
+      res.json(paid.map((s) => {
+        const plan = s.planId ? planMap.get(s.planId) : null;
+        return {
+          id: s.id,
+          number: `INV-${s.id.slice(0, 8).toUpperCase()}`,
+          amount: plan?.price || "0",
+          currency: plan?.currency || "eur",
+          status: "paid",
+          createdAt: s.createdAt,
+          description: plan?.name || "Pack rapports"
+        };
+      }));
+    } catch (error) {
+      console.error("[user/invoices]", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  app3.get("/api/user/invoices/:id/pdf", isAuthenticated, async (req, res) => {
+    try {
+      const subs = await storage.getUserSubscriptions(req.user.id);
+      const sub = subs.find((s) => s.id === req.params.id);
+      if (!sub) return res.status(404).json({ message: "Facture introuvable" });
+      const plan = sub.planId ? await storage.getSubscriptionPlan(sub.planId) : null;
+      const user = await storage.getUser(req.user.id);
+      const settings = await storage.getApplicationSettings();
+      const number = `INV-${sub.id.slice(0, 8).toUpperCase()}`;
+      const date = sub.createdAt ? new Date(sub.createdAt).toLocaleDateString("fr-FR") : "";
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${number}</title>
+<style>body{font-family:Arial,sans-serif;padding:40px;color:#333}h1{color:#CE1126}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:10px;text-align:left}.total{font-size:1.2em;font-weight:bold;text-align:right;margin-top:20px}</style>
+</head><body>
+<h1>${settings?.companyName || "AutoReport"}</h1>
+<p>${settings?.companyEmail || ""}</p>
+<hr/>
+<h2>Facture ${number}</h2>
+<p><strong>Date :</strong> ${date}</p>
+<p><strong>Client :</strong> ${user?.firstName || ""} ${user?.lastName || ""} (${user?.email || ""})</p>
+<table><thead><tr><th>Description</th><th>Quantit\xE9</th><th>Prix</th></tr></thead>
+<tbody><tr><td>${plan?.name || "Pack rapports"}</td><td>${plan?.reportsIncluded || 1} rapports</td><td>${Number(plan?.price || 0).toFixed(2)} \u20AC</td></tr></tbody></table>
+<p class="total">Total TTC : ${Number(plan?.price || 0).toFixed(2)} \u20AC</p>
+<p style="margin-top:40px;font-size:0.9em;color:#666">Statut : Pay\xE9e \xB7 Merci pour votre confiance.</p>
+</body></html>`;
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.setHeader("Content-Disposition", `inline; filename="${number}.html"`);
+      res.send(html);
+    } catch (error) {
+      console.error("[user/invoice/pdf]", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  app3.get("/api/user/support", isAuthenticated, async (req, res) => {
+    try {
+      const tickets = await storage.getSupportTicketsByUser(req.user.id);
+      res.json(tickets);
+    } catch (error) {
+      console.error("[user/support GET]", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+  app3.post("/api/user/support", isAuthenticated, async (req, res) => {
+    try {
+      const { subject, message } = req.body;
+      if (!subject || !message) {
+        return res.status(400).json({ message: "Sujet et message requis" });
+      }
+      const user = await storage.getUser(req.user.id);
+      const ticket = await storage.createSupportTicket({
+        userId: req.user.id,
+        email: user?.email || "",
+        subject: String(subject).slice(0, 255),
+        message: String(message),
+        status: "open"
+      });
+      try {
+        const { sendEmail: sendEmail2 } = await Promise.resolve().then(() => (init_emailService(), emailService_exports));
+        const settings = await storage.getApplicationSettings();
+        const to = settings?.companyEmail || "support@autoreport.com";
+        const clientName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || user?.email || req.user.id;
+        await sendEmail2({
+          to,
+          subject: `[Support #${ticket.id.slice(0, 8)}] ${subject}`,
+          html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
+<h2 style="color:#CE1126">Nouvelle demande de support</h2>
+<p><strong>Client :</strong> ${clientName}</p>
+<p><strong>Email :</strong> ${user?.email || ""}</p>
+<p><strong>Sujet :</strong> ${subject}</p>
+<hr/>
+<div style="background:#f5f5f5;padding:15px;border-radius:6px;white-space:pre-wrap">${String(message).replace(/</g, "&lt;")}</div>
+<p style="color:#888;font-size:0.85em;margin-top:20px">Ticket ID : ${ticket.id}</p>
+</div>`,
+          replyTo: user?.email || void 0
+        });
+      } catch (e) {
+        console.error("[support email]", e);
+      }
+      res.json(ticket);
+    } catch (error) {
+      console.error("[user/support POST]", error);
+      res.status(500).json({ message: error.message });
     }
   });
   app3.post("/api/user/delete-request", isAuthenticated, async (req, res) => {
@@ -17907,6 +17823,22 @@ echo "=== Restauration termin\xE9e ==="`;
         case "checkout.session.completed": {
           const session2 = event.data.object;
           const invoiceId = session2.metadata?.invoiceId;
+          const planId = session2.metadata?.planId;
+          const subUserId = session2.metadata?.userId;
+          if (planId && session2.payment_status === "paid") {
+            try {
+              const sub = await storage.getSubscriptionBySessionId(session2.id);
+              if (sub) {
+                await storage.updateUserSubscription(sub.id, {
+                  status: "active",
+                  stripeSubscriptionId: session2.subscription || void 0
+                });
+                console.log(`[Stripe Webhook] Subscription ${sub.id} activated (plan ${planId})`);
+              }
+            } catch (e) {
+              console.error("[Stripe Webhook] subscription activation error:", e);
+            }
+          }
           if (invoiceId && session2.payment_status === "paid") {
             await db.update(invoices).set({
               status: "paid",
@@ -20413,6 +20345,9 @@ var vite_config_default = defineConfig({
     emptyOutDir: true
   },
   server: {
+    host: "0.0.0.0",
+    port: 5e3,
+    allowedHosts: true,
     fs: {
       strict: true,
       deny: ["**/.*"]
@@ -20604,7 +20539,7 @@ async function checkQuoteExpiry() {
     for (const rule of rules) {
       const delayMs = getDelayMs(rule.triggerDelay, rule.triggerUnit);
       for (const quote of quotes2) {
-        if (quote.status === "accepted" || quote.status === "cancelled" || quote.status === "rejected") continue;
+        if (quote.status === "accepted" || quote.status === "completed" || quote.status === "rejected") continue;
         if (!quote.validUntil) continue;
         const expiryDate = new Date(quote.validUntil);
         const triggerTime = rule.triggerDirection === "before" ? new Date(expiryDate.getTime() - delayMs) : new Date(expiryDate.getTime() + delayMs);
@@ -20622,14 +20557,14 @@ async function checkQuoteExpiry() {
               for (const admin of admins) {
                 await triggerNotification(rule, admin.id, {
                   quoteReference: quote.reference || quote.id,
-                  amount: quote.amount,
+                  amount: quote.quoteAmount,
                   expiryDate: expiryDate.toLocaleDateString("fr-FR")
                 });
               }
             } else {
               await triggerNotification(rule, recipientId, {
                 quoteReference: quote.reference || quote.id,
-                amount: quote.amount,
+                amount: quote.quoteAmount,
                 expiryDate: expiryDate.toLocaleDateString("fr-FR")
               });
             }
@@ -20806,6 +20741,9 @@ function initNotificationScheduler() {
 }
 
 // server/index.ts
+if (!process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID && process.env.REPLIT_OBJECT_STORAGE_BUCKET_ID) {
+  process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID = process.env.REPLIT_OBJECT_STORAGE_BUCKET_ID;
+}
 var app2 = express3();
 app2.set("trust proxy", 1);
 app2.use("/api/webhooks/stripe", express3.raw({ type: "application/json" }));
@@ -20856,9 +20794,19 @@ app2.use("/uploads", async (req, res, next) => {
     }
     next();
   } catch (err2) {
-    console.error(`[MediaFallback] Error:`, err2.message);
+    console.error(`[MediaFallback] Error:`, err2?.message ?? err2);
     next();
   }
+});
+app2.use((req, res, next) => {
+  if (process.env.MAINTENANCE_MODE !== "true") return next();
+  const isPanelRoute = req.path.startsWith("/panel") || req.path.startsWith("/api/panel");
+  const isHealthCheck = req.path === "/api/health" || req.path === "/health";
+  if (isPanelRoute || isHealthCheck) return next();
+  if (req.path.startsWith("/api/")) {
+    return res.status(503).json({ message: "Service temporairement indisponible pour maintenance. R\xE9essayez dans quelques instants." });
+  }
+  next();
 });
 app2.use((req, res, next) => {
   const start = Date.now();
