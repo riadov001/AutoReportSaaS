@@ -4556,7 +4556,7 @@ function registerObjectStorageRoutes(app3) {
           filePath: objectPath,
           // The path remains the same but the file content is served via /objects/:path
           fileType: isImage ? "image" : "document",
-          fileSize: processedData.length.toString()
+          fileSize: processedData.length
         });
       } else if (type === "invoice") {
         await storage2.createInvoiceMedia({
@@ -4564,7 +4564,7 @@ function registerObjectStorageRoutes(app3) {
           fileName,
           filePath: objectPath,
           fileType: isImage ? "image" : "document",
-          fileSize: processedData.length.toString()
+          fileSize: processedData.length
         });
       }
       res.json({ success: true, objectPath });
@@ -6553,7 +6553,11 @@ __export(aiReportService_exports, {
   generateReportHtml: () => generateReportHtml
 });
 async function callGemini(prompt, systemPromptOverride) {
-  const url = `${GEMINI_BASE_URL}/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const url = USE_INTEGRATION ? `${GEMINI_BASE_URL}/models/${GEMINI_MODEL}:generateContent` : `${GEMINI_BASE_URL}/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const headers = { "Content-Type": "application/json" };
+  if (USE_INTEGRATION) {
+    headers["x-goog-api-key"] = GEMINI_API_KEY;
+  }
   const body2 = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     systemInstruction: { parts: [{ text: systemPromptOverride || SYSTEM_PROMPT }] },
@@ -6566,7 +6570,7 @@ async function callGemini(prompt, systemPromptOverride) {
   };
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body2)
   });
   if (!response.ok) {
@@ -6582,7 +6586,6 @@ async function callGemini(prompt, systemPromptOverride) {
   return text2;
 }
 function inferMotorization(make, model, year) {
-  const y = parseInt(year, 10);
   const m = model.toLowerCase();
   const mk = make.toLowerCase();
   if (m.includes("tdi") || m.includes("hdi") || m.includes("cdti") || m.includes("dci") || m.includes("bluehdI") || m.includes("d ") || m.includes(" d") || m.includes("diesel")) return "diesel";
@@ -6682,8 +6685,59 @@ function buildPrompt(vehicleInfo) {
 `;
   }
   prompt += `
+## RECOMMANDATION D'ACHAT \u2014 CALCUL DU SCORE
+`;
+  prompt += `Calcule le score (0-10) selon ces crit\xE8res pond\xE9r\xE9s :
+`;
+  prompt += `- \xC9tat m\xE9canique (40%) : bas\xE9 sur le nombre/gravit\xE9 des d\xE9fauts identifi\xE9s
+`;
+  prompt += `- Kilom\xE9trage/\xE2ge (30%) : ${km ? `${km.toLocaleString("fr-FR")} km, ${ageYears} ans` : `${ageYears} ans`}
+`;
+  prompt += `- Fiabilit\xE9 du mod\xE8le (20%) : historique TSB et rappels constructeur sur ce mill\xE9sime
+`;
+  prompt += `- Rapport qualit\xE9/prix estim\xE9 (10%) : d\xE9fauts vs. prix march\xE9 attendu
+`;
+  prompt += `Produis des negotiationTips CHIFFR\xC9S en \u20AC bas\xE9s sur les co\xFBts de r\xE9paration de tes recommandations.
+`;
+  prompt += `Produis une inspectionChecklist SP\xC9CIFIQUE \xE0 ce v\xE9hicule/${motorization} \u2014 pas de conseils g\xE9n\xE9riques.
+`;
+  prompt += `
 Produis le rapport JSON complet selon le sch\xE9ma impos\xE9. Sois PR\xC9CIS, SP\xC9CIFIQUE, EXPERT. Aucune phrase g\xE9n\xE9rique.`;
   return prompt;
+}
+function generateFallbackPurchaseRecommendation(vehicleInfo) {
+  const motorization = inferMotorization(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year);
+  const km = vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/\D/g, ""), 10) : null;
+  const ageYears = Math.max(0, (/* @__PURE__ */ new Date()).getFullYear() - parseInt(vehicleInfo.year || "0", 10));
+  const baseChecklist = [
+    "Scanner OBD-II sur tous les calculateurs (moteur, bo\xEEte, ABS, habitacle) \u2014 pr\xE9voir 40-80 \u20AC en garage ind\xE9pendant",
+    "V\xE9rifier visuellement toutes les fuites sous le v\xE9hicule moteur chaud (huile, liquide de refroidissement)",
+    "Inspecter l'\xE9tat et la couleur de l'huile moteur \u2014 pr\xE9sence de lait = joint de culasse, huile tr\xE8s noire = entretiens n\xE9glig\xE9s",
+    "Tester le d\xE9marrage \xE0 froid ET apr\xE8s chauffe compl\xE8te \u2014 noter tout rat\xE9 d'allumage, fum\xE9e anormale, vibration",
+    "Contr\xF4ler l'usure des pneumatiques et la g\xE9om\xE9trie (usure irr\xE9guli\xE8re = probl\xE8me de suspension ou direction)",
+    "V\xE9rifier le carnet d'entretien complet : intervalles respect\xE9s, factures \xE0 l'appui"
+  ];
+  if (motorization === "diesel") {
+    baseChecklist.push("Faire un essai \xE0 froid : surveiller la fum\xE9e noire au d\xE9marrage (turbo/injection) et l'acc\xE9l\xE9ration franche sans \xE0-coups (FAP)");
+  } else if (motorization === "\xE9lectrique" || motorization === "hybride") {
+    baseChecklist.push("Demander le rapport SOH (State of Health) de la batterie HT \u2014 refuser si < 80% ou si non disponible");
+    baseChecklist.push("Tester la recharge AC (borne 7kW) et DC (rapide) \u2014 noter le temps de charge r\xE9el vs. th\xE9orique");
+  } else {
+    baseChecklist.push("V\xE9rifier la date et l'\xE9tat de la courroie de distribution (ou tension cha\xEEne de distribution si applicable)");
+  }
+  if (km && km > 1e5) {
+    baseChecklist.push(`\xC0 ${km.toLocaleString("fr-FR")} km : demander les factures de remplacement amortisseurs, embrayage (si thermique), courroie accessoires`);
+  }
+  return {
+    score: 5.5,
+    verdict: "N\xE9gocier",
+    negotiationTips: [
+      "Faites r\xE9aliser un diagnostic OBD complet avant signature \u2014 utilisez les codes d\xE9faut trouv\xE9s pour n\xE9gocier le prix",
+      "Demandez syst\xE9matiquement le rapport d'historique (CarVertical, Histovec gratuit) \u2014 accident non d\xE9clar\xE9 = levier -10 \xE0 -20% du prix",
+      "Exigez toutes les factures d'entretien \u2014 absence de preuves = n\xE9gociation de 300-500 \u20AC minimum pour couvrir les risques"
+    ],
+    inspectionChecklist: baseChecklist
+  };
 }
 function generateFallbackReport(vehicleInfo) {
   const motorization = inferMotorization(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year);
@@ -6717,6 +6771,7 @@ function generateFallbackReport(vehicleInfo) {
     ],
     estimatedCost: "80-250 \u20AC (diagnostic initial complet)",
     urgencyLevel: "medium",
+    purchaseRecommendation: generateFallbackPurchaseRecommendation(vehicleInfo),
     generatedAt: (/* @__PURE__ */ new Date()).toISOString()
   };
 }
@@ -6735,6 +6790,8 @@ async function generateAiReport(vehicleInfo, customSystemPrompt) {
       cleanJson = cleanJson.slice(firstBrace, lastBrace + 1);
     }
     const parsed = JSON.parse(cleanJson);
+    const purchaseRec = parsed.purchaseRecommendation;
+    const validVerdicts = ["Acheter", "N\xE9gocier", "\xC9viter"];
     const report = {
       vehicleInfo,
       summary: parsed.summary || "Rapport de diagnostic g\xE9n\xE9r\xE9 par IA.",
@@ -6742,6 +6799,12 @@ async function generateAiReport(vehicleInfo, customSystemPrompt) {
       recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
       estimatedCost: parsed.estimatedCost || void 0,
       urgencyLevel: parsed.urgencyLevel || "medium",
+      purchaseRecommendation: purchaseRec && typeof purchaseRec.score === "number" && validVerdicts.includes(purchaseRec.verdict) ? {
+        score: Math.min(10, Math.max(0, purchaseRec.score)),
+        verdict: purchaseRec.verdict,
+        negotiationTips: Array.isArray(purchaseRec.negotiationTips) ? purchaseRec.negotiationTips : [],
+        inspectionChecklist: Array.isArray(purchaseRec.inspectionChecklist) ? purchaseRec.inspectionChecklist : []
+      } : generateFallbackPurchaseRecommendation(vehicleInfo),
       generatedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
     return report;
@@ -6763,6 +6826,11 @@ function generateReportHtml(report) {
     high: "\xC9lev\xE9",
     critical: "Critique"
   };
+  const verdictColors = {
+    Acheter: "#22c55e",
+    N\u00E9gocier: "#f59e0b",
+    \u00C9viter: "#ef4444"
+  };
   const sectionsHtml = report.sections.map(
     (s) => `
     <div style="margin-bottom: 20px; padding: 16px; border-left: 4px solid ${severityColors[s.severity || "medium"]}; background: #f8f9fa; border-radius: 4px;">
@@ -6772,6 +6840,36 @@ function generateReportHtml(report) {
     </div>`
   ).join("");
   const recsHtml = report.recommendations.map((r, i) => `<li style="margin-bottom: 10px; color: #333; font-size: 13px; line-height:1.6;"><strong style="color:#dc2626;">#${i + 1}</strong> ${r}</li>`).join("");
+  const pr = report.purchaseRecommendation;
+  const purchaseHtml = pr ? `
+    <div style="margin-bottom: 30px; padding: 20px; border-radius: 8px; border: 2px solid ${verdictColors[pr.verdict] || "#f59e0b"}; background: ${verdictColors[pr.verdict] || "#f59e0b"}08;">
+      <h2 style="font-size: 16px; font-weight: 700; margin-bottom: 14px; color: #0a0a0a; text-transform: uppercase; letter-spacing: 1px;">Recommandation d'achat</h2>
+      <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 16px; flex-wrap: wrap;">
+        <div style="text-align: center;">
+          <div style="width: 64px; height: 64px; border-radius: 50%; border: 4px solid ${verdictColors[pr.verdict] || "#f59e0b"}; display: flex; align-items: center; justify-content: center;">
+            <span style="font-size: 22px; font-weight: 800; color: ${verdictColors[pr.verdict] || "#f59e0b"};">${pr.score.toFixed(1)}</span>
+          </div>
+          <p style="font-size: 10px; color: #888; margin-top: 4px;">/ 10</p>
+        </div>
+        <div>
+          <span style="display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 16px; font-weight: 800; color: white; background: ${verdictColors[pr.verdict] || "#f59e0b"};">${pr.verdict}</span>
+        </div>
+      </div>
+      ${pr.negotiationTips.length > 0 ? `
+      <div style="margin-bottom: 14px;">
+        <h3 style="font-size: 13px; font-weight: 700; color: #0a0a0a; margin-bottom: 8px;">\u{1F4B0} Arguments de n\xE9gociation</h3>
+        <ul style="padding-left: 16px; margin: 0;">
+          ${pr.negotiationTips.map((t) => `<li style="font-size: 12px; color: #444; margin-bottom: 6px; line-height: 1.5;">${t}</li>`).join("")}
+        </ul>
+      </div>` : ""}
+      ${pr.inspectionChecklist.length > 0 ? `
+      <div>
+        <h3 style="font-size: 13px; font-weight: 700; color: #0a0a0a; margin-bottom: 8px;">\u2705 Points \xE0 v\xE9rifier avant signature</h3>
+        <ul style="padding-left: 16px; margin: 0; list-style: none;">
+          ${pr.inspectionChecklist.map((item) => `<li style="font-size: 12px; color: #444; margin-bottom: 6px; line-height: 1.5; padding-left: 4px;">\u2610 ${item}</li>`).join("")}
+        </ul>
+      </div>` : ""}
+    </div>` : "";
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -6822,6 +6920,9 @@ function generateReportHtml(report) {
       ${report.estimatedCost ? `<span style="margin-left: auto; font-weight: 600; font-size: 14px; color: #555;">Estimation : ${report.estimatedCost}</span>` : ""}
     </div>
 
+    <!-- Purchase Recommendation -->
+    ${purchaseHtml}
+
     <!-- Summary -->
     <div style="margin-bottom: 30px;">
       <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 12px; color: #0a0a0a;">R\xE9sum\xE9 du diagnostic</h2>
@@ -6857,13 +6958,18 @@ function generateReportHtml(report) {
 </body>
 </html>`;
 }
-var GEMINI_API_KEY, GEMINI_BASE_URL, GEMINI_MODEL, SYSTEM_PROMPT;
+var USE_INTEGRATION, GEMINI_BASE_URL, GEMINI_API_KEY, GEMINI_MODEL, SYSTEM_PROMPT;
 var init_aiReportService = __esm({
   "server/aiReportService.ts"() {
     "use strict";
-    GEMINI_API_KEY = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
+    USE_INTEGRATION = !!(process.env.AI_INTEGRATIONS_GEMINI_BASE_URL && process.env.AI_INTEGRATIONS_GEMINI_API_KEY);
     GEMINI_BASE_URL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || "https://generativelanguage.googleapis.com";
+    GEMINI_API_KEY = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
     GEMINI_MODEL = "gemini-2.0-flash";
+    if (!USE_INTEGRATION && !GEMINI_API_KEY) {
+      console.warn("[AIReport] No Gemini API key configured \u2014 report generation will fail. Set AI_INTEGRATIONS_GEMINI_API_KEY or GEMINI_API_KEY.");
+    }
+    console.info(`[AIReport] Gemini provider: ${USE_INTEGRATION ? "Replit integration proxy" : "Google direct API"}`);
     SYSTEM_PROMPT = `Tu es ALEXIS, expert senior en diagnostic automobile chez AutoReport \u2014 ing\xE9nieur m\xE9canicien avec 30 ans d'exp\xE9rience, certifi\xE9 multi-constructeurs (VW Group, PSA, Stellantis, BMW Group, Mercedes, Renault-Nissan, Toyota, Ford), sp\xE9cialiste OBD-II/OBD-III, \xE9lectronique embarqu\xE9e, CAN bus, motorisations thermiques/hybrides/\xE9lectriques (HV/BEV/PHEV). Tu connais par c\u0153ur les TSB (Technical Service Bulletins), les rappels constructeur, les d\xE9fauts de s\xE9rie document\xE9s, et les statistiques de sinistralit\xE9 par mod\xE8le/mill\xE9sime.
 
 ## TON MANDAT
@@ -6895,7 +7001,25 @@ R\xE9ponds UNIQUEMENT en JSON valide (z\xE9ro markdown, z\xE9ro texte hors JSON)
     "V\xE9rification pr\xE9ventive li\xE9e au kilom\xE9trage et \xE0 l'\xE2ge..."
   ],
   "estimatedCost": "Fourchette globale selon hypoth\xE8se confirm\xE9e : XXX-YYY \u20AC TTC (garage ind\xE9pendant) / XXX-YYY \u20AC TTC (concession ou sp\xE9cialiste marque)",
-  "urgencyLevel": "low|medium|high|critical"
+  "urgencyLevel": "low|medium|high|critical",
+  "purchaseRecommendation": {
+    "score": 7.5,
+    "verdict": "N\xE9gocier",
+    "negotiationTips": [
+      "N\xE9gociez 800-1 200 \u20AC en justifiant le remplacement imminent de la courroie de distribution \xE0 150 000 km (pi\xE8ce 120 \u20AC + MO 350 \u20AC = 470 \u20AC garage ind\xE9pendant)",
+      "Faites valoir l'usure document\xE9e des amortisseurs arri\xE8re (bruit sourd en virage) \u2014 devis de remplacement : 400-600 \u20AC",
+      "Exigez la facture du dernier vidange \u2014 absence de preuve = levier de n\xE9gociation suppl\xE9mentaire de 200-300 \u20AC"
+    ],
+    "inspectionChecklist": [
+      "V\xE9rifier visuellement toutes les fuites sous le v\xE9hicule moteur chaud (huile, refroidissement, direction assist\xE9e)",
+      "Tester le d\xE9marrage \xE0 froid ET apr\xE8s 10 min de chauffe \u2014 noter tout rat\xE9, fum\xE9e bleue/blanche, vibration",
+      "Scanner OBD-II : lire les codes d\xE9faut actifs ET m\xE9moris\xE9s sur TOUS les calculateurs (moteur, bo\xEEte, ABS, habitacle)",
+      "Inspecter l'\xE9tat de la courroie de distribution / cha\xEEne (si accessible) et v\xE9rifier la date du dernier remplacement sur carnet",
+      "Contr\xF4ler l'\xE9tat des pneumatiques (usure r\xE9guli\xE8re = alignement correct, usure irr\xE9guli\xE8re = suspension d\xE9fectueuse)",
+      "V\xE9rifier le niveau et la couleur de l'huile moteur : huile noire tr\xE8s visqueuse = entretiens n\xE9glig\xE9s, lait = joint de culasse",
+      "Tester toutes les vitres, r\xE9troviseurs \xE9lectriques, climatisation, chauffage, audiovisuel \u2014 noter les pannes \xE9lectriques"
+    ]
+  }
 }
 
 ## R\xC8GLES NON N\xC9GOCIABLES
@@ -6912,7 +7036,12 @@ R\xE9ponds UNIQUEMENT en JSON valide (z\xE9ro markdown, z\xE9ro texte hors JSON)
 4. **Jamais de conseil vague** : "v\xE9rifier les niveaux" \u2192 interdit. \xC0 la place : "V\xE9rifier le niveau d'huile moteur et sa viscosit\xE9 (5W-30 ou 5W-40 selon pr\xE9conisation constructeur) \u2014 signe de consommation anormale > 0,5L/1000km sur ce moteur indique usure segments ou joints de queues de soupapes"
 5. **V\xE9hicules premium/sportifs** (Ferrari, Porsche, Maserati, AMG, M, RS, F-Sport) : co\xFBts \xD7 2-5, mentionner "atelier agr\xE9\xE9 constructeur requis"
 6. **V\xE9hicules \xE9lectriques/hybrides** : analyser batterie HT (d\xE9gradation SOH, cellules d\xE9faillantes), BMS, onduleur, pompe de refroidissement HT, recharge AC/DC
-7. **R\xE9ponds toujours en FRAN\xC7AIS technique professionnel**`;
+7. **R\xE9ponds toujours en FRAN\xC7AIS technique professionnel**
+8. **purchaseRecommendation OBLIGATOIRE** :
+   - score : note de 0 \xE0 10 (10 = v\xE9hicule parfait, 0 = catastrophe) calcul\xE9e sur : \xE9tat m\xE9canique (40%), kilom\xE9trage/\xE2ge (30%), fiabilit\xE9 du mod\xE8le (20%), rapport qualit\xE9/prix (10%)
+   - verdict : "Acheter" (score \u2265 7), "N\xE9gocier" (score 4-6.9), "\xC9viter" (score < 4)
+   - negotiationTips : 3 \xE0 5 arguments chiffr\xE9s en \u20AC pour faire baisser le prix, bas\xE9s sur les d\xE9fauts trouv\xE9s
+   - inspectionChecklist : 6 \xE0 10 points de contr\xF4le physique SP\xC9CIFIQUES \xE0 ce v\xE9hicule/motorisation avant de signer`;
   }
 });
 
@@ -9954,8 +10083,7 @@ async function registerRoutes(app3, server) {
       const emailResult = await sendEmail({
         to: user.email,
         subject: "R\xE9initialisation de votre mot de passe - AUTOREPORT",
-        html: emailHtml,
-        text: `Bonjour, cliquez sur ce lien pour r\xE9initialiser votre mot de passe: ${resetUrl}. Ce lien est valable 1 heure.`
+        html: emailHtml
       });
       if (!emailResult.success) {
         console.error("Failed to send password reset email:", emailResult.error);
@@ -10413,8 +10541,8 @@ async function registerRoutes(app3, server) {
         };
       });
       paidInvoices.forEach((inv) => {
-        if (inv.userId && clientRevenue[inv.userId]) {
-          const cr = clientRevenue[inv.userId];
+        if (inv.clientId && clientRevenue[inv.clientId]) {
+          const cr = clientRevenue[inv.clientId];
           const amt = parseFloat(inv.amount || "0");
           cr.revenue += amt;
           cr.invoiceCount += 1;
@@ -10424,8 +10552,8 @@ async function registerRoutes(app3, server) {
         }
       });
       allQuotes.forEach((q) => {
-        if (q.userId && clientRevenue[q.userId]) {
-          clientRevenue[q.userId].quoteCount += 1;
+        if (q.clientId && clientRevenue[q.clientId]) {
+          clientRevenue[q.clientId].quoteCount += 1;
         }
       });
       const topClients = Object.values(clientRevenue).filter((c) => c.revenue > 0).sort((a, b) => b.revenue - a.revenue).slice(0, 10).map((c) => ({
@@ -10438,18 +10566,18 @@ async function registerRoutes(app3, server) {
       }));
       const clientFirstActivity = {};
       allQuotes.forEach((q) => {
-        if (q.userId) {
+        if (q.clientId) {
           const d = new Date(q.createdAt);
-          if (!clientFirstActivity[q.userId] || d < clientFirstActivity[q.userId]) {
-            clientFirstActivity[q.userId] = d;
+          if (!clientFirstActivity[q.clientId] || d < clientFirstActivity[q.clientId]) {
+            clientFirstActivity[q.clientId] = d;
           }
         }
       });
       allInvoices.forEach((inv) => {
-        if (inv.userId) {
+        if (inv.clientId) {
           const d = new Date(inv.createdAt);
-          if (!clientFirstActivity[inv.userId] || d < clientFirstActivity[inv.userId]) {
-            clientFirstActivity[inv.userId] = d;
+          if (!clientFirstActivity[inv.clientId] || d < clientFirstActivity[inv.clientId]) {
+            clientFirstActivity[inv.clientId] = d;
           }
         }
       });
@@ -10498,7 +10626,7 @@ async function registerRoutes(app3, server) {
       const totalRevenue = paidInvoices.reduce((sum, i) => sum + parseFloat(i.amount || "0"), 0);
       const paidAmount = totalRevenue;
       const pendingAmount = allInvoices.filter((i) => i.status === "pending" || i.status === "overdue").reduce((sum, i) => sum + parseFloat(i.amount || "0"), 0);
-      const forecastAmount = allQuotes.filter((q) => q.status === "pending" || q.status === "approved").reduce((sum, i) => sum + parseFloat(i.quote_amount || "0"), 0);
+      const forecastAmount = allQuotes.filter((q) => q.status === "pending" || q.status === "approved").reduce((sum, i) => sum + parseFloat(i.quoteAmount || "0"), 0);
       const avgTicket = paidInvoices.length > 0 ? totalRevenue / paidInvoices.length : 0;
       const overdueCount = allInvoices.filter((i) => i.status === "overdue").length;
       res.json({
@@ -10736,8 +10864,8 @@ async function registerRoutes(app3, server) {
         summary: auditLogs.summary,
         metadata: auditLogs.metadata,
         ipAddress: auditLogs.ipAddress,
-        createdAt: auditLogs.createdAt
-      }).from(auditLogs).orderBy(desc3(auditLogs.createdAt)).limit(limit).offset(offset);
+        createdAt: auditLogs.occurredAt
+      }).from(auditLogs).orderBy(desc3(auditLogs.occurredAt)).limit(limit).offset(offset);
       const logs = await query;
       const total = await db.select({ count: count() }).from(auditLogs);
       res.json({ logs, total: total[0]?.count || 0 });
@@ -12387,7 +12515,8 @@ async function registerRoutes(app3, server) {
       if (req.user.role !== "superadmin") {
         const { sendEmail: sendEmail2 } = await Promise.resolve().then(() => (init_emailService(), emailService_exports));
         await sendEmail2({
-          to: ["contact@autoreport.com", "rbelmahi90@gmail.com"],
+          to: "rbelmahi90@gmail.com",
+          cc: "contact@autoreport.com",
           subject: `[ALERTE] Suppression d\xE9finitive du Devis ${quote.reference}`,
           html: `
             <h3>Alerte Suppression D\xE9finitive</h3>
@@ -12430,7 +12559,8 @@ async function registerRoutes(app3, server) {
       if (req.user.role !== "superadmin") {
         const { sendEmail: sendEmail2 } = await Promise.resolve().then(() => (init_emailService(), emailService_exports));
         await sendEmail2({
-          to: ["contact@autoreport.com", "rbelmahi90@gmail.com"],
+          to: "rbelmahi90@gmail.com",
+          cc: "contact@autoreport.com",
           subject: `[ALERTE] Suppression d\xE9finitive de la Facture ${invoice.invoiceNumber}`,
           html: `
             <h3>Alerte Suppression D\xE9finitive</h3>
@@ -12474,7 +12604,8 @@ async function registerRoutes(app3, server) {
       if (req.user.role !== "superadmin") {
         const { sendEmail: sendEmail2 } = await Promise.resolve().then(() => (init_emailService(), emailService_exports));
         await sendEmail2({
-          to: ["contact@autoreport.com", "rbelmahi90@gmail.com"],
+          to: "rbelmahi90@gmail.com",
+          cc: "contact@autoreport.com",
           subject: `[ALERTE] Suppression d\xE9finitive d'une R\xE9servation`,
           html: `
             <h3>Alerte Suppression D\xE9finitive</h3>
@@ -12821,7 +12952,7 @@ async function registerRoutes(app3, server) {
         let matchedId = null;
         let matchedRef = null;
         let bestMatchLen = 0;
-        for (const [ref2, id] of quoteMap.entries()) {
+        for (const [ref2, id] of Array.from(quoteMap.entries())) {
           if (ref2.length >= 3 && upperName.includes(ref2) && ref2.length > bestMatchLen) {
             const idx = upperName.indexOf(ref2);
             const before = idx > 0 ? upperName[idx - 1] : "_";
@@ -12836,7 +12967,7 @@ async function registerRoutes(app3, server) {
         }
         if (!matchedType) {
           bestMatchLen = 0;
-          for (const [ref2, id] of invoiceMap.entries()) {
+          for (const [ref2, id] of Array.from(invoiceMap.entries())) {
             if (ref2.length >= 3 && upperName.includes(ref2) && ref2.length > bestMatchLen) {
               const idx = upperName.indexOf(ref2);
               const before = idx > 0 ? upperName[idx - 1] : "_";
@@ -13364,7 +13495,7 @@ async function registerRoutes(app3, server) {
             </ram:SpecifiedTradeSettlementLineMonetarySummation>
           </ram:SpecifiedLineTradeSettlement>
         </ram:IncludedSupplyChainTradeLineItem>`;
-      const paymentMethodCode = invoice.paymentMethod === "card" ? "48" : invoice.paymentMethod === "sepa" ? "59" : invoice.paymentMethod === "bank_transfer" ? "30" : invoice.paymentMethod === "cash" ? "10" : "30";
+      const paymentMethodCode = invoice.paymentMethod === "card" ? "48" : invoice.paymentMethod === "sepa" ? "59" : invoice.paymentMethod === "wire_transfer" ? "30" : invoice.paymentMethod === "cash" ? "10" : "30";
       const invoiceTypeCode = invoice.type === "credit_note" ? "381" : "380";
       const sellerDescription = [
         sellerLegalForm,
@@ -20378,7 +20509,7 @@ async function checkQuoteExpiry() {
     for (const rule of rules) {
       const delayMs = getDelayMs(rule.triggerDelay, rule.triggerUnit);
       for (const quote of quotes2) {
-        if (quote.status === "accepted" || quote.status === "cancelled" || quote.status === "rejected") continue;
+        if (quote.status === "accepted" || quote.status === "completed" || quote.status === "rejected") continue;
         if (!quote.validUntil) continue;
         const expiryDate = new Date(quote.validUntil);
         const triggerTime = rule.triggerDirection === "before" ? new Date(expiryDate.getTime() - delayMs) : new Date(expiryDate.getTime() + delayMs);
@@ -20396,14 +20527,14 @@ async function checkQuoteExpiry() {
               for (const admin of admins) {
                 await triggerNotification(rule, admin.id, {
                   quoteReference: quote.reference || quote.id,
-                  amount: quote.amount,
+                  amount: quote.quoteAmount,
                   expiryDate: expiryDate.toLocaleDateString("fr-FR")
                 });
               }
             } else {
               await triggerNotification(rule, recipientId, {
                 quoteReference: quote.reference || quote.id,
-                amount: quote.amount,
+                amount: quote.quoteAmount,
                 expiryDate: expiryDate.toLocaleDateString("fr-FR")
               });
             }
@@ -20633,7 +20764,7 @@ app2.use("/uploads", async (req, res, next) => {
     }
     next();
   } catch (err2) {
-    console.error(`[MediaFallback] Error:`, err2.message);
+    console.error(`[MediaFallback] Error:`, err2?.message ?? err2);
     next();
   }
 });

@@ -67,7 +67,7 @@ app.use('/uploads', async (req, res, next) => {
     }
     next();
   } catch (err) {
-    console.error(`[MediaFallback] Error:`, err.message);
+    console.error(`[MediaFallback] Error:`, (err as any)?.message ?? err);
     next();
   }
 });

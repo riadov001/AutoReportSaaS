@@ -1,6 +1,7 @@
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Download, Phone, Mail, MapPin, Loader2, CheckCircle, Clock, AlertCircle } from "lucide-react";
 
 function formatPrice(value: string | number | null | undefined): string {

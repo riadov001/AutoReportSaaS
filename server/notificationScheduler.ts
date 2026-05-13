@@ -136,7 +136,7 @@ async function checkQuoteExpiry() {
       const delayMs = getDelayMs(rule.triggerDelay, rule.triggerUnit);
 
       for (const quote of quotes) {
-        if (quote.status === "accepted" || quote.status === "cancelled" || quote.status === "rejected") continue;
+        if (quote.status === "accepted" || quote.status === "completed" || quote.status === "rejected") continue;
         if (!quote.validUntil) continue;
 
         const expiryDate = new Date(quote.validUntil);
@@ -160,14 +160,14 @@ async function checkQuoteExpiry() {
               for (const admin of admins) {
                 await triggerNotification(rule, admin.id, {
                   quoteReference: quote.reference || quote.id,
-                  amount: quote.amount,
+                  amount: quote.quoteAmount,
                   expiryDate: expiryDate.toLocaleDateString("fr-FR"),
                 });
               }
             } else {
               await triggerNotification(rule, recipientId, {
                 quoteReference: quote.reference || quote.id,
-                amount: quote.amount,
+                amount: quote.quoteAmount,
                 expiryDate: expiryDate.toLocaleDateString("fr-FR"),
               });
             }

@@ -140,7 +140,7 @@ export function registerObjectStorageRoutes(app: Express): void {
           fileName,
           filePath: objectPath, // The path remains the same but the file content is served via /objects/:path
           fileType: isImage ? "image" : "document",
-          fileSize: processedData.length.toString(),
+          fileSize: processedData.length,
         });
       } else if (type === "invoice") {
         await storage.createInvoiceMedia({
@@ -148,7 +148,7 @@ export function registerObjectStorageRoutes(app: Express): void {
           fileName,
           filePath: objectPath,
           fileType: isImage ? "image" : "document",
-          fileSize: processedData.length.toString(),
+          fileSize: processedData.length,
         });
       }
 

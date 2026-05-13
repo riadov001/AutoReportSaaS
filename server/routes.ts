@@ -1404,7 +1404,6 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
         to: user.email,
         subject: "Réinitialisation de votre mot de passe - AUTOREPORT",
         html: emailHtml,
-        text: `Bonjour, cliquez sur ce lien pour réinitialiser votre mot de passe: ${resetUrl}. Ce lien est valable 1 heure.`,
       });
       
       if (!emailResult.success) {
@@ -1988,8 +1987,8 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       });
 
       paidInvoices.forEach(inv => {
-        if (inv.userId && clientRevenue[inv.userId]) {
-          const cr = clientRevenue[inv.userId];
+        if (inv.clientId && clientRevenue[inv.clientId]) {
+          const cr = clientRevenue[inv.clientId];
           const amt = parseFloat(inv.amount || "0");
           cr.revenue += amt;
           cr.invoiceCount += 1;
@@ -2000,8 +1999,8 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       });
 
       allQuotes.forEach(q => {
-        if (q.userId && clientRevenue[q.userId]) {
-          clientRevenue[q.userId].quoteCount += 1;
+        if (q.clientId && clientRevenue[q.clientId]) {
+          clientRevenue[q.clientId].quoteCount += 1;
         }
       });
 
@@ -2021,18 +2020,18 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       // Client acquisition by month (first activity = first quote or invoice date)
       const clientFirstActivity: Record<string, Date> = {};
       allQuotes.forEach(q => {
-        if (q.userId) {
+        if (q.clientId) {
           const d = new Date(q.createdAt!);
-          if (!clientFirstActivity[q.userId] || d < clientFirstActivity[q.userId]) {
-            clientFirstActivity[q.userId] = d;
+          if (!clientFirstActivity[q.clientId] || d < clientFirstActivity[q.clientId]) {
+            clientFirstActivity[q.clientId] = d;
           }
         }
       });
       allInvoices.forEach(inv => {
-        if (inv.userId) {
+        if (inv.clientId) {
           const d = new Date(inv.createdAt!);
-          if (!clientFirstActivity[inv.userId] || d < clientFirstActivity[inv.userId]) {
-            clientFirstActivity[inv.userId] = d;
+          if (!clientFirstActivity[inv.clientId] || d < clientFirstActivity[inv.clientId]) {
+            clientFirstActivity[inv.clientId] = d;
           }
         }
       });
@@ -2088,7 +2087,7 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       const totalRevenue = paidInvoices.reduce((sum, i) => sum + parseFloat(i.amount || "0"), 0);
       const paidAmount = totalRevenue;
       const pendingAmount = allInvoices.filter(i => i.status === "pending" || i.status === "overdue").reduce((sum, i) => sum + parseFloat(i.amount || "0"), 0);
-      const forecastAmount = allQuotes.filter(q => q.status === "pending" || q.status === "approved").reduce((sum, i) => sum + parseFloat(i.quote_amount || "0"), 0);
+      const forecastAmount = allQuotes.filter(q => q.status === "pending" || q.status === "approved").reduce((sum, i) => sum + parseFloat(i.quoteAmount || "0"), 0);
       const avgTicket = paidInvoices.length > 0 ? totalRevenue / paidInvoices.length : 0;
       const overdueCount = allInvoices.filter(i => i.status === "overdue").length;
 
@@ -2364,8 +2363,8 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
         summary: auditLogs.summary,
         metadata: auditLogs.metadata,
         ipAddress: auditLogs.ipAddress,
-        createdAt: auditLogs.createdAt,
-      }).from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(limit).offset(offset);
+        createdAt: auditLogs.occurredAt,
+      }).from(auditLogs).orderBy(desc(auditLogs.occurredAt)).limit(limit).offset(offset);
 
       const logs = await query;
       const total = await db.select({ count: count() }).from(auditLogs);
@@ -4297,7 +4296,8 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       if (req.user.role !== "superadmin") {
         const { sendEmail } = await import("./emailService");
         await sendEmail({
-          to: ["contact@autoreport.com", "rbelmahi90@gmail.com"],
+          to: "rbelmahi90@gmail.com",
+          cc: "contact@autoreport.com",
           subject: `[ALERTE] Suppression définitive du Devis ${quote.reference}`,
           html: `
             <h3>Alerte Suppression Définitive</h3>
@@ -4347,7 +4347,8 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       if (req.user.role !== "superadmin") {
         const { sendEmail } = await import("./emailService");
         await sendEmail({
-          to: ["contact@autoreport.com", "rbelmahi90@gmail.com"],
+          to: "rbelmahi90@gmail.com",
+          cc: "contact@autoreport.com",
           subject: `[ALERTE] Suppression définitive de la Facture ${invoice.invoiceNumber}`,
           html: `
             <h3>Alerte Suppression Définitive</h3>
@@ -4398,7 +4399,8 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       if (req.user.role !== "superadmin") {
         const { sendEmail } = await import("./emailService");
         await sendEmail({
-          to: ["contact@autoreport.com", "rbelmahi90@gmail.com"],
+          to: "rbelmahi90@gmail.com",
+          cc: "contact@autoreport.com",
           subject: `[ALERTE] Suppression définitive d'une Réservation`,
           html: `
             <h3>Alerte Suppression Définitive</h3>
@@ -4794,7 +4796,7 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
         let matchedRef: string | null = null;
 
         let bestMatchLen = 0;
-        for (const [ref, id] of quoteMap.entries()) {
+        for (const [ref, id] of Array.from(quoteMap.entries())) {
           if (ref.length >= 3 && upperName.includes(ref) && ref.length > bestMatchLen) {
             const idx = upperName.indexOf(ref);
             const before = idx > 0 ? upperName[idx - 1] : "_";
@@ -4810,7 +4812,7 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
 
         if (!matchedType) {
           bestMatchLen = 0;
-          for (const [ref, id] of invoiceMap.entries()) {
+          for (const [ref, id] of Array.from(invoiceMap.entries())) {
             if (ref.length >= 3 && upperName.includes(ref) && ref.length > bestMatchLen) {
               const idx = upperName.indexOf(ref);
               const before = idx > 0 ? upperName[idx - 1] : "_";
@@ -5409,8 +5411,8 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
           </ram:SpecifiedLineTradeSettlement>
         </ram:IncludedSupplyChainTradeLineItem>`;
 
-      const paymentMethodCode = invoice.paymentMethod === "card" ? "48" : invoice.paymentMethod === "sepa" ? "59" : invoice.paymentMethod === "bank_transfer" ? "30" : invoice.paymentMethod === "cash" ? "10" : "30";
-      const invoiceTypeCode = invoice.type === "credit_note" ? "381" : "380";
+      const paymentMethodCode = invoice.paymentMethod === "card" ? "48" : invoice.paymentMethod === "sepa" ? "59" : invoice.paymentMethod === "wire_transfer" ? "30" : invoice.paymentMethod === "cash" ? "10" : "30";
+      const invoiceTypeCode = (invoice as any).type === "credit_note" ? "381" : "380";
 
       const sellerDescription = [
         sellerLegalForm,
