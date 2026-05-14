@@ -80,7 +80,8 @@ Sauvegarde automatique : Quotidienne à 21h00 (Europe/Paris), sans cumul (garde 
 - `vite.config.ts` updated: `host: "0.0.0.0"`, `port: 5000`, `allowedHosts: true` for Replit proxy
 - Logo image replaced with inline SVG (original asset not included in export)
 - Workflow: `npm run dev` on port 5000
-- Deployment: autoscale with `npm run build` + `node dist/index.js`
+- Deployment: autoscale avec `npm run build` + `sh -c "NODE_ENV=production node ./dist/index.js"` — le `NODE_ENV=production` est obligatoire pour éviter le crash Vite en prod
+- App publiée : https://auto-report.replit.app
 
 ## External Dependencies
 
@@ -116,25 +117,51 @@ Sauvegarde automatique : Quotidienne à 21h00 (Europe/Paris), sans cumul (garde 
 
 ## SaaS Public Landing Features (AutoReport)
 
+### Formulaire de génération de rapport (landing.tsx)
+Tous les champs utilisent le branding **matte black** uniforme : fond `zinc-900`, bordure `zinc-700`, focus `[#CE1126]/60`.
+- **MARQUE / MODÈLE** : champs texte libres (requis)
+- **FINITION** : champ texte libre (optionnel)
+- **PUISSANCE** : champ texte libre — ex: "150ch", "110kW" (optionnel) — ajouté mai 2026
+- **MOTORISATION** : champ texte libre — ex: "1.6 TDI", "2.0 TSI" (optionnel) — anciennement un select
+- **ANNÉE** : champ numérique (requis)
+- **KM** : champ numérique (optionnel)
+- **CARBURANT** : boutons-cases matte black à sélection unique (Diesel / Essence / Hybride / Électrique / GPL) — anciennement un select
+- **BOÎTE DE VITESSE** : boutons-cases matte black à sélection unique (Manuelle / Automatique)
+- **USAGE** : boutons-cases matte black à sélection multiple (Ville / Mixte / Autoroute)
+- **EMAIL** : champ email libre (facultatif, pour recevoir le rapport)
+
+### Prompt IA (aiReportService.ts)
+Structure du rapport en 10 sections : Score global (/10 + 4 sous-critères), Verdict expert (BONNE AFFAIRE / CORRECT / RISQUÉ / À ÉVITER), Analyse du prix, Bilan rapide, Points forts (3-5), Points faibles (3-5), Risques spécifiques, Coût annuel estimé, Checklist avant achat, Conseils pratiques (3).
+- Langage simple, clair, sans jargon
+- Toutes les infos contractualisées au véhicule précis / motorisation / kilométrage
+- JSON retourné conforme au type `GeneratedReport` existant
+
 ### Free Report Limiting
-- `POST /api/reports/generate` — Public endpoint, **limited to 1 free AI report per person** (de-duplicated by IP address + optional guest email).
-- Authenticated users: 1 free report then must subscribe (or have an active subscription with remaining quota).
-- Guests: Limited by IP; optional email field (`guestEmail`) provides additional de-duplication layer.
-- `isFree`, `ipAddress`, `guestEmail` columns added to `aiReports` table to track usage.
+- `POST /api/reports/generate` — Public endpoint, **limité à 1 rapport gratuit par personne** (dé-dupliqué par IP + email optionnel).
+- Utilisateurs authentifiés : 1 rapport gratuit puis abonnement requis (ou quota actif).
+- Invités : limité par IP ; champ email (`guestEmail`) layer de dé-duplication supplémentaire.
+- Colonnes `isFree`, `ipAddress`, `guestEmail` dans la table `aiReports`.
+- Champ `puissance` transmis au service IA via `req.body` → `generateAiReport()`.
 
 ### PDF Download Gate
-- `POST /api/reports/download-pdf` — Requires authentication (`req.user`). Returns HTTP 401 if not logged in.
-- Frontend `report-display.tsx` intercepts the 401 and prompts the user to register.
+- `POST /api/reports/download-pdf` — Nécessite authentification (`req.user`). Retourne HTTP 401 si non connecté.
+- Frontend `report-display.tsx` intercepte le 401 et invite l'utilisateur à s'inscrire.
 
 ### Subscription Plans (Admin-Configurable)
-- Admin panel at `/panel/plans` — full CRUD for subscription plans.
-- Plans support: one-time payment, monthly, or yearly period.
-- Each plan has: name, description, price, currency, period, reports quota, Stripe Price ID, active/inactive toggle, sort order.
-- `GET /api/plans` — public endpoint listing active plans.
-- `POST /api/subscriptions/checkout` — Creates a Stripe Checkout session (subscription mode for recurring, payment mode for one-time) and a pending `userSubscriptions` row.
-- `POST /api/subscriptions/confirm` — Verifies Stripe payment status and marks subscription active.
+- Panel admin à `/panel/plans` — CRUD complet des plans d'abonnement.
+- Plans : paiement unique, mensuel, ou annuel.
+- Chaque plan : nom, description, prix, devise, période, quota rapports, Stripe Price ID, toggle actif/inactif, ordre.
+- `GET /api/plans` — endpoint public listant les plans actifs.
+- `POST /api/subscriptions/checkout` — Crée une session Stripe Checkout et une ligne `userSubscriptions` en attente.
+- `POST /api/subscriptions/confirm` — Vérifie le paiement Stripe et active l'abonnement.
 
 ### Admin Credentials
-- Panel URL: `/panel`
-- Email: `admin@autoreport.com`
-- Password: `AutoReport2024!`
+- Panel URL : `/panel`
+- Email : `admin@autoreport.com`
+- Mot de passe : `AutoReport2024!`
+
+### Composants UI (branding matte black)
+- `client/src/components/ui/checkbox.tsx` — fond zinc-900/zinc-950, bordure zinc, indicateur blanc
+- `client/src/components/ui/select.tsx` — fond zinc-900/zinc-950, bordure zinc, texte blanc
+- `client/src/components/ui/switch.tsx` — fond zinc-900/zinc-950, indicateur zinc-400
+- `client/src/components/ui/radio-group.tsx` — fond zinc-900/zinc-950, indicateur zinc-400
