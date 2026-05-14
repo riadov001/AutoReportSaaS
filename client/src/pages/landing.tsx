@@ -258,7 +258,7 @@ function ContactModal({ onClose }: { onClose: () => void }) {
 
 export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {}) {
   const { toast } = useToast();
-  const [vehicleInfo, setVehicleInfo] = useState({ make: "", model: "", year: "", finition: "", motorisation: "", carburant: "", mileage: "", gearbox: "", usage: [] as string[], issue: "", puissance: "" });
+  const [vehicleInfo, setVehicleInfo] = useState({ make: "", model: "", year: "", finition: "", motorisation: "", carburant: "", mileage: "", gearbox: "", usage: [] as string[], issue: "", puissance: "", prix: "", codePostal: "" });
   const [guestEmail, setGuestEmail] = useState("");
   const [generating, setGenerating] = useState(false);
   const [report, setReport] = useState<GeneratedReport | null>(null);
@@ -299,6 +299,8 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
           mileage: vehicleInfo.mileage || undefined,
           gearbox: vehicleInfo.gearbox || undefined,
           usage: vehicleInfo.usage.length ? vehicleInfo.usage : undefined,
+          prix: vehicleInfo.prix || undefined,
+          codePostal: vehicleInfo.codePostal || undefined,
           issue: builtIssue,
           guestEmail: guestEmail.trim() || undefined,
         }),
@@ -683,6 +685,31 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                           {opt}
                         </button>
                       ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">PRIX DEMANDÉ <span className="text-white/15">(optionnel)</span></label>
+                      <input
+                        type="number"
+                        placeholder="ex: 12500"
+                        value={vehicleInfo.prix}
+                        onChange={e => setVehicleInfo(v => ({ ...v, prix: e.target.value }))}
+                        data-testid="input-prix"
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-[#CE1126]/60 focus:bg-zinc-900 transition-all font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">CODE POSTAL <span className="text-white/15">(optionnel)</span></label>
+                      <input
+                        type="text"
+                        placeholder="ex: 75001"
+                        value={vehicleInfo.codePostal}
+                        onChange={e => setVehicleInfo(v => ({ ...v, codePostal: e.target.value }))}
+                        data-testid="input-code-postal"
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-[#CE1126]/60 focus:bg-zinc-900 transition-all font-mono"
+                      />
                     </div>
                   </div>
 

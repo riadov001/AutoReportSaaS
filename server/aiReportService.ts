@@ -20,6 +20,8 @@ interface VehicleInfo {
   carburant?: string;
   gearbox?: string;
   usage?: string | string[];
+  prix?: string;
+  codePostal?: string;
 }
 
 interface ReportSection {
@@ -46,61 +48,53 @@ export interface GeneratedReport {
   generatedAt: string;
 }
 
-const SYSTEM_PROMPT = `Tu es un expert automobile spécialisé dans les véhicules d'occasion.
+const SYSTEM_PROMPT = `Tu es un expert automobile senior chez AutoReport.
 
-Ta mission est de générer un rapport PREMIUM, clair et très utile pour aider un acheteur à prendre une décision.
-
-CONSIGNES STRICTES :
-- Langage simple et clair pour néophyte
-- Pas de jargon compliqué
-- Ton professionnel et utile
-- Aucun contenu générique. Toutes les infos doivent être contractualisées au véhicule, à sa motorisation et à son kilométrage
+Langage simple pour néophytes. Ton professionnel, premium, style Ferrari. Zéro blabla. Tout doit être lié précisément aux données du véhicule fourni.
 
 FORMAT DE RÉPONSE — JSON STRICT :
 Réponds UNIQUEMENT en JSON valide (zéro markdown, zéro texte hors JSON) selon cette structure exacte :
 
 {
-  "summary": "Bilan rapide en 3-4 phrases claires et directes sur ce véhicule précis. Puis : BONNE AFFAIRE / CORRECT / RISQUÉ / À ÉVITER avec une phrase d'explication.",
+  "summary": "Bilan Rapide en 3-4 lignes max sur ce véhicule précis. Puis VERDICT EXPERT : BONNE AFFAIRE / CORRECT / RISQUÉ / À ÉVITER suivi d'une phrase courte d'explication.",
   "sections": [
     {
-      "title": "⭐ Score Global & Critères de notation",
-      "content": "Score global : X/10\n\n• Fiabilité : X/10 — [explication courte spécifique à ce modèle]\n• Coût d'entretien : X/10 — [explication courte avec coût réel]\n• Revente : X/10 — [explication courte sur la cote]\n• Adapté à l'usage : X/10 — [explication courte selon usage déclaré]",
+      "title": "⭐ Score Global",
+      "content": "Score global : X/10\n\n• Fiabilité : X/10 — [explication courte spécifique à ce modèle/millésime]\n• Coût d'entretien : X/10 — [coût réel annuel estimé pour ce modèle]\n• Valeur de revente : X/10 — [cote marché tendance pour ce modèle]\n• Adapté à l'usage : X/10 — [adéquation avec l'usage déclaré]",
       "severity": "low"
     },
     {
       "title": "✅ Points Forts",
-      "content": "3 à 5 points forts concrets et spécifiques à ce modèle/motorisation :\n• Point fort 1\n• Point fort 2\n• Point fort 3",
+      "content": "3 à 5 points forts concrets et spécifiques à ce modèle/motorisation/finition :\n• ...\n• ...\n• ...",
       "severity": "low"
     },
     {
       "title": "⚠️ Points Faibles",
-      "content": "3 à 5 défauts connus et spécifiques à ce modèle :\n• Défaut 1\n• Défaut 2\n• Défaut 3",
+      "content": "3 à 5 défauts connus documentés sur ce modèle :\n• ...\n• ...\n• ...",
       "severity": "medium"
     },
     {
       "title": "🔴 Risques Spécifiques",
-      "content": "Pannes fréquentes ou coûteuses documentées sur ce modèle exact avec kilométrage :\n• Risque 1 — coût estimé : X €\n• Risque 2 — coût estimé : X €",
+      "content": "Pannes fréquentes ou coûteuses sur ce modèle/motorisation/année/kilométrage :\n• ... — coût estimé : X €\n• ... — coût estimé : X €",
       "severity": "high"
     },
     {
       "title": "💰 Analyse du Prix",
-      "content": "Fourchette marché actuelle : X € — Y €\nPosition du véhicule : [bon prix / légèrement surévalué / dans la moyenne / bon deal]\n\nExplication en 2 phrases sur la valeur réelle selon kilométrage et état.",
+      "content": "Fourchette du marché actuel : X € — Y €\nPosition du véhicule : [très bon prix / bon prix / prix moyen / cher / très cher]\n\n[2 phrases d'analyse basées sur le prix demandé vs la fourchette marché]",
       "severity": "low"
     },
     {
       "title": "🧾 Coût Estimé Annuel",
-      "content": "• Entretien moyen annuel : X — Y €\n• Assurance (approximatif) : X — Y €\n\nTotal possession estimé / an : X — Y €",
+      "content": "• Entretien moyen : X — Y € / an\n• Assurance approximative : X — Y € / an\n\nTotal possession estimé / an : X — Y €",
       "severity": "low"
     }
   ],
   "recommendations": [
-    "Point à vérifier 1 avant achat (checklist concrète selon les faiblesses du véhicule)",
+    "Point à vérifier 1 — checklist concrète et priorisée avant achat",
     "Point à vérifier 2",
     "Point à vérifier 3",
     "Point à vérifier 4",
-    "Conseil pratique 1",
-    "Conseil pratique 2",
-    "Conseil pratique 3"
+    "Point à vérifier 5"
   ],
   "estimatedCost": "Entretien : X-Y € / an + Assurance : X-Y € / an = Total : X-Y € / an",
   "urgencyLevel": "low|medium|high|critical",
@@ -108,9 +102,9 @@ Réponds UNIQUEMENT en JSON valide (zéro markdown, zéro texte hors JSON) selon
     "score": 7.5,
     "verdict": "Acheter|Négocier|Éviter",
     "negotiationTips": [
-      "Conseil concret 1 pour négocier ou sécuriser l'achat",
-      "Conseil concret 2",
-      "Conseil concret 3"
+      "Conseil actionnable 1",
+      "Conseil actionnable 2",
+      "Conseil actionnable 3"
     ],
     "inspectionChecklist": [
       "Point de vérification physique 1",
@@ -122,13 +116,15 @@ Réponds UNIQUEMENT en JSON valide (zéro markdown, zéro texte hors JSON) selon
   }
 }
 
-RÈGLES DE SCORING :
-- verdict "Acheter" = score ≥ 7.5 (BONNE AFFAIRE)
-- verdict "Négocier" = score 5 à 7.4 (CORRECT ou RISQUÉ)
-- verdict "Éviter" = score < 5 (À ÉVITER)
-- urgencyLevel "low" = bon état général, "medium" = quelques points à surveiller, "high" = problèmes importants, "critical" = à éviter absolument
-
-IMPORTANT : Sois précis, aide à décider, évite le blabla. Chaque information doit être utile et spécifique au véhicule analysé.`;
+RÈGLES STRICTES :
+- Adapte scores, risques et conseils au kilométrage réel + usage déclaré
+- Si le prix demandé est fourni, analyse-le précisément vs la fourchette marché
+- Si le code postal est fourni, tiens compte du contexte régional (assurance, usure route, etc.)
+- verdict "Acheter" = score ≥ 7.5 (BONNE AFFAIRE), "Négocier" = 5 à 7.4 (CORRECT/RISQUÉ), "Éviter" = < 5 (À ÉVITER)
+- urgencyLevel : "low" = bon état général, "medium" = points à surveiller, "high" = problèmes importants, "critical" = à éviter
+- recommendations = exactement les points à vérifier avant achat (checklist priorisée)
+- purchaseRecommendation.negotiationTips = exactement 3 conseils pratiques actionnables
+- Sois honnête et direct. Zéro contenu générique.`;
 
 async function callGemini(prompt: string, systemPromptOverride?: string): Promise<string> {
   const url = USE_INTEGRATION
@@ -214,6 +210,7 @@ function buildPrompt(vehicleInfo: VehicleInfo): string {
   ].filter(Boolean).join(", ") || "Non précisé";
 
   const kilometrageStr = km && !isNaN(km) ? `${km.toLocaleString("fr-FR")} km` : "Non précisé";
+  const dateRapport = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 
   let prompt = `Données du véhicule à analyser :\n`;
   prompt += `- Marque : ${vehicleInfo.make}\n`;
@@ -222,7 +219,10 @@ function buildPrompt(vehicleInfo: VehicleInfo): string {
   prompt += `- Motorisation : ${motorisationStr}\n`;
   prompt += `- Année : ${vehicleInfo.year}\n`;
   prompt += `- Kilométrage : ${kilometrageStr}\n`;
-  prompt += `- Usage : ${usageStr}\n`;
+  prompt += `- Usage déclaré : ${usageStr}\n`;
+  prompt += `- Prix demandé : ${vehicleInfo.prix ? `${vehicleInfo.prix} €` : "Non précisé"}\n`;
+  prompt += `- Code postal : ${vehicleInfo.codePostal || "Non précisé"}\n`;
+  prompt += `- Date du rapport : ${dateRapport}\n`;
   prompt += `\nGénère le rapport JSON complet selon la structure imposée. Toutes les informations doivent être spécifiques à ce véhicule précis, cette motorisation et ce kilométrage. Zéro contenu générique.`;
 
   return prompt;
