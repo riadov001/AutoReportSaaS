@@ -686,6 +686,69 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
     }
   });
 
+  // Sync guest report after login/signup — attaches localStorage report to user account
+  app.post('/api/reports/sync-guest', async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Non authentifié" });
+      }
+
+      const { reportData, vehicleInfo } = req.body;
+      if (!reportData || typeof reportData !== "object") {
+        return res.status(400).json({ message: "Données de rapport invalides" });
+      }
+
+      const vi = vehicleInfo || (reportData as any).vehicleInfo || {};
+      const make = vi.make || "Inconnu";
+      const model = vi.model || "Inconnu";
+      const year = String(vi.year || "");
+      const issue = vi.issue || "Rapport pré-achat VO (synchronisé)";
+      const mileage = vi.mileage || null;
+
+      // Eviter les doublons : si l'utilisateur a déjà des rapports, vérifier le contenu
+      const existingReports = await storage.getAiReports(userId);
+      const contentStr = JSON.stringify(reportData);
+      const alreadyExists = existingReports.some((r) => r.content === contentStr);
+      if (alreadyExists) {
+        return res.status(409).json({ message: "Rapport déjà présent dans le compte" });
+      }
+
+      // Créer l'entrée DB — isFree=false car le quota gratuit a déjà été consommé côté invité
+      await storage.createAiReport({
+        userId,
+        garageId: null,
+        make,
+        model,
+        year,
+        mileage,
+        issue,
+        content: contentStr,
+        status: "generated",
+        metadata: {
+          syncedFromGuest: true,
+          finition: vi.finition || null,
+          motorisation: vi.motorisation || null,
+          carburant: vi.carburant || null,
+          gearbox: vi.gearbox || null,
+          usage: vi.usage || null,
+          prix: vi.prix || null,
+          codePostal: vi.codePostal || null,
+          puissance: vi.puissance || null,
+        },
+        guestEmail: null,
+        ipAddress: null,
+        isFree: false,
+      });
+
+      console.log(`[SyncGuest] Rapport synchronisé pour userId=${userId} (${make} ${model} ${year})`);
+      res.json({ success: true, message: "Rapport synchronisé avec votre compte" });
+    } catch (err: any) {
+      console.error("[SyncGuest] Erreur :", err?.message || err);
+      res.status(500).json({ message: "Erreur lors de la synchronisation du rapport" });
+    }
+  });
+
   // PDF download - requires authentication
   app.post('/api/reports/download-pdf', async (req, res) => {
     try {

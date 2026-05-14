@@ -5,6 +5,7 @@ import { Zap, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { AutoReportLogo } from "@/components/autoreport-logo";
+import { syncGuestReportToAccount } from "@/lib/guestReportSync";
 
 export default function AuthSignUp() {
   const [, setLocation] = useLocation();
@@ -52,12 +53,19 @@ export default function AuthSignUp() {
       });
       return loginRes.ok;
     },
-    onSuccess: (autoLoggedIn) => {
+    onSuccess: async (autoLoggedIn) => {
+      // Invalider le cache auth pour que la session soit reconnue
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      if (autoLoggedIn) {
+        // Synchroniser le rapport invité généré avant inscription (ne bloque pas la nav)
+        syncGuestReportToAccount().catch((e) =>
+          console.warn("[AuthSignUp] Erreur sync rapport invité :", e)
+        );
+      }
       toast({
         title: "Compte créé",
         description: autoLoggedIn ? "Bienvenue sur AutoReport !" : "Vous pouvez maintenant vous connecter.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setLocation(autoLoggedIn ? "/dashboard" : "/signin");
     },
     onError: (err: Error) => {

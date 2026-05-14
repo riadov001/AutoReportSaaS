@@ -1,0 +1,252 @@
+Projet : https://autoreport.straight-path.fr
+
+MISSION CRITIQUE — intervenir rapidement SANS casser l’application existante.
+
+Tu dois agir comme un senior fullstack engineer spécialisé React + Express + Auth + SaaS multi-tenant.
+
+OBJECTIF :
+Corriger UNIQUEMENT les problèmes liés :
+1. aux rapports IA générés avant login
+2. à la navigation après authentication
+3. à la persistance session/auth
+4. aux redirections frontend
+
+IMPORTANT :
+- Ne PAS refactor tout le projet
+- Ne PAS modifier inutilement l’architecture
+- Ne PAS casser les routes existantes
+- Ne PAS modifier le multi-tenant actuel
+- Ne PAS toucher aux modules admin/comptabilité/facturation sauf nécessité absolue
+- Priorité à la stabilité production
+- Faire les changements minimums mais robustes
+- Préférer patch ciblé plutôt que gros refactor
+
+━━━━━━━━━━━━━━━━━━
+ÉTAPE 1 — ANALYSE RAPIDE
+━━━━━━━━━━━━━━━━━━
+
+Analyser UNIQUEMENT :
+- client/src/App.tsx
+- client/src/hooks/useAuth.ts
+- client/src/lib/queryClient.ts
+- client/src/pages/landing.tsx
+- client/src/pages/rapports.tsx
+- client/src/pages/client-dashboard.tsx
+- client/src/components/report-display.tsx
+- server/routes.ts
+- server/auth.ts
+- server/aiService.ts
+
+Identifier :
+- où le rapport invité est perdu
+- pourquoi navigation homepage casse après login
+- où auth state devient incohérent
+- quelles routes provoquent redirect loops
+
+Avant toute modification :
+- lister précisément les fichiers impactés
+- expliquer pourquoi chaque modification est nécessaire
+- éviter tout changement hors scope
+
+━━━━━━━━━━━━━━━━━━
+ÉTAPE 2 — RAPPORTS INVITÉS
+━━━━━━━━━━━━━━━━━━
+
+PROBLÈME :
+Un utilisateur peut générer un rapport sans compte.
+Après login/signup :
+- le rapport disparaît
+- ou n’est pas sauvegardé
+- ou n’est pas attaché au compte.
+
+SOLUTION À IMPLÉMENTER :
+
+A. Avant login
+Quand un rapport IA est généré :
+- sauvegarder automatiquement dans localStorage :
+  - report content
+  - images
+  - timestamp
+  - temporary guest id
+
+Créer :
+guest_reports
+
+Structure :
+{
+  id,
+  createdAt,
+  reportData,
+  images,
+  synced:false
+}
+
+B. Après login/signup
+Au moment du succès auth :
+- détecter rapports guest
+- envoyer automatiquement au backend
+- créer rapports permanents DB
+- attacher au userId connecté
+- marquer synced:true
+- nettoyer localStorage seulement après succès
+
+IMPORTANT :
+- aucun rapport ne doit être perdu
+- supporter refresh navigateur
+- supporter plusieurs rapports
+- éviter doublons
+
+Ajouter :
+- retry simple
+- gestion erreur réseau
+- logs console clairs
+
+━━━━━━━━━━━━━━━━━━
+ÉTAPE 3 — NAVIGATION APRÈS LOGIN
+━━━━━━━━━━━━━━━━━━
+
+BUG ACTUEL :
+Après authentication :
+- impossible ou difficile de revenir sur /
+- routes bloquées
+- navigation incohérente
+
+CAUSE PROBABLE :
+- protected route mal conçue
+- redirect automatique excessif
+- auth loading state incorrect
+- query cache stale
+
+CORRIGER SANS REFACTOR GLOBAL :
+
+Vérifier :
+- useLocation()
+- redirects automatiques
+- guards auth
+- useEffect auth
+- query invalidation
+
+COMPORTEMENT FINAL :
+- utilisateur connecté peut visiter /
+- utilisateur connecté peut visiter /rapports
+- utilisateur connecté peut revenir dashboard
+- aucun refresh cassé
+- aucun écran blanc
+- aucune boucle infinie
+
+NE PAS :
+- forcer redirect permanent vers dashboard
+- bloquer homepage aux users connectés
+
+━━━━━━━━━━━━━━━━━━
+ÉTAPE 4 — AUTH STATE
+━━━━━━━━━━━━━━━━━━
+
+Stabiliser auth state.
+
+Ajouter si absent :
+- isLoading
+- isAuthenticated
+- user
+- refreshUser()
+
+IMPORTANT :
+- attendre fin chargement auth avant redirect
+- empêcher flash/logout visuel
+- empêcher race conditions
+
+TanStack Query :
+- invalider proprement auth queries
+- éviter cache stale après login/logout
+
+━━━━━━━━━━━━━━━━━━
+ÉTAPE 5 — BACKEND MINIMAL
+━━━━━━━━━━━━━━━━━━
+
+NE PAS refaire toute la DB.
+
+Ajouter uniquement si nécessaire :
+- endpoint sync guest reports
+OU
+- logique merge dans login/register
+
+Exemple :
+POST /api/reports/sync-guest
+
+Body :
+{
+  reports:[]
+}
+
+Le backend doit :
+- valider user connecté
+- sauvegarder reports
+- éviter doublons
+- retourner succès clair
+
+━━━━━━━━━━━━━━━━━━
+ÉTAPE 6 — RÈGLES STRICTES
+━━━━━━━━━━━━━━━━━━
+
+INTERDICTIONS :
+- pas de gros refactor
+- pas de changement architecture globale
+- pas de migration lourde DB
+- pas de changement auth provider
+- pas de suppression de code existant sans raison
+- pas de modification admin panel
+
+OBLIGATION :
+- patch minimal
+- stable production
+- backward compatible
+- code commenté
+- zéro régression
+
+━━━━━━━━━━━━━━━━━━
+ÉTAPE 7 — VALIDATION OBLIGATOIRE
+━━━━━━━━━━━━━━━━━━
+
+Tester obligatoirement :
+
+1.
+guest → générer rapport → signup
+=> rapport conservé
+
+2.
+guest → générer rapport → login
+=> rapport synchronisé
+
+3.
+refresh navigateur
+=> rapport toujours présent
+
+4.
+logout/login
+=> historique conservé
+
+5.
+user connecté → retour homepage /
+=> fonctionne
+
+6.
+mobile responsive
+=> aucun bug navigation
+
+7.
+aucune erreur console critique
+
+━━━━━━━━━━━━━━━━━━
+RÉSULTAT ATTENDU
+━━━━━━━━━━━━━━━━━━
+
+Je veux :
+- correctif rapide
+- faible risque production
+- solution robuste
+- minimum de modifications
+- maximum de stabilité
+- aucune régression existante
+
+Toujours privilégier :
+PATCH CIBLÉ > REFACTOR COMPLET.

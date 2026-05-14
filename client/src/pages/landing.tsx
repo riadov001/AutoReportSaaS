@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { SiHostinger } from "react-icons/si";
 import type { GeneratedReport } from "@/components/report-display";
+import { saveGuestReport } from "@/lib/guestReportSync";
 
 const ReportDisplay = lazy(() => import("@/components/report-display"));
 
@@ -314,6 +315,22 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
       if (!res.ok) throw new Error();
       const data = await res.json();
       setReport(data);
+      // Persist report locally so it survives navigation to /signin or /signup
+      saveGuestReport(data, {
+        make: vehicleInfo.make,
+        model: vehicleInfo.model,
+        year: vehicleInfo.year,
+        mileage: vehicleInfo.mileage || undefined,
+        issue: builtIssue,
+        finition: vehicleInfo.finition || undefined,
+        motorisation: vehicleInfo.motorisation || undefined,
+        carburant: vehicleInfo.carburant || undefined,
+        gearbox: vehicleInfo.gearbox || undefined,
+        usage: vehicleInfo.usage.length ? vehicleInfo.usage : undefined,
+        prix: vehicleInfo.prix || undefined,
+        codePostal: vehicleInfo.codePostal || undefined,
+        puissance: vehicleInfo.puissance || undefined,
+      });
     } catch {
       toast({ title: "Erreur", description: "Impossible de générer le rapport. Réessayez.", variant: "destructive" });
     } finally {

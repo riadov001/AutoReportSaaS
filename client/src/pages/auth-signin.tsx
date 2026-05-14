@@ -5,6 +5,7 @@ import { Eye, EyeOff, Zap, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { AutoReportLogo } from "@/components/autoreport-logo";
+import { syncGuestReportToAccount } from "@/lib/guestReportSync";
 
 export default function AuthSignIn() {
   const [, setLocation] = useLocation();
@@ -30,8 +31,13 @@ export default function AuthSignIn() {
       else localStorage.removeItem("rememberedEmail");
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    onSuccess: async () => {
+      // Invalider le cache auth AVANT la sync pour que le token de session soit valide
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Synchroniser le rapport invité généré avant login (ne bloque pas la nav en cas d'erreur)
+      syncGuestReportToAccount().catch((e) =>
+        console.warn("[AuthSignIn] Erreur sync rapport invité :", e)
+      );
       toast({ title: "Connexion réussie", description: "Bienvenue sur AutoReport" });
       setLocation("/dashboard");
     },
