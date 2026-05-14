@@ -586,17 +586,14 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                     </div>
                     <div>
                       <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">MOTORISATION</label>
-                      <select
+                      <input
+                        type="text"
+                        placeholder="ex: 1.6 TDI, 2.0 TSI..."
                         value={vehicleInfo.motorisation}
                         onChange={e => setVehicleInfo(v => ({ ...v, motorisation: e.target.value }))}
-                        data-testid="select-motorisation"
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#CE1126]/60 transition-all font-mono appearance-none cursor-pointer"
-                      >
-                        <option value="" className="bg-zinc-900 text-zinc-400">Cylindrée...</option>
-                        {["1.0 / 1.2", "1.4 / 1.5", "1.6", "1.8 / 2.0", "2.5 / 3.0", "3.0+", "Électrique"].map(opt => (
-                          <option key={opt} value={opt} className="bg-zinc-900 text-white">{opt}</option>
-                        ))}
-                      </select>
+                        data-testid="input-motorisation"
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-[#CE1126]/60 focus:bg-zinc-900 transition-all font-mono"
+                      />
                     </div>
                     <div>
                       <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">KM</label>
