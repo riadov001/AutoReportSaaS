@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "r64cHo07JJtST5rF6TPI0"
+uri = "file://autoreport-hostinger.zip"
+type = "unspecified"
+title = "AutoReport — Package Hostinger (8.1 MB)"
