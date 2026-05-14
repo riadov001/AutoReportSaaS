@@ -258,7 +258,7 @@ function ContactModal({ onClose }: { onClose: () => void }) {
 
 export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {}) {
   const { toast } = useToast();
-  const [vehicleInfo, setVehicleInfo] = useState({ make: "", model: "", year: "", finition: "", motorisation: "", carburant: "", mileage: "", gearbox: "", usage: [] as string[], issue: "" });
+  const [vehicleInfo, setVehicleInfo] = useState({ make: "", model: "", year: "", finition: "", motorisation: "", carburant: "", mileage: "", gearbox: "", usage: [] as string[], issue: "", puissance: "" });
   const [guestEmail, setGuestEmail] = useState("");
   const [generating, setGenerating] = useState(false);
   const [report, setReport] = useState<GeneratedReport | null>(null);
@@ -275,6 +275,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
     const builtIssue = [
       "Analyse pré-achat véhicule d'occasion",
       vehicleInfo.motorisation ? `Motorisation : ${vehicleInfo.motorisation}` : "",
+      vehicleInfo.puissance ? `Puissance : ${vehicleInfo.puissance}` : "",
       vehicleInfo.carburant ? `Carburant : ${vehicleInfo.carburant}` : "",
       vehicleInfo.gearbox ? `Boîte : ${vehicleInfo.gearbox}` : "",
       vehicleInfo.usage.length ? `Usage : ${vehicleInfo.usage.join(" / ")}` : "",
@@ -293,6 +294,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
           year: vehicleInfo.year,
           finition: vehicleInfo.finition || undefined,
           motorisation: vehicleInfo.motorisation || undefined,
+          puissance: vehicleInfo.puissance || undefined,
           carburant: vehicleInfo.carburant || undefined,
           mileage: vehicleInfo.mileage || undefined,
           gearbox: vehicleInfo.gearbox || undefined,
@@ -538,22 +540,35 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                           value={vehicleInfo[key as "make" | "model"]}
                           onChange={e => setVehicleInfo(v => ({ ...v, [key]: e.target.value }))}
                           data-testid={`input-${key}`}
-                          className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all font-mono"
+                          className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-[#CE1126]/60 focus:bg-zinc-900 transition-all font-mono"
                         />
                       </div>
                     ))}
                   </div>
 
-                  <div>
-                    <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">FINITION <span className="text-white/15">(optionnel)</span></label>
-                    <input
-                      type="text"
-                      placeholder="Sport / Executive / Confort / GTI..."
-                      value={vehicleInfo.finition}
-                      onChange={e => setVehicleInfo(v => ({ ...v, finition: e.target.value }))}
-                      data-testid="input-finition"
-                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all font-mono"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">FINITION <span className="text-white/15">(optionnel)</span></label>
+                      <input
+                        type="text"
+                        placeholder="Sport / Executive / GTI..."
+                        value={vehicleInfo.finition}
+                        onChange={e => setVehicleInfo(v => ({ ...v, finition: e.target.value }))}
+                        data-testid="input-finition"
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-[#CE1126]/60 focus:bg-zinc-900 transition-all font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">PUISSANCE <span className="text-white/15">(optionnel)</span></label>
+                      <input
+                        type="text"
+                        placeholder="ex: 150ch, 110kW..."
+                        value={vehicleInfo.puissance}
+                        onChange={e => setVehicleInfo(v => ({ ...v, puissance: e.target.value }))}
+                        data-testid="input-puissance"
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-[#CE1126]/60 focus:bg-zinc-900 transition-all font-mono"
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
@@ -566,7 +581,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                         value={vehicleInfo.year}
                         onChange={e => setVehicleInfo(v => ({ ...v, year: e.target.value }))}
                         data-testid="input-year"
-                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all font-mono"
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-[#CE1126]/60 focus:bg-zinc-900 transition-all font-mono"
                       />
                     </div>
                     <div>
@@ -575,11 +590,11 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                         value={vehicleInfo.motorisation}
                         onChange={e => setVehicleInfo(v => ({ ...v, motorisation: e.target.value }))}
                         data-testid="select-motorisation"
-                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all font-mono"
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#CE1126]/60 transition-all font-mono appearance-none cursor-pointer"
                       >
-                        <option value="" className="bg-[#0a0a12]">Sélectionner...</option>
+                        <option value="" className="bg-zinc-900 text-zinc-400">Cylindrée...</option>
                         {["1.0 / 1.2", "1.4 / 1.5", "1.6", "1.8 / 2.0", "2.5 / 3.0", "3.0+", "Électrique"].map(opt => (
-                          <option key={opt} value={opt} className="bg-[#0a0a12]">{opt}</option>
+                          <option key={opt} value={opt} className="bg-zinc-900 text-white">{opt}</option>
                         ))}
                       </select>
                     </div>
@@ -591,7 +606,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                         value={vehicleInfo.mileage}
                         onChange={e => setVehicleInfo(v => ({ ...v, mileage: e.target.value }))}
                         data-testid="input-mileage"
-                        className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all font-mono"
+                        className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-[#CE1126]/60 focus:bg-zinc-900 transition-all font-mono"
                       />
                     </div>
                   </div>
@@ -602,11 +617,11 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                       value={vehicleInfo.carburant}
                       onChange={e => setVehicleInfo(v => ({ ...v, carburant: e.target.value }))}
                       data-testid="select-carburant"
-                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all font-mono"
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#CE1126]/60 transition-all font-mono appearance-none cursor-pointer"
                     >
-                      <option value="" className="bg-[#0a0a12]">Sélectionner...</option>
+                      <option value="" className="bg-zinc-900 text-zinc-400">Sélectionner...</option>
                       {["Diesel", "Essence", "Hybride", "Électrique", "GPL"].map(opt => (
-                        <option key={opt} value={opt} className="bg-[#0a0a12]">{opt}</option>
+                        <option key={opt} value={opt} className="bg-zinc-900 text-white">{opt}</option>
                       ))}
                     </select>
                   </div>
@@ -615,35 +630,51 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                     <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-2">BOÎTE DE VITESSE</label>
                     <div className="flex gap-4">
                       {["Manuelle", "Automatique"].map(opt => (
-                        <label key={opt} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={vehicleInfo.gearbox === opt}
-                            onChange={() => setVehicleInfo(v => ({ ...v, gearbox: v.gearbox === opt ? "" : opt }))}
-                            className="accent-[#CE1126] w-4 h-4"
-                          />
-                          <span className="text-xs font-mono text-white/50">{opt}</span>
-                        </label>
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setVehicleInfo(v => ({ ...v, gearbox: v.gearbox === opt ? "" : opt }))}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-md border transition-all font-mono text-xs ${
+                            vehicleInfo.gearbox === opt
+                              ? "bg-zinc-800 border-zinc-500 text-white"
+                              : "bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
+                          }`}
+                        >
+                          <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 transition-all ${
+                            vehicleInfo.gearbox === opt ? "bg-zinc-600 border-zinc-400" : "bg-zinc-900 border-zinc-600"
+                          }`}>
+                            {vehicleInfo.gearbox === opt && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+                          </span>
+                          {opt}
+                        </button>
                       ))}
                     </div>
                   </div>
 
                   <div>
                     <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-2">USAGE <span className="text-white/15">(plusieurs possibles)</span></label>
-                    <div className="flex gap-4">
+                    <div className="flex gap-3">
                       {["Ville", "Mixte", "Autoroute"].map(opt => (
-                        <label key={opt} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={vehicleInfo.usage.includes(opt)}
-                            onChange={() => setVehicleInfo(v => ({
-                              ...v,
-                              usage: v.usage.includes(opt) ? v.usage.filter(u => u !== opt) : [...v.usage, opt],
-                            }))}
-                            className="accent-[#CE1126] w-4 h-4"
-                          />
-                          <span className="text-xs font-mono text-white/50">{opt}</span>
-                        </label>
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setVehicleInfo(v => ({
+                            ...v,
+                            usage: v.usage.includes(opt) ? v.usage.filter(u => u !== opt) : [...v.usage, opt],
+                          }))}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-md border transition-all font-mono text-xs ${
+                            vehicleInfo.usage.includes(opt)
+                              ? "bg-zinc-800 border-zinc-500 text-white"
+                              : "bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
+                          }`}
+                        >
+                          <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 transition-all ${
+                            vehicleInfo.usage.includes(opt) ? "bg-zinc-600 border-zinc-400" : "bg-zinc-900 border-zinc-600"
+                          }`}>
+                            {vehicleInfo.usage.includes(opt) && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+                          </span>
+                          {opt}
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -655,7 +686,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                       placeholder="votre@email.com"
                       value={guestEmail}
                       onChange={e => setGuestEmail(e.target.value)}
-                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-md px-3 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#CE1126]/40 focus:bg-white/[0.05] transition-all font-mono"
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-[#CE1126]/60 focus:bg-zinc-900 transition-all font-mono"
                     />
                   </div>
 

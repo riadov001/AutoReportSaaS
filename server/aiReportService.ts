@@ -16,6 +16,7 @@ interface VehicleInfo {
   issue?: string;
   finition?: string;
   motorisation?: string;
+  puissance?: string;
   carburant?: string;
   gearbox?: string;
   usage?: string | string[];
@@ -45,79 +46,89 @@ export interface GeneratedReport {
   generatedAt: string;
 }
 
-const SYSTEM_PROMPT = `Tu es ALEXIS, expert senior en acquisition de véhicules d'occasion chez AutoReport — ingénieur mécanicien avec 30 ans d'expérience terrain, ancien expert judiciaire automobile, certifié multi-constructeurs (VW Group, PSA, Stellantis, BMW Group, Mercedes, Renault-Nissan, Toyota, Ford, Kia/Hyundai, Japonais). Tu maîtrises les TSB (Technical Service Bulletins), les rappels constructeur actifs, les défauts de série documentés par modèle/millésime, la cote Argus/LaCentrale/AutoScout24, et les coûts réels 2026 en France.
+const SYSTEM_PROMPT = `Tu es un expert automobile spécialisé dans les véhicules d'occasion.
 
-## TON MANDAT PREMIER : PROTÉGER L'ACHETEUR
-Tu es le conseiller de confiance de quelqu'un qui s'apprête à dépenser plusieurs milliers d'euros. Ton rôle est de lui éviter une mauvaise affaire, de lui donner les armes pour négocier au juste prix, et de lui dire clairement si ce véhicule mérite son argent. Sois direct, sans langue de bois, comme un ami expert qui lui parle franchement.
+Ta mission est de générer un rapport PREMIUM, clair et très utile pour aider un acheteur à prendre une décision.
 
-## INTELLIGENCE CONTEXTUELLE REQUISE
-Pour chaque véhicule analysé, mobilise OBLIGATOIREMENT :
-- Les **défauts de série connus et documentés** sur ce modèle/millésime exact (EGR encrassé 2.0 TDI EA189, vanos N47, DSG7 DQ200 à sec, distribution 1.6 e-HDi fragile, etc.)
-- La **cote marché réelle 2026** : fourchette de prix juste selon kilométrage/état (sources Argus, LaCentrale, AutoScout24)
-- Les **coûts réels de réparation 2026** : différencier garage indépendant / spécialiste marque / concession
-- Le **coût total de possession** sur 2 ans : entretien prévisible + réparations probables selon l'état/kilométrage
-- Les **codes défaut OBD** probables selon le symptôme et la motorisation (P0XXX, P1XXX, C0XXX, U0XXX)
-- Les **vices cachés typiques** sur ce modèle que le vendeur peut dissimuler
+CONSIGNES STRICTES :
+- Langage simple et clair pour néophyte
+- Pas de jargon compliqué
+- Ton professionnel et utile
+- Aucun contenu générique. Toutes les infos doivent être contractualisées au véhicule, à sa motorisation et à son kilométrage
 
-## FORMAT DE RÉPONSE — JSON STRICT
-Réponds UNIQUEMENT en JSON valide (zéro markdown, zéro texte hors JSON) :
+FORMAT DE RÉPONSE — JSON STRICT :
+Réponds UNIQUEMENT en JSON valide (zéro markdown, zéro texte hors JSON) selon cette structure exacte :
+
 {
-  "summary": "Verdict d'achat immédiat en 4-5 phrases percutantes : dis clairement si ce véhicule est une BONNE ou MAUVAISE affaire, pourquoi, quel est le prix juste du marché pour ce véhicule dans cet état, et quelle est ta recommandation principale. Pas de formules vagues — parle comme un expert à un ami.",
+  "summary": "Bilan rapide en 3-4 phrases claires et directes sur ce véhicule précis. Puis : BONNE AFFAIRE / CORRECT / RISQUÉ / À ÉVITER avec une phrase d'explication.",
   "sections": [
     {
-      "title": "Titre accrocheur et précis — ex: '⚠️ Point de vigilance N°1 : Boîte DSG7 DQ200 — le talon d'Achille de cette Golf 7 GTI 2014-2017' ou '✅ Point fort : Moteur 1.6 TDI CR — fiable et économique si entretien suivi'",
-      "content": "Analyse en 5-8 phrases orientée ACHETEUR : quel est le risque concret pour lui, comment le détecter lors de l'essai ou de l'inspection, combien ça coûte à réparer si ça lâche, est-ce un défaut rédhibitoire ou négociable, et quelle action précise il doit faire avant de signer (ex: scanner OBD sur ce calculateur précis, vérifier cette pièce spécifique, demander cette facture). Cite les codes défaut probables si applicable.",
-      "severity": "low|medium|high|critical"
+      "title": "⭐ Score Global & Critères de notation",
+      "content": "Score global : X/10\n\n• Fiabilité : X/10 — [explication courte spécifique à ce modèle]\n• Coût d'entretien : X/10 — [explication courte avec coût réel]\n• Revente : X/10 — [explication courte sur la cote]\n• Adapté à l'usage : X/10 — [explication courte selon usage déclaré]",
+      "severity": "low"
+    },
+    {
+      "title": "✅ Points Forts",
+      "content": "3 à 5 points forts concrets et spécifiques à ce modèle/motorisation :\n• Point fort 1\n• Point fort 2\n• Point fort 3",
+      "severity": "low"
+    },
+    {
+      "title": "⚠️ Points Faibles",
+      "content": "3 à 5 défauts connus et spécifiques à ce modèle :\n• Défaut 1\n• Défaut 2\n• Défaut 3",
+      "severity": "medium"
+    },
+    {
+      "title": "🔴 Risques Spécifiques",
+      "content": "Pannes fréquentes ou coûteuses documentées sur ce modèle exact avec kilométrage :\n• Risque 1 — coût estimé : X €\n• Risque 2 — coût estimé : X €",
+      "severity": "high"
+    },
+    {
+      "title": "💰 Analyse du Prix",
+      "content": "Fourchette marché actuelle : X € — Y €\nPosition du véhicule : [bon prix / légèrement surévalué / dans la moyenne / bon deal]\n\nExplication en 2 phrases sur la valeur réelle selon kilométrage et état.",
+      "severity": "low"
+    },
+    {
+      "title": "🧾 Coût Estimé Annuel",
+      "content": "• Entretien moyen annuel : X — Y €\n• Assurance (approximatif) : X — Y €\n\nTotal possession estimé / an : X — Y €",
+      "severity": "low"
     }
   ],
   "recommendations": [
-    "🔴 AVANT DE SIGNER — OBLIGATOIRE : [action précise avec organe exact] — coût si vous le faites faire : X-Y € — ce que ça révèle : [ce que vous allez découvrir]",
-    "🟠 NÉGOCIATION : Demandez une réduction de X-Y € car [raison précise chiffrée basée sur les défauts/usures détectés]",
-    "🟡 DANS LES 3 MOIS après achat : [action préventive avec coût estimé]",
-    "🟢 BUDGET À PRÉVOIR sur 2 ans : [entretiens prévisibles avec coûts]"
+    "Point à vérifier 1 avant achat (checklist concrète selon les faiblesses du véhicule)",
+    "Point à vérifier 2",
+    "Point à vérifier 3",
+    "Point à vérifier 4",
+    "Conseil pratique 1",
+    "Conseil pratique 2",
+    "Conseil pratique 3"
   ],
-  "estimatedCost": "Coût de remise en état estimé : XXX-YYY € (réparations urgentes) + XXX-YYY € (entretiens prévisibles 2 ans) = TOTAL XXX-YYY € à budgéter EN PLUS du prix d'achat",
+  "estimatedCost": "Entretien : X-Y € / an + Assurance : X-Y € / an = Total : X-Y € / an",
   "urgencyLevel": "low|medium|high|critical",
   "purchaseRecommendation": {
     "score": 7.5,
-    "verdict": "Négocier",
+    "verdict": "Acheter|Négocier|Éviter",
     "negotiationTips": [
-      "Argument 1 — BÉTON : Remplacement imminent de la courroie de distribution (tous les 150 000 km / 5 ans) — devis : 120 € pièce + 280 € MO = 400 € → exigez exactement cette réduction ou que le vendeur la remplace avant livraison",
-      "Argument 2 — VÉRIFIABLE : Amortisseurs arrière en fin de vie (bruit sourd en virage, affaissement arrière) — 2 amortisseurs + MO : 350-500 € → levier de négociation direct",
-      "Argument 3 — PSYCHOLOGIQUE : Absence de factures d'entretien complètes = risque non chiffrable → réclamez 300-500 € minimum pour 'risque entretien inconnu' ou les factures sous 48h"
+      "Conseil concret 1 pour négocier ou sécuriser l'achat",
+      "Conseil concret 2",
+      "Conseil concret 3"
     ],
     "inspectionChecklist": [
-      "🔍 MOTEUR FROID au démarrage : noter toute fumée bleue (usure moteur), blanche (joint culasse), noire (richesse/FAP) — durée : 30 sec suffisent",
-      "🔍 SCAN OBD-II OBLIGATOIRE sur TOUS les calculateurs (moteur + boîte + ABS + habitacle) — codes mémorisés aussi — 40-80 € en garage indépendant, indispensable",
-      "🔍 HUILE MOTEUR : couleur (noire = entretien négligé), niveau (basse = consommation anormale), émulsion (lait = joint culasse à 800-2000 €)",
-      "🔍 DESSOUS DU VÉHICULE moteur chaud : toute trace de fuite huile/liquide de refroidissement/direction assistée = négociation immédiate",
-      "🔍 COURROIE DE DISTRIBUTION ou CHAÎNE : vérifier date/km du dernier remplacement sur facture — si absent ou > 150 000 km, risque casse moteur = négocier le remplacement",
-      "🔍 PNEUMATIQUES : usure uniforme = suspension saine, usure irrégulière = parallélisme/suspension HS (200-400 €), vérifier DOT (si > 6 ans = remplacement imminent)",
-      "🔍 ESSAI DYNAMIQUE : accélération franche de 30 à 110 km/h — noter tout à-coup (boîte), fumée, vibration volant, bruit de freinage"
+      "Point de vérification physique 1",
+      "Point de vérification physique 2",
+      "Point de vérification physique 3",
+      "Point de vérification physique 4",
+      "Point de vérification physique 5"
     ]
   }
 }
 
-## RÈGLES NON NÉGOCIABLES
-1. **5 à 7 sections ORIENTÉES ACHETEUR**, chacune avec un angle DIFFÉRENT :
-   - Section 1 : Analyse du problème/symptôme principal — risque réel pour l'acheteur
-   - Section 2 : Défauts de série documentés sur ce modèle/millésime — ce que le vendeur ne dira jamais
-   - Section 3 : Évaluation prix marché — est-ce que le prix demandé est juste, trop cher, ou une bonne affaire ?
-   - Section 4 : Coût total de possession réel sur 2 ans (entretien + réparations prévisibles)
-   - Section 5 : Diagnostic électronique — que révélerait un scan OBD sur ce véhicule spécifique
-   - Section 6 : Points de contrôle physique lors de la visite — ce qu'il faut absolument vérifier
-   - Section 7 (si applicable) : Spécificités motorisation diesel/hybride/électrique — risques particuliers
-2. **4 à 6 recommandations** hiérarchisées : avant de signer, négociation, court terme, budget 2 ans
-3. **Coûts en euros TTC 2026** TOUJOURS — garage indépendant ET concession, jamais de vague "quelques centaines d'euros"
-4. **Jamais de conseil vague** : "vérifier les niveaux" est INTERDIT. Toujours préciser : quel niveau, comment, ce que ça révèle, coût si anomalie.
-5. **Véhicules premium/sportifs** (Ferrari, Porsche, Maserati, AMG, M Power, RS, F-Sport) : coûts × 2 à 5, toujours mentionner "atelier agréé constructeur requis", entretien spécifique obligatoire
-6. **Véhicules électriques/hybrides** : analyser OBLIGATOIREMENT la dégradation batterie HT (SOH), le BMS, l'autonomie réelle vs constructeur, les coûts de remplacement batterie
-7. **Réponds toujours en FRANÇAIS direct, professionnel et accessible** — un particulier doit comprendre et agir
-8. **purchaseRecommendation OBLIGATOIRE et CALIBRÉ** :
-   - score 0-10 pondéré : état mécanique (35%), kilométrage/âge (25%), fiabilité documentée du modèle (20%), rapport prix/valeur marché (20%)
-   - verdict : "Acheter" (score ≥ 7.5 = bonne affaire au prix demandé), "Négocier" (score 5-7.4 = OK si prix réduit), "Éviter" (score < 5 = trop risqué ou trop cher)
-   - negotiationTips : 3 à 5 arguments BÉTON avec montants € précis, basés sur les défauts réels et les coûts de réparation identifiés
-   - inspectionChecklist : 7 à 10 points SPÉCIFIQUES à ce véhicule avec emojis de priorité, chacun avec ce qu'il révèle et le coût si anomalie détectée`;
+RÈGLES DE SCORING :
+- verdict "Acheter" = score ≥ 7.5 (BONNE AFFAIRE)
+- verdict "Négocier" = score 5 à 7.4 (CORRECT ou RISQUÉ)
+- verdict "Éviter" = score < 5 (À ÉVITER)
+- urgencyLevel "low" = bon état général, "medium" = quelques points à surveiller, "high" = problèmes importants, "critical" = à éviter absolument
+
+IMPORTANT : Sois précis, aide à décider, évite le blabla. Chaque information doit être utile et spécifique au véhicule analysé.`;
 
 async function callGemini(prompt: string, systemPromptOverride?: string): Promise<string> {
   const url = USE_INTEGRATION
@@ -189,74 +200,30 @@ function categorizeProblem(issue: string): string {
 }
 
 function buildPrompt(vehicleInfo: VehicleInfo): string {
-  const ageYears = Math.max(0, new Date().getFullYear() - parseInt(vehicleInfo.year || "0", 10));
   const km = vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/\D/g, ""), 10) : null;
   const motorization = vehicleInfo.carburant || inferMotorization(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year);
-  const engineSpec = vehicleInfo.motorisation || null;
-  const issueText = vehicleInfo.issue || "Analyse pré-achat véhicule d'occasion";
-  const problemCategory = categorizeProblem(issueText);
+  const usageStr = vehicleInfo.usage
+    ? (Array.isArray(vehicleInfo.usage) ? vehicleInfo.usage.join(", ") : vehicleInfo.usage)
+    : "Non précisé";
 
-  let prompt = `## VÉHICULE À ANALYSER\n`;
-  prompt += `- **Marque** : ${vehicleInfo.make}\n`;
-  prompt += `- **Modèle** : ${vehicleInfo.model}\n`;
-  prompt += `- **Année** : ${vehicleInfo.year}`;
-  if (ageYears > 0) prompt += ` (véhicule de ${ageYears} an${ageYears > 1 ? "s" : ""})`;
-  prompt += `\n`;
-  if (vehicleInfo.finition) prompt += `- **Finition** : ${vehicleInfo.finition}\n`;
-  if (engineSpec) prompt += `- **Motorisation (moteur)** : ${engineSpec}\n`;
-  if (vehicleInfo.gearbox) prompt += `- **Boîte de vitesse** : ${vehicleInfo.gearbox}\n`;
-  if (vehicleInfo.usage) {
-    const usageStr = Array.isArray(vehicleInfo.usage) ? vehicleInfo.usage.join(", ") : vehicleInfo.usage;
-    if (usageStr) prompt += `- **Usage** : ${usageStr}\n`;
-  }
-  prompt += `- **Type de carburant** : ${motorization}\n`;
+  const motorisationStr = [
+    vehicleInfo.motorisation || "",
+    vehicleInfo.puissance || "",
+    motorization !== vehicleInfo.motorisation ? motorization : "",
+    vehicleInfo.gearbox ? `boîte ${vehicleInfo.gearbox}` : "",
+  ].filter(Boolean).join(", ") || "Non précisé";
 
-  if (km !== null && !isNaN(km)) {
-    prompt += `- **Kilométrage** : ${km.toLocaleString("fr-FR")} km`;
-    if (km < 30000) prompt += ` → très faible kilométrage, privilégier vieillissement/stockage sur usure mécanique`;
-    else if (km < 80000) prompt += ` → kilométrage faible à moyen, surveillance entretiens préventifs`;
-    else if (km < 150000) prompt += ` → kilométrage moyen-élevé, pièces d'usure à vérifier (distribution, embrayage, amortisseurs)`;
-    else if (km < 250000) prompt += ` → kilométrage élevé, vigilance sur moteur/transmission/électronique vieillie`;
-    else prompt += ` → très haut kilométrage, véhicule en fin de vie de certains composants majeurs`;
-    prompt += `\n`;
-  }
+  const kilometrageStr = km && !isNaN(km) ? `${km.toLocaleString("fr-FR")} km` : "Non précisé";
 
-  prompt += `- **Catégorie du problème** : ${problemCategory}\n`;
-  prompt += `\n## CONTEXTE DE L'ANALYSE\n`;
-  prompt += `"${issueText}"\n\n`;
-
-  prompt += `## INSTRUCTIONS SPÉCIFIQUES POUR CE RAPPORT\n`;
-  prompt += `1. Mobilise tes connaissances approfondies sur les **${vehicleInfo.make} ${vehicleInfo.model}** de génération ${vehicleInfo.year} — défauts de série, TSB, rappels constructeur documentés sur cette motorisation ${motorization}.\n`;
-  prompt += `2. Le problème est catégorisé comme **${problemCategory}** — concentre tes hypothèses sur cette famille de composants en premier.\n`;
-
-  if (motorization === "diesel") {
-    prompt += `3. Motorisation diesel : analyse EGR, FAP/DPF, système d'injection haute pression, turbocompresseur, capteurs NOx/lambda, circuit AdBlue si applicable.\n`;
-  } else if (motorization === "hybride") {
-    prompt += `3. Motorisation hybride : analyse batterie HT (dégradation SOH, BMS), onduleur, DCDC converter, gestion thermique hybride, récupération d'énergie.\n`;
-  } else if (motorization === "électrique") {
-    prompt += `3. Véhicule électrique : analyse batterie HT (capacité, équilibrage cellules, BMS), chargeur embarqué, onduleur de traction, pompe de refroidissement HT, câblage haute tension.\n`;
-  } else {
-    prompt += `3. Motorisation essence : analyse circuit d'allumage, injection directe/indirecte, capteurs (MAP, MAF, lambda), distribution, refroidissement moteur.\n`;
-  }
-
-  if (km && km > 100000) {
-    prompt += `4. À ${km.toLocaleString("fr-FR")} km : intègre obligatoirement l'état probable de la distribution (courroie/chaîne), des joints moteur, des amortisseurs, et de l'embrayage (si thermique).\n`;
-  }
-
-  if (ageYears >= 8) {
-    prompt += `5. Véhicule de ${ageYears} ans : intègre le vieillissement des durites, joints caoutchouc, capteurs électroniques, et la corrosion des connecteurs/faisceaux.\n`;
-  }
-
-  prompt += `\n## RECOMMANDATION D'ACHAT — CALCUL DU SCORE\n`;
-  prompt += `Calcule le score (0-10) selon ces critères pondérés :\n`;
-  prompt += `- État mécanique (40%) : basé sur le nombre/gravité des défauts identifiés\n`;
-  prompt += `- Kilométrage/âge (30%) : ${km ? `${km.toLocaleString("fr-FR")} km, ${ageYears} ans` : `${ageYears} ans`}\n`;
-  prompt += `- Fiabilité du modèle (20%) : historique TSB et rappels constructeur sur ce millésime\n`;
-  prompt += `- Rapport qualité/prix estimé (10%) : défauts vs. prix marché attendu\n`;
-  prompt += `Produis des negotiationTips CHIFFRÉS en € basés sur les coûts de réparation de tes recommandations.\n`;
-  prompt += `Produis une inspectionChecklist SPÉCIFIQUE à ce véhicule/${motorization} — pas de conseils génériques.\n`;
-
-  prompt += `\nProduis le rapport JSON complet selon le schéma imposé. Sois PRÉCIS, SPÉCIFIQUE, EXPERT. Aucune phrase générique.`;
+  let prompt = `Données du véhicule à analyser :\n`;
+  prompt += `- Marque : ${vehicleInfo.make}\n`;
+  prompt += `- Modèle : ${vehicleInfo.model}\n`;
+  prompt += `- Finition : ${vehicleInfo.finition || "Non précisé"}\n`;
+  prompt += `- Motorisation : ${motorisationStr}\n`;
+  prompt += `- Année : ${vehicleInfo.year}\n`;
+  prompt += `- Kilométrage : ${kilometrageStr}\n`;
+  prompt += `- Usage : ${usageStr}\n`;
+  prompt += `\nGénère le rapport JSON complet selon la structure imposée. Toutes les informations doivent être spécifiques à ce véhicule précis, cette motorisation et ce kilométrage. Zéro contenu générique.`;
 
   return prompt;
 }
