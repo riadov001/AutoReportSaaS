@@ -6553,7 +6553,11 @@ __export(aiReportService_exports, {
   generateReportHtml: () => generateReportHtml
 });
 async function callGemini(prompt, systemPromptOverride) {
-  const url = `${GEMINI_BASE_URL}/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const url = USE_INTEGRATION ? `${GEMINI_BASE_URL}/models/${GEMINI_MODEL}:generateContent` : `${GEMINI_BASE_URL}/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const headers = { "Content-Type": "application/json" };
+  if (USE_INTEGRATION) {
+    headers["x-goog-api-key"] = GEMINI_API_KEY;
+  }
   const body2 = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     systemInstruction: { parts: [{ text: systemPromptOverride || SYSTEM_PROMPT }] },
@@ -6566,7 +6570,7 @@ async function callGemini(prompt, systemPromptOverride) {
   };
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body2)
   });
   if (!response.ok) {
@@ -6582,7 +6586,6 @@ async function callGemini(prompt, systemPromptOverride) {
   return text2;
 }
 function inferMotorization(make, model, year) {
-  const y = parseInt(year, 10);
   const m = model.toLowerCase();
   const mk = make.toLowerCase();
   if (m.includes("tdi") || m.includes("hdi") || m.includes("cdti") || m.includes("dci") || m.includes("bluehdI") || m.includes("d ") || m.includes(" d") || m.includes("diesel")) return "diesel";
@@ -6682,8 +6685,59 @@ function buildPrompt(vehicleInfo) {
 `;
   }
   prompt += `
+## RECOMMANDATION D'ACHAT \u2014 CALCUL DU SCORE
+`;
+  prompt += `Calcule le score (0-10) selon ces crit\xE8res pond\xE9r\xE9s :
+`;
+  prompt += `- \xC9tat m\xE9canique (40%) : bas\xE9 sur le nombre/gravit\xE9 des d\xE9fauts identifi\xE9s
+`;
+  prompt += `- Kilom\xE9trage/\xE2ge (30%) : ${km ? `${km.toLocaleString("fr-FR")} km, ${ageYears} ans` : `${ageYears} ans`}
+`;
+  prompt += `- Fiabilit\xE9 du mod\xE8le (20%) : historique TSB et rappels constructeur sur ce mill\xE9sime
+`;
+  prompt += `- Rapport qualit\xE9/prix estim\xE9 (10%) : d\xE9fauts vs. prix march\xE9 attendu
+`;
+  prompt += `Produis des negotiationTips CHIFFR\xC9S en \u20AC bas\xE9s sur les co\xFBts de r\xE9paration de tes recommandations.
+`;
+  prompt += `Produis une inspectionChecklist SP\xC9CIFIQUE \xE0 ce v\xE9hicule/${motorization} \u2014 pas de conseils g\xE9n\xE9riques.
+`;
+  prompt += `
 Produis le rapport JSON complet selon le sch\xE9ma impos\xE9. Sois PR\xC9CIS, SP\xC9CIFIQUE, EXPERT. Aucune phrase g\xE9n\xE9rique.`;
   return prompt;
+}
+function generateFallbackPurchaseRecommendation(vehicleInfo) {
+  const motorization = inferMotorization(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year);
+  const km = vehicleInfo.mileage ? parseInt(vehicleInfo.mileage.replace(/\D/g, ""), 10) : null;
+  const ageYears = Math.max(0, (/* @__PURE__ */ new Date()).getFullYear() - parseInt(vehicleInfo.year || "0", 10));
+  const baseChecklist = [
+    "Scanner OBD-II sur tous les calculateurs (moteur, bo\xEEte, ABS, habitacle) \u2014 pr\xE9voir 40-80 \u20AC en garage ind\xE9pendant",
+    "V\xE9rifier visuellement toutes les fuites sous le v\xE9hicule moteur chaud (huile, liquide de refroidissement)",
+    "Inspecter l'\xE9tat et la couleur de l'huile moteur \u2014 pr\xE9sence de lait = joint de culasse, huile tr\xE8s noire = entretiens n\xE9glig\xE9s",
+    "Tester le d\xE9marrage \xE0 froid ET apr\xE8s chauffe compl\xE8te \u2014 noter tout rat\xE9 d'allumage, fum\xE9e anormale, vibration",
+    "Contr\xF4ler l'usure des pneumatiques et la g\xE9om\xE9trie (usure irr\xE9guli\xE8re = probl\xE8me de suspension ou direction)",
+    "V\xE9rifier le carnet d'entretien complet : intervalles respect\xE9s, factures \xE0 l'appui"
+  ];
+  if (motorization === "diesel") {
+    baseChecklist.push("Faire un essai \xE0 froid : surveiller la fum\xE9e noire au d\xE9marrage (turbo/injection) et l'acc\xE9l\xE9ration franche sans \xE0-coups (FAP)");
+  } else if (motorization === "\xE9lectrique" || motorization === "hybride") {
+    baseChecklist.push("Demander le rapport SOH (State of Health) de la batterie HT \u2014 refuser si < 80% ou si non disponible");
+    baseChecklist.push("Tester la recharge AC (borne 7kW) et DC (rapide) \u2014 noter le temps de charge r\xE9el vs. th\xE9orique");
+  } else {
+    baseChecklist.push("V\xE9rifier la date et l'\xE9tat de la courroie de distribution (ou tension cha\xEEne de distribution si applicable)");
+  }
+  if (km && km > 1e5) {
+    baseChecklist.push(`\xC0 ${km.toLocaleString("fr-FR")} km : demander les factures de remplacement amortisseurs, embrayage (si thermique), courroie accessoires`);
+  }
+  return {
+    score: 5.5,
+    verdict: "N\xE9gocier",
+    negotiationTips: [
+      "Faites r\xE9aliser un diagnostic OBD complet avant signature \u2014 utilisez les codes d\xE9faut trouv\xE9s pour n\xE9gocier le prix",
+      "Demandez syst\xE9matiquement le rapport d'historique (CarVertical, Histovec gratuit) \u2014 accident non d\xE9clar\xE9 = levier -10 \xE0 -20% du prix",
+      "Exigez toutes les factures d'entretien \u2014 absence de preuves = n\xE9gociation de 300-500 \u20AC minimum pour couvrir les risques"
+    ],
+    inspectionChecklist: baseChecklist
+  };
 }
 function generateFallbackReport(vehicleInfo) {
   const motorization = inferMotorization(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year);
@@ -6717,6 +6771,7 @@ function generateFallbackReport(vehicleInfo) {
     ],
     estimatedCost: "80-250 \u20AC (diagnostic initial complet)",
     urgencyLevel: "medium",
+    purchaseRecommendation: generateFallbackPurchaseRecommendation(vehicleInfo),
     generatedAt: (/* @__PURE__ */ new Date()).toISOString()
   };
 }
@@ -6735,6 +6790,8 @@ async function generateAiReport(vehicleInfo, customSystemPrompt) {
       cleanJson = cleanJson.slice(firstBrace, lastBrace + 1);
     }
     const parsed = JSON.parse(cleanJson);
+    const purchaseRec = parsed.purchaseRecommendation;
+    const validVerdicts = ["Acheter", "N\xE9gocier", "\xC9viter"];
     const report = {
       vehicleInfo,
       summary: parsed.summary || "Rapport de diagnostic g\xE9n\xE9r\xE9 par IA.",
@@ -6742,6 +6799,12 @@ async function generateAiReport(vehicleInfo, customSystemPrompt) {
       recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
       estimatedCost: parsed.estimatedCost || void 0,
       urgencyLevel: parsed.urgencyLevel || "medium",
+      purchaseRecommendation: purchaseRec && typeof purchaseRec.score === "number" && validVerdicts.includes(purchaseRec.verdict) ? {
+        score: Math.min(10, Math.max(0, purchaseRec.score)),
+        verdict: purchaseRec.verdict,
+        negotiationTips: Array.isArray(purchaseRec.negotiationTips) ? purchaseRec.negotiationTips : [],
+        inspectionChecklist: Array.isArray(purchaseRec.inspectionChecklist) ? purchaseRec.inspectionChecklist : []
+      } : generateFallbackPurchaseRecommendation(vehicleInfo),
       generatedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
     return report;
@@ -6763,6 +6826,11 @@ function generateReportHtml(report) {
     high: "\xC9lev\xE9",
     critical: "Critique"
   };
+  const verdictColors = {
+    Acheter: "#22c55e",
+    N\u00E9gocier: "#f59e0b",
+    \u00C9viter: "#ef4444"
+  };
   const sectionsHtml = report.sections.map(
     (s) => `
     <div style="margin-bottom: 20px; padding: 16px; border-left: 4px solid ${severityColors[s.severity || "medium"]}; background: #f8f9fa; border-radius: 4px;">
@@ -6772,6 +6840,36 @@ function generateReportHtml(report) {
     </div>`
   ).join("");
   const recsHtml = report.recommendations.map((r, i) => `<li style="margin-bottom: 10px; color: #333; font-size: 13px; line-height:1.6;"><strong style="color:#dc2626;">#${i + 1}</strong> ${r}</li>`).join("");
+  const pr = report.purchaseRecommendation;
+  const purchaseHtml = pr ? `
+    <div style="margin-bottom: 30px; padding: 20px; border-radius: 8px; border: 2px solid ${verdictColors[pr.verdict] || "#f59e0b"}; background: ${verdictColors[pr.verdict] || "#f59e0b"}08;">
+      <h2 style="font-size: 16px; font-weight: 700; margin-bottom: 14px; color: #0a0a0a; text-transform: uppercase; letter-spacing: 1px;">Recommandation d'achat</h2>
+      <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 16px; flex-wrap: wrap;">
+        <div style="text-align: center;">
+          <div style="width: 64px; height: 64px; border-radius: 50%; border: 4px solid ${verdictColors[pr.verdict] || "#f59e0b"}; display: flex; align-items: center; justify-content: center;">
+            <span style="font-size: 22px; font-weight: 800; color: ${verdictColors[pr.verdict] || "#f59e0b"};">${pr.score.toFixed(1)}</span>
+          </div>
+          <p style="font-size: 10px; color: #888; margin-top: 4px;">/ 10</p>
+        </div>
+        <div>
+          <span style="display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 16px; font-weight: 800; color: white; background: ${verdictColors[pr.verdict] || "#f59e0b"};">${pr.verdict}</span>
+        </div>
+      </div>
+      ${pr.negotiationTips.length > 0 ? `
+      <div style="margin-bottom: 14px;">
+        <h3 style="font-size: 13px; font-weight: 700; color: #0a0a0a; margin-bottom: 8px;">\u{1F4B0} Arguments de n\xE9gociation</h3>
+        <ul style="padding-left: 16px; margin: 0;">
+          ${pr.negotiationTips.map((t) => `<li style="font-size: 12px; color: #444; margin-bottom: 6px; line-height: 1.5;">${t}</li>`).join("")}
+        </ul>
+      </div>` : ""}
+      ${pr.inspectionChecklist.length > 0 ? `
+      <div>
+        <h3 style="font-size: 13px; font-weight: 700; color: #0a0a0a; margin-bottom: 8px;">\u2705 Points \xE0 v\xE9rifier avant signature</h3>
+        <ul style="padding-left: 16px; margin: 0; list-style: none;">
+          ${pr.inspectionChecklist.map((item) => `<li style="font-size: 12px; color: #444; margin-bottom: 6px; line-height: 1.5; padding-left: 4px;">\u2610 ${item}</li>`).join("")}
+        </ul>
+      </div>` : ""}
+    </div>` : "";
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -6822,6 +6920,9 @@ function generateReportHtml(report) {
       ${report.estimatedCost ? `<span style="margin-left: auto; font-weight: 600; font-size: 14px; color: #555;">Estimation : ${report.estimatedCost}</span>` : ""}
     </div>
 
+    <!-- Purchase Recommendation -->
+    ${purchaseHtml}
+
     <!-- Summary -->
     <div style="margin-bottom: 30px;">
       <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 12px; color: #0a0a0a;">R\xE9sum\xE9 du diagnostic</h2>
@@ -6857,62 +6958,91 @@ function generateReportHtml(report) {
 </body>
 </html>`;
 }
-var GEMINI_API_KEY, GEMINI_BASE_URL, GEMINI_MODEL, SYSTEM_PROMPT;
+var USE_INTEGRATION, GEMINI_BASE_URL, GEMINI_API_KEY, GEMINI_MODEL, SYSTEM_PROMPT;
 var init_aiReportService = __esm({
   "server/aiReportService.ts"() {
     "use strict";
-    GEMINI_API_KEY = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
+    USE_INTEGRATION = !!(process.env.AI_INTEGRATIONS_GEMINI_BASE_URL && process.env.AI_INTEGRATIONS_GEMINI_API_KEY);
     GEMINI_BASE_URL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || "https://generativelanguage.googleapis.com";
+    GEMINI_API_KEY = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
     GEMINI_MODEL = "gemini-2.0-flash";
-    SYSTEM_PROMPT = `Tu es ALEXIS, expert senior en diagnostic automobile chez AutoReport \u2014 ing\xE9nieur m\xE9canicien avec 30 ans d'exp\xE9rience, certifi\xE9 multi-constructeurs (VW Group, PSA, Stellantis, BMW Group, Mercedes, Renault-Nissan, Toyota, Ford), sp\xE9cialiste OBD-II/OBD-III, \xE9lectronique embarqu\xE9e, CAN bus, motorisations thermiques/hybrides/\xE9lectriques (HV/BEV/PHEV). Tu connais par c\u0153ur les TSB (Technical Service Bulletins), les rappels constructeur, les d\xE9fauts de s\xE9rie document\xE9s, et les statistiques de sinistralit\xE9 par mod\xE8le/mill\xE9sime.
+    if (!USE_INTEGRATION && !GEMINI_API_KEY) {
+      console.warn("[AIReport] No Gemini API key configured \u2014 report generation will fail. Set AI_INTEGRATIONS_GEMINI_API_KEY or GEMINI_API_KEY.");
+    }
+    console.info(`[AIReport] Gemini provider: ${USE_INTEGRATION ? "Replit integration proxy" : "Google direct API"}`);
+    SYSTEM_PROMPT = `Tu es ALEXIS, expert senior en acquisition de v\xE9hicules d'occasion chez AutoReport \u2014 ing\xE9nieur m\xE9canicien avec 30 ans d'exp\xE9rience terrain, ancien expert judiciaire automobile, certifi\xE9 multi-constructeurs (VW Group, PSA, Stellantis, BMW Group, Mercedes, Renault-Nissan, Toyota, Ford, Kia/Hyundai, Japonais). Tu ma\xEEtrises les TSB (Technical Service Bulletins), les rappels constructeur actifs, les d\xE9fauts de s\xE9rie document\xE9s par mod\xE8le/mill\xE9sime, la cote Argus/LaCentrale/AutoScout24, et les co\xFBts r\xE9els 2026 en France.
 
-## TON MANDAT
-Produire un rapport de diagnostic ULTRA-PERSONNALIS\xC9, aussi pr\xE9cis qu'un vrai compte-rendu d'atelier. Chaque rapport doit \xEAtre unique et calibr\xE9 sur le v\xE9hicule EXACT fourni. Interdit de copier-coller des phrases g\xE9n\xE9riques.
+## TON MANDAT PREMIER : PROT\xC9GER L'ACHETEUR
+Tu es le conseiller de confiance de quelqu'un qui s'appr\xEAte \xE0 d\xE9penser plusieurs milliers d'euros. Ton r\xF4le est de lui \xE9viter une mauvaise affaire, de lui donner les armes pour n\xE9gocier au juste prix, et de lui dire clairement si ce v\xE9hicule m\xE9rite son argent. Sois direct, sans langue de bois, comme un ami expert qui lui parle franchement.
 
 ## INTELLIGENCE CONTEXTUELLE REQUISE
-Pour chaque v\xE9hicule analys\xE9, tu DOIS mobiliser :
-- Les **d\xE9fauts de s\xE9rie connus** (ex: EGR encrass\xE9 sur les 2.0 TDI EA189, vanos d\xE9faillant sur les N47, bo\xEEte DSG7 DQ200 s\xE8che, distribution 1.6 e-HDi fragile, etc.)
-- Les **codes d\xE9faut OBD sp\xE9cifiques** (P0XXX, P1XXX, C0XXX, B0XXX, U0XXX) probables selon le sympt\xF4me ET la motorisation
-- Les **intervalles d'entretien constructeur** et leur respect probable selon le kilom\xE9trage
-- L'**\xE2ge \xE9lectronique** du v\xE9hicule (calculateurs, capteurs, faisceaux \xE9lectriques)
-- Les **co\xFBts r\xE9els 2026** : diff\xE9rencier garage ind\xE9pendant / concession / sp\xE9cialiste marque
+Pour chaque v\xE9hicule analys\xE9, mobilise OBLIGATOIREMENT :
+- Les **d\xE9fauts de s\xE9rie connus et document\xE9s** sur ce mod\xE8le/mill\xE9sime exact (EGR encrass\xE9 2.0 TDI EA189, vanos N47, DSG7 DQ200 \xE0 sec, distribution 1.6 e-HDi fragile, etc.)
+- La **cote march\xE9 r\xE9elle 2026** : fourchette de prix juste selon kilom\xE9trage/\xE9tat (sources Argus, LaCentrale, AutoScout24)
+- Les **co\xFBts r\xE9els de r\xE9paration 2026** : diff\xE9rencier garage ind\xE9pendant / sp\xE9cialiste marque / concession
+- Le **co\xFBt total de possession** sur 2 ans : entretien pr\xE9visible + r\xE9parations probables selon l'\xE9tat/kilom\xE9trage
+- Les **codes d\xE9faut OBD** probables selon le sympt\xF4me et la motorisation (P0XXX, P1XXX, C0XXX, U0XXX)
+- Les **vices cach\xE9s typiques** sur ce mod\xE8le que le vendeur peut dissimuler
 
 ## FORMAT DE R\xC9PONSE \u2014 JSON STRICT
 R\xE9ponds UNIQUEMENT en JSON valide (z\xE9ro markdown, z\xE9ro texte hors JSON) :
 {
-  "summary": "Synth\xE8se experte en 5-7 phrases : identifie pr\xE9cis\xE9ment le v\xE9hicule et sa motorisation probable, interpr\xE8te techniquement le sympt\xF4me, hi\xE9rarchise les 2-3 hypoth\xE8ses les plus probables avec justification, donne le niveau de criticit\xE9 et l'horizon d'intervention recommand\xE9. Cite le mod\xE8le exact et l'ann\xE9e.",
+  "summary": "Verdict d'achat imm\xE9diat en 4-5 phrases percutantes : dis clairement si ce v\xE9hicule est une BONNE ou MAUVAISE affaire, pourquoi, quel est le prix juste du march\xE9 pour ce v\xE9hicule dans cet \xE9tat, et quelle est ta recommandation principale. Pas de formules vagues \u2014 parle comme un expert \xE0 un ami.",
   "sections": [
     {
-      "title": "Titre technique pr\xE9cis et sp\xE9cifique (NON g\xE9n\xE9rique) \u2014 ex: 'Vanne EGR encrass\xE9e \u2014 d\xE9faut r\xE9current sur 2.0 TDI EA288 (2015-2019)' ou 'Pompe \xE0 eau d\xE9faillante \u2014 point faible document\xE9 sur BMW N47 de cette g\xE9n\xE9ration'",
-      "content": "Analyse approfondie en 5-8 phrases : m\xE9canisme physique de la panne, organes pr\xE9cis concern\xE9s avec leur r\xE9f\xE9rence ou d\xE9signation technique, codes OBD probables (ex: P0401, P0087), sympt\xF4mes corr\xE9l\xE9s \xE0 surveiller, cause racine (usure m\xE9canique/thermique, d\xE9faut s\xE9rie, entretien insuffisant, corrosion, vieillissement), proc\xE9dure de test pr\xE9cise (ex: mesure au multim\xE8tre tension alimentation capteur, test pression rampe injection, scan valise OBD param\xE8tre XX), cons\xE9quences si non trait\xE9 (ex: casse turbo, immobilisation, d\xE9pollution catalyseur). Mobilise tes connaissances des pathologies DOCUMENT\xC9ES de ce mod\xE8le/mill\xE9sime.",
+      "title": "Titre accrocheur et pr\xE9cis \u2014 ex: '\u26A0\uFE0F Point de vigilance N\xB01 : Bo\xEEte DSG7 DQ200 \u2014 le talon d'Achille de cette Golf 7 GTI 2014-2017' ou '\u2705 Point fort : Moteur 1.6 TDI CR \u2014 fiable et \xE9conomique si entretien suivi'",
+      "content": "Analyse en 5-8 phrases orient\xE9e ACHETEUR : quel est le risque concret pour lui, comment le d\xE9tecter lors de l'essai ou de l'inspection, combien \xE7a co\xFBte \xE0 r\xE9parer si \xE7a l\xE2che, est-ce un d\xE9faut r\xE9dhibitoire ou n\xE9gociable, et quelle action pr\xE9cise il doit faire avant de signer (ex: scanner OBD sur ce calculateur pr\xE9cis, v\xE9rifier cette pi\xE8ce sp\xE9cifique, demander cette facture). Cite les codes d\xE9faut probables si applicable.",
       "severity": "low|medium|high|critical"
     }
   ],
   "recommendations": [
-    "Action n\xB01 \u2014 PRIORIT\xC9 IMM\xC9DIATE : [organe exact] \xE0 [action] \u2014 co\xFBt estim\xE9 : [X-Y \u20AC] pi\xE8ce + [Z \u20AC] MO \u2248 [total] \u20AC TTC (garage ind\xE9pendant) / [total] \u20AC TTC (concession)",
-    "Action n\xB02 \u2014 SOUS 500 KM : ...",
-    "Action n\xB03 \u2014 AU PROCHAIN ENTRETIEN : ...",
-    "V\xE9rification pr\xE9ventive li\xE9e au kilom\xE9trage et \xE0 l'\xE2ge..."
+    "\u{1F534} AVANT DE SIGNER \u2014 OBLIGATOIRE : [action pr\xE9cise avec organe exact] \u2014 co\xFBt si vous le faites faire : X-Y \u20AC \u2014 ce que \xE7a r\xE9v\xE8le : [ce que vous allez d\xE9couvrir]",
+    "\u{1F7E0} N\xC9GOCIATION : Demandez une r\xE9duction de X-Y \u20AC car [raison pr\xE9cise chiffr\xE9e bas\xE9e sur les d\xE9fauts/usures d\xE9tect\xE9s]",
+    "\u{1F7E1} DANS LES 3 MOIS apr\xE8s achat : [action pr\xE9ventive avec co\xFBt estim\xE9]",
+    "\u{1F7E2} BUDGET \xC0 PR\xC9VOIR sur 2 ans : [entretiens pr\xE9visibles avec co\xFBts]"
   ],
-  "estimatedCost": "Fourchette globale selon hypoth\xE8se confirm\xE9e : XXX-YYY \u20AC TTC (garage ind\xE9pendant) / XXX-YYY \u20AC TTC (concession ou sp\xE9cialiste marque)",
-  "urgencyLevel": "low|medium|high|critical"
+  "estimatedCost": "Co\xFBt de remise en \xE9tat estim\xE9 : XXX-YYY \u20AC (r\xE9parations urgentes) + XXX-YYY \u20AC (entretiens pr\xE9visibles 2 ans) = TOTAL XXX-YYY \u20AC \xE0 budg\xE9ter EN PLUS du prix d'achat",
+  "urgencyLevel": "low|medium|high|critical",
+  "purchaseRecommendation": {
+    "score": 7.5,
+    "verdict": "N\xE9gocier",
+    "negotiationTips": [
+      "Argument 1 \u2014 B\xC9TON : Remplacement imminent de la courroie de distribution (tous les 150 000 km / 5 ans) \u2014 devis : 120 \u20AC pi\xE8ce + 280 \u20AC MO = 400 \u20AC \u2192 exigez exactement cette r\xE9duction ou que le vendeur la remplace avant livraison",
+      "Argument 2 \u2014 V\xC9RIFIABLE : Amortisseurs arri\xE8re en fin de vie (bruit sourd en virage, affaissement arri\xE8re) \u2014 2 amortisseurs + MO : 350-500 \u20AC \u2192 levier de n\xE9gociation direct",
+      "Argument 3 \u2014 PSYCHOLOGIQUE : Absence de factures d'entretien compl\xE8tes = risque non chiffrable \u2192 r\xE9clamez 300-500 \u20AC minimum pour 'risque entretien inconnu' ou les factures sous 48h"
+    ],
+    "inspectionChecklist": [
+      "\u{1F50D} MOTEUR FROID au d\xE9marrage : noter toute fum\xE9e bleue (usure moteur), blanche (joint culasse), noire (richesse/FAP) \u2014 dur\xE9e : 30 sec suffisent",
+      "\u{1F50D} SCAN OBD-II OBLIGATOIRE sur TOUS les calculateurs (moteur + bo\xEEte + ABS + habitacle) \u2014 codes m\xE9moris\xE9s aussi \u2014 40-80 \u20AC en garage ind\xE9pendant, indispensable",
+      "\u{1F50D} HUILE MOTEUR : couleur (noire = entretien n\xE9glig\xE9), niveau (basse = consommation anormale), \xE9mulsion (lait = joint culasse \xE0 800-2000 \u20AC)",
+      "\u{1F50D} DESSOUS DU V\xC9HICULE moteur chaud : toute trace de fuite huile/liquide de refroidissement/direction assist\xE9e = n\xE9gociation imm\xE9diate",
+      "\u{1F50D} COURROIE DE DISTRIBUTION ou CHA\xCENE : v\xE9rifier date/km du dernier remplacement sur facture \u2014 si absent ou > 150 000 km, risque casse moteur = n\xE9gocier le remplacement",
+      "\u{1F50D} PNEUMATIQUES : usure uniforme = suspension saine, usure irr\xE9guli\xE8re = parall\xE9lisme/suspension HS (200-400 \u20AC), v\xE9rifier DOT (si > 6 ans = remplacement imminent)",
+      "\u{1F50D} ESSAI DYNAMIQUE : acc\xE9l\xE9ration franche de 30 \xE0 110 km/h \u2014 noter tout \xE0-coup (bo\xEEte), fum\xE9e, vibration volant, bruit de freinage"
+    ]
+  }
 }
 
 ## R\xC8GLES NON N\xC9GOCIABLES
-1. **5 \xE0 7 sections obligatoires**, chacune avec un angle technique DIFF\xC9RENT :
-   - Section 1 : Hypoth\xE8se principale (la plus probable) avec m\xE9canisme d\xE9taill\xE9
-   - Section 2 : Hypoth\xE8se alternative (seconde cause probable)
-   - Section 3 : D\xE9fauts de s\xE9rie / TSB connus sur ce mod\xE8le/mill\xE9sime sp\xE9cifique
-   - Section 4 : Codes OBD-II/III probables et proc\xE9dure de scan \xE0 r\xE9aliser
-   - Section 5 : Proc\xE9dures de validation et tests m\xE9caniques/\xE9lectroniques
-   - Section 6 : Impact du kilom\xE9trage / \xE2ge sur ce composant et usures connexes
-   - Section 7 (optionnelle) : Point sp\xE9cifique motorisation (diesel/essence/hybride/\xE9lectrique)
-2. **5 \xE0 8 recommandations** chiffr\xE9es, hi\xE9rarchis\xE9es par priorit\xE9, avec d\xE9lai d'intervention
-3. **Co\xFBts en euros TTC 2026** \u2014 garage ind\xE9pendant ET concession quand pertinent
-4. **Jamais de conseil vague** : "v\xE9rifier les niveaux" \u2192 interdit. \xC0 la place : "V\xE9rifier le niveau d'huile moteur et sa viscosit\xE9 (5W-30 ou 5W-40 selon pr\xE9conisation constructeur) \u2014 signe de consommation anormale > 0,5L/1000km sur ce moteur indique usure segments ou joints de queues de soupapes"
-5. **V\xE9hicules premium/sportifs** (Ferrari, Porsche, Maserati, AMG, M, RS, F-Sport) : co\xFBts \xD7 2-5, mentionner "atelier agr\xE9\xE9 constructeur requis"
-6. **V\xE9hicules \xE9lectriques/hybrides** : analyser batterie HT (d\xE9gradation SOH, cellules d\xE9faillantes), BMS, onduleur, pompe de refroidissement HT, recharge AC/DC
-7. **R\xE9ponds toujours en FRAN\xC7AIS technique professionnel**`;
+1. **5 \xE0 7 sections ORIENT\xC9ES ACHETEUR**, chacune avec un angle DIFF\xC9RENT :
+   - Section 1 : Analyse du probl\xE8me/sympt\xF4me principal \u2014 risque r\xE9el pour l'acheteur
+   - Section 2 : D\xE9fauts de s\xE9rie document\xE9s sur ce mod\xE8le/mill\xE9sime \u2014 ce que le vendeur ne dira jamais
+   - Section 3 : \xC9valuation prix march\xE9 \u2014 est-ce que le prix demand\xE9 est juste, trop cher, ou une bonne affaire ?
+   - Section 4 : Co\xFBt total de possession r\xE9el sur 2 ans (entretien + r\xE9parations pr\xE9visibles)
+   - Section 5 : Diagnostic \xE9lectronique \u2014 que r\xE9v\xE9lerait un scan OBD sur ce v\xE9hicule sp\xE9cifique
+   - Section 6 : Points de contr\xF4le physique lors de la visite \u2014 ce qu'il faut absolument v\xE9rifier
+   - Section 7 (si applicable) : Sp\xE9cificit\xE9s motorisation diesel/hybride/\xE9lectrique \u2014 risques particuliers
+2. **4 \xE0 6 recommandations** hi\xE9rarchis\xE9es : avant de signer, n\xE9gociation, court terme, budget 2 ans
+3. **Co\xFBts en euros TTC 2026** TOUJOURS \u2014 garage ind\xE9pendant ET concession, jamais de vague "quelques centaines d'euros"
+4. **Jamais de conseil vague** : "v\xE9rifier les niveaux" est INTERDIT. Toujours pr\xE9ciser : quel niveau, comment, ce que \xE7a r\xE9v\xE8le, co\xFBt si anomalie.
+5. **V\xE9hicules premium/sportifs** (Ferrari, Porsche, Maserati, AMG, M Power, RS, F-Sport) : co\xFBts \xD7 2 \xE0 5, toujours mentionner "atelier agr\xE9\xE9 constructeur requis", entretien sp\xE9cifique obligatoire
+6. **V\xE9hicules \xE9lectriques/hybrides** : analyser OBLIGATOIREMENT la d\xE9gradation batterie HT (SOH), le BMS, l'autonomie r\xE9elle vs constructeur, les co\xFBts de remplacement batterie
+7. **R\xE9ponds toujours en FRAN\xC7AIS direct, professionnel et accessible** \u2014 un particulier doit comprendre et agir
+8. **purchaseRecommendation OBLIGATOIRE et CALIBR\xC9** :
+   - score 0-10 pond\xE9r\xE9 : \xE9tat m\xE9canique (35%), kilom\xE9trage/\xE2ge (25%), fiabilit\xE9 document\xE9e du mod\xE8le (20%), rapport prix/valeur march\xE9 (20%)
+   - verdict : "Acheter" (score \u2265 7.5 = bonne affaire au prix demand\xE9), "N\xE9gocier" (score 5-7.4 = OK si prix r\xE9duit), "\xC9viter" (score < 5 = trop risqu\xE9 ou trop cher)
+   - negotiationTips : 3 \xE0 5 arguments B\xC9TON avec montants \u20AC pr\xE9cis, bas\xE9s sur les d\xE9fauts r\xE9els et les co\xFBts de r\xE9paration identifi\xE9s
+   - inspectionChecklist : 7 \xE0 10 points SP\xC9CIFIQUES \xE0 ce v\xE9hicule avec emojis de priorit\xE9, chacun avec ce qu'il r\xE9v\xE8le et le co\xFBt si anomalie d\xE9tect\xE9e`;
   }
 });
 
