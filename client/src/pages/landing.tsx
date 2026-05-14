@@ -612,18 +612,28 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">CARBURANT</label>
-                    <select
-                      value={vehicleInfo.carburant}
-                      onChange={e => setVehicleInfo(v => ({ ...v, carburant: e.target.value }))}
-                      data-testid="select-carburant"
-                      className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#CE1126]/60 transition-all font-mono appearance-none cursor-pointer"
-                    >
-                      <option value="" className="bg-zinc-900 text-zinc-400">Sélectionner...</option>
+                    <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-2">CARBURANT</label>
+                    <div className="flex flex-wrap gap-2">
                       {["Diesel", "Essence", "Hybride", "Électrique", "GPL"].map(opt => (
-                        <option key={opt} value={opt} className="bg-zinc-900 text-white">{opt}</option>
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => setVehicleInfo(v => ({ ...v, carburant: v.carburant === opt ? "" : opt }))}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-md border transition-all font-mono text-xs ${
+                            vehicleInfo.carburant === opt
+                              ? "bg-zinc-800 border-zinc-500 text-white"
+                              : "bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
+                          }`}
+                        >
+                          <span className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center shrink-0 transition-all ${
+                            vehicleInfo.carburant === opt ? "bg-zinc-600 border-zinc-400" : "bg-zinc-900 border-zinc-600"
+                          }`}>
+                            {vehicleInfo.carburant === opt && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+                          </span>
+                          {opt}
+                        </button>
                       ))}
-                    </select>
+                    </div>
                   </div>
 
                   <div>
