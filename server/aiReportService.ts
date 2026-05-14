@@ -1,12 +1,16 @@
-const USE_INTEGRATION = !!(process.env.AI_INTEGRATIONS_GEMINI_BASE_URL && process.env.AI_INTEGRATIONS_GEMINI_API_KEY);
-const GEMINI_BASE_URL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || "https://generativelanguage.googleapis.com";
-const GEMINI_API_KEY = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
-const GEMINI_MODEL = "gemini-2.0-flash";
+import { GoogleGenAI } from "@google/genai";
 
-if (!USE_INTEGRATION && !GEMINI_API_KEY) {
-  console.warn("[AIReport] No Gemini API key configured — report generation will fail. Set AI_INTEGRATIONS_GEMINI_API_KEY or GEMINI_API_KEY.");
-}
-console.info(`[AIReport] Gemini provider: ${USE_INTEGRATION ? "Replit integration proxy" : "Google direct API"}`);
+const GEMINI_MODEL = "gemini-2.5-flash";
+
+const ai = new GoogleGenAI({
+  apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
+  httpOptions: {
+    apiVersion: "",
+    baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
+  },
+});
+
+console.info("[AIReport] Gemini provider: Replit AI Integrations (crédits Replit)");
 
 interface VehicleInfo {
   make: string;
@@ -126,40 +130,18 @@ STRUCTURE JSON OBLIGATOIRE — réponds UNIQUEMENT en JSON valide, aucun texte a
 IMPORTANT : Le champ "verdict" dans purchaseRecommendation doit être UNIQUEMENT l'un des trois mots exacts : "Acheter", "Négocier" ou "Éviter".`;
 
 async function callGemini(prompt: string, systemPromptOverride?: string): Promise<string> {
-  const url = USE_INTEGRATION
-    ? `${GEMINI_BASE_URL}/models/${GEMINI_MODEL}:generateContent`
-    : `${GEMINI_BASE_URL}/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (USE_INTEGRATION) {
-    headers["x-goog-api-key"] = GEMINI_API_KEY;
-  }
-
-  const body = {
+  const response = await ai.models.generateContent({
+    model: GEMINI_MODEL,
     contents: [{ role: "user", parts: [{ text: prompt }] }],
-    systemInstruction: { parts: [{ text: systemPromptOverride || SYSTEM_PROMPT }] },
-    generationConfig: {
-      temperature: 0.6,
+    config: {
+      systemInstruction: systemPromptOverride || SYSTEM_PROMPT,
+      temperature: 0.7,
       maxOutputTokens: 8192,
       topP: 0.92,
-      topK: 40,
     },
-  };
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
   });
 
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error("[AIReport] Gemini API error:", response.status, errText);
-    throw new Error(`Gemini API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  const text = response.text;
   if (!text) {
     throw new Error("Pas de réponse de l'IA");
   }
