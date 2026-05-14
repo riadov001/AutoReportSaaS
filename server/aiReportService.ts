@@ -2,15 +2,21 @@ import { GoogleGenAI } from "@google/genai";
 
 const GEMINI_MODEL = "gemini-2.5-flash";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
-  httpOptions: {
-    apiVersion: "",
-    baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
-  },
-});
+const USE_REPLIT_INTEGRATION = !!(process.env.AI_INTEGRATIONS_GEMINI_BASE_URL && process.env.AI_INTEGRATIONS_GEMINI_API_KEY);
+const apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
 
-console.info("[AIReport] Gemini provider: Replit AI Integrations (crédits Replit)");
+if (!apiKey) {
+  console.warn("[AIReport] Aucune clé Gemini configurée — configurez GEMINI_API_KEY ou l'intégration Replit.");
+}
+
+const ai = USE_REPLIT_INTEGRATION
+  ? new GoogleGenAI({
+      apiKey,
+      httpOptions: { apiVersion: "", baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL },
+    })
+  : new GoogleGenAI({ apiKey });
+
+console.info(`[AIReport] Gemini provider: ${USE_REPLIT_INTEGRATION ? "Replit AI Integrations (crédits Replit)" : "Google API directe"}`);
 
 interface VehicleInfo {
   make: string;

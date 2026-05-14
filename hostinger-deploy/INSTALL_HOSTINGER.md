@@ -31,8 +31,15 @@ package-lock.json
 ## Étape 2 — Configurer les variables d'environnement
 
 1. Copiez `.env.example` → `.env`
-2. Remplissez toutes les valeurs (au minimum `DATABASE_URL`, `SESSION_SECRET`, `PANEL_JWT_SECRET`, `AI_INTEGRATIONS_GEMINI_API_KEY`)
+2. Remplissez **au minimum** :
+   - `DATABASE_URL` — votre base PostgreSQL
+   - `SESSION_SECRET` — chaîne aléatoire (`openssl rand -hex 64`)
+   - `PANEL_JWT_SECRET` — chaîne aléatoire (`openssl rand -hex 32`)
+   - `GEMINI_API_KEY` — clé Google Gemini (gratuite sur [aistudio.google.com](https://aistudio.google.com/app/apikey))
 3. Ne commitez jamais le fichier `.env` !
+
+> **Note IA :** Sur Hostinger, utilisez `GEMINI_API_KEY` avec votre propre clé Google.
+> Le modèle utilisé est **gemini-2.5-flash** via l'API Google directe.
 
 ---
 
@@ -60,8 +67,10 @@ Assurez-vous que `DATABASE_URL` est correctement configurée dans `.env`.
 ### Commande de démarrage (à configurer dans Hostinger) :
 
 ```bash
-node dist/index.js
+NODE_ENV=production node dist/index.js
 ```
+
+> ⚠️ Le `NODE_ENV=production` est **obligatoire** pour éviter un crash lié à Vite.
 
 ### Variables à configurer dans le panneau Hostinger :
 
@@ -92,6 +101,15 @@ https://votre-domaine.com/panel
 Identifiants configurés dans `.env` :
 - Email : valeur de `PANEL_ADMIN_EMAIL`
 - Mot de passe : valeur de `PANEL_ADMIN_PASSWORD`
+
+---
+
+## Résumé des changements récents (mai 2026)
+
+- **Gemini 2.5 Flash** : modèle IA mis à jour, rapports plus précis et personnalisés
+- **Champs formulaire** : Prix demandé et Code postal ajoutés au formulaire de rapport
+- **Prompt IA** : entièrement reécrit pour des rapports d'aide à l'achat personnalisés (zéro OBD)
+- **SDK Gemini** : migration vers `@google/genai` v1.52+
 
 ---
 

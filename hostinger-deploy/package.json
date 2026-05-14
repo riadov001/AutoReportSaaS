@@ -14,7 +14,7 @@
     "@aws-sdk/client-s3": "^3.994.0",
     "@aws-sdk/s3-request-presigner": "^3.992.0",
     "@google-cloud/storage": "^7.18.0",
-    "@google/generative-ai": "^0.24.1",
+    "@google/genai": "^1.52.0",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@radix-ui/react-accordion": "^1.2.4",
