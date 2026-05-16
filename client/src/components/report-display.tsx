@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { Download, Info, AlertTriangle, AlertCircle, TriangleAlert, CheckSquare, Square, ShoppingCart, HandCoins, XCircle } from "lucide-react";
+import { Download, Info, AlertTriangle, AlertCircle, TriangleAlert, CheckSquare, Square, TrendingUp, Minus, TrendingDown, Ban } from "lucide-react";
 
 export interface ReportSection {
   title: string;
@@ -8,15 +7,36 @@ export interface ReportSection {
   severity?: "low" | "medium" | "high" | "critical";
 }
 
+export interface ScoreBreakdown {
+  fiabilite: number;
+  coutEntretien: number;
+  valeurRevente: number;
+  adaptéUsage: number;
+}
+
 export interface PurchaseRecommendation {
   score: number;
-  verdict: "Acheter" | "Négocier" | "Éviter";
+  scoreBreakdown?: ScoreBreakdown;
+  verdict: "BONNE AFFAIRE" | "CORRECT" | "RISQUÉ" | "À ÉVITER";
   negotiationTips: string[];
   inspectionChecklist: string[];
 }
 
 export interface GeneratedReport {
-  vehicleInfo: { make: string; model: string; year: string; mileage?: string; issue: string };
+  vehicleInfo: {
+    make: string;
+    model: string;
+    year: string;
+    mileage?: string;
+    issue?: string;
+    finition?: string;
+    motorisation?: string;
+    puissance?: string;
+    carburant?: string;
+    gearbox?: string;
+    usage?: string | string[];
+    prix?: string;
+  };
   summary: string;
   sections: ReportSection[];
   recommendations: string[];
@@ -27,23 +47,24 @@ export interface GeneratedReport {
 }
 
 export const SEVERITY_CONFIG = {
-  low:      { label: "Faible",   color: "#22c55e", bg: "rgba(34,197,94,0.1)",  border: "rgba(34,197,94,0.3)",  Icon: Info },
-  medium:   { label: "Moyen",    color: "#f59e0b", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.3)", Icon: AlertTriangle },
-  high:     { label: "Élevé",    color: "#f97316", bg: "rgba(249,115,22,0.1)", border: "rgba(249,115,22,0.3)", Icon: AlertCircle },
-  critical: { label: "Critique", color: "#CE1126", bg: "rgba(206,17,38,0.1)",  border: "rgba(206,17,38,0.3)",  Icon: TriangleAlert },
+  low:      { label: "Faible",   color: "#22c55e", bg: "rgba(34,197,94,0.08)",  border: "rgba(34,197,94,0.2)",  Icon: Info },
+  medium:   { label: "Moyen",    color: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)", Icon: AlertTriangle },
+  high:     { label: "Élevé",    color: "#f97316", bg: "rgba(249,115,22,0.08)", border: "rgba(249,115,22,0.2)", Icon: AlertCircle },
+  critical: { label: "Critique", color: "#CE1126", bg: "rgba(206,17,38,0.08)",  border: "rgba(206,17,38,0.2)",  Icon: TriangleAlert },
 };
 
 const VERDICT_CONFIG = {
-  Acheter:  { color: "#22c55e", bg: "rgba(34,197,94,0.08)",  border: "rgba(34,197,94,0.25)",  Icon: ShoppingCart },
-  Négocier: { color: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.25)", Icon: HandCoins },
-  Éviter:   { color: "#ef4444", bg: "rgba(239,68,68,0.08)",  border: "rgba(239,68,68,0.25)",  Icon: XCircle },
+  "BONNE AFFAIRE": { color: "#22c55e", bg: "rgba(34,197,94,0.07)",  border: "rgba(34,197,94,0.2)",  Icon: TrendingUp,   label: "Bonne affaire — excellent rapport qualité/risque" },
+  "CORRECT":       { color: "#3b82f6", bg: "rgba(59,130,246,0.07)", border: "rgba(59,130,246,0.2)", Icon: Minus,        label: "Correct — acceptable mais quelques vérifications s'imposent" },
+  "RISQUÉ":        { color: "#f97316", bg: "rgba(249,115,22,0.07)", border: "rgba(249,115,22,0.2)", Icon: TrendingDown, label: "Risqué — des problèmes identifiés, négociez le prix" },
+  "À ÉVITER":      { color: "#CE1126", bg: "rgba(206,17,38,0.07)",  border: "rgba(206,17,38,0.2)",  Icon: Ban,          label: "À éviter — les risques déconseillent fortement cet achat" },
 };
 
 export function SeverityBadge({ severity }: { severity: keyof typeof SEVERITY_CONFIG }) {
   const cfg = SEVERITY_CONFIG[severity] || SEVERITY_CONFIG.medium;
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider shrink-0"
       style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}` }}
     >
       <span className="h-1.5 w-1.5 rounded-full inline-block" style={{ background: cfg.color }} />
@@ -52,39 +73,60 @@ export function SeverityBadge({ severity }: { severity: keyof typeof SEVERITY_CO
   );
 }
 
-function ScoreGauge({ score }: { score: number }) {
+function ScoreRing({ score, size = 72 }: { score: number; size?: number }) {
   const clamped = Math.min(10, Math.max(0, score));
-  const color = clamped >= 7 ? "#22c55e" : clamped >= 4 ? "#f59e0b" : "#ef4444";
-  const pct = (clamped / 10) * 100;
+  const color = clamped >= 8 ? "#22c55e" : clamped >= 6 ? "#3b82f6" : clamped >= 4 ? "#f97316" : "#CE1126";
+  const r = 22;
+  const circ = 2 * Math.PI * r;
+  const pct = clamped / 10;
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="relative w-16 h-16">
-        <svg viewBox="0 0 64 64" className="w-full h-full -rotate-90">
-          <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
+    <div className="flex flex-col items-center gap-0.5">
+      <div style={{ width: size, height: size }} className="relative">
+        <svg viewBox="0 0 52 52" className="w-full h-full -rotate-90">
+          <circle cx="26" cy="26" r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="5" />
           <circle
-            cx="32" cy="32" r="26"
+            cx="26" cy="26" r={r}
             fill="none"
             stroke={color}
-            strokeWidth="6"
-            strokeDasharray={`${2 * Math.PI * 26}`}
-            strokeDashoffset={`${2 * Math.PI * 26 * (1 - pct / 100)}`}
+            strokeWidth="5"
+            strokeDasharray={circ}
+            strokeDashoffset={circ * (1 - pct)}
             strokeLinecap="round"
-            style={{ transition: "stroke-dashoffset 0.6s ease" }}
+            style={{ transition: "stroke-dashoffset 0.7s ease" }}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-lg font-black leading-none" style={{ color }}>{clamped.toFixed(1)}</span>
-          <span className="text-[9px] text-white/30 font-mono">/10</span>
+          <span className="font-black leading-none" style={{ color, fontSize: size * 0.27 }}>{clamped.toFixed(1)}</span>
+          <span className="text-white/25 font-mono" style={{ fontSize: size * 0.12 }}>/10</span>
         </div>
       </div>
     </div>
   );
 }
 
-function PurchaseRecommendationCard({ pr }: { pr: PurchaseRecommendation }) {
+function SubScoreBar({ label, value }: { label: string; value: number }) {
+  const clamped = Math.min(10, Math.max(0, value));
+  const color = clamped >= 8 ? "#22c55e" : clamped >= 6 ? "#3b82f6" : clamped >= 4 ? "#f97316" : "#CE1126";
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10px] text-white/40 font-mono">{label}</span>
+        <span className="text-[11px] font-bold" style={{ color }}>{clamped.toFixed(1)}/10</span>
+      </div>
+      <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden">
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${clamped * 10}%`, background: color, transition: "width 0.7s ease" }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function PurchaseRecommendationCard({ pr, onSignupPrompt }: { pr: PurchaseRecommendation; onSignupPrompt?: () => void }) {
   const [checked, setChecked] = useState<Set<number>>(new Set());
-  const vcfg = VERDICT_CONFIG[pr.verdict] || VERDICT_CONFIG["Négocier"];
+  const vcfg = VERDICT_CONFIG[pr.verdict] || VERDICT_CONFIG["CORRECT"];
   const VerdictIcon = vcfg.Icon;
 
   const toggle = (i: number) => setChecked(prev => {
@@ -101,28 +143,33 @@ function PurchaseRecommendationCard({ pr }: { pr: PurchaseRecommendation }) {
       className="rounded-md p-4 space-y-4"
       style={{ background: vcfg.bg, border: `1px solid ${vcfg.border}` }}
     >
-      <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// RECOMMANDATION_ACHAT</p>
+      <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// VERDICT_EXPERT</p>
 
-      {/* Score + Verdict row */}
+      {/* Score + Verdict */}
       <div className="flex items-center gap-4">
-        <ScoreGauge score={pr.score} />
-        <div className="flex flex-col gap-1.5">
+        <ScoreRing score={pr.score} size={72} />
+        <div className="flex flex-col gap-2 flex-1">
           <span
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-black"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-black self-start"
             style={{ color: vcfg.color, background: `${vcfg.color}18`, border: `1px solid ${vcfg.border}` }}
           >
             <VerdictIcon className="h-3.5 w-3.5" />
             {pr.verdict}
           </span>
-          <p className="text-[10px] text-white/40 font-mono leading-tight">
-            {pr.verdict === "Acheter"
-              ? "Ce véhicule présente un bon rapport qualité/risque"
-              : pr.verdict === "Négocier"
-              ? "Des défauts justifient une négociation du prix"
-              : "Les risques identifiés déconseillent cet achat"}
-          </p>
+          <p className="text-[11px] text-white/40 leading-tight">{vcfg.label}</p>
         </div>
       </div>
+
+      {/* Score breakdown */}
+      {pr.scoreBreakdown && (
+        <div className="space-y-2 pt-1">
+          <p className="text-[10px] text-white/25 uppercase tracking-wider font-mono mb-2">// SOUS-SCORES</p>
+          <SubScoreBar label="Fiabilité" value={pr.scoreBreakdown.fiabilite} />
+          <SubScoreBar label="Coût d'entretien" value={pr.scoreBreakdown.coutEntretien} />
+          <SubScoreBar label="Valeur de revente" value={pr.scoreBreakdown.valeurRevente} />
+          <SubScoreBar label="Adapté à l'usage" value={pr.scoreBreakdown.adaptéUsage} />
+        </div>
+      )}
 
       {/* Negotiation tips */}
       {pr.negotiationTips.length > 0 && (
@@ -144,14 +191,14 @@ function PurchaseRecommendationCard({ pr }: { pr: PurchaseRecommendation }) {
         </div>
       )}
 
-      {/* Inspection checklist */}
+      {/* Checklist */}
       {pr.inspectionChecklist.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// INSPECTION_AVANT_ACHAT</p>
+            <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// CHECKLIST_AVANT_ACHAT</p>
             {totalCount > 0 && (
               <span className="text-[10px] font-mono" style={{ color: doneCount === totalCount ? "#22c55e" : "#f59e0b" }}>
-                {doneCount}/{totalCount}
+                {doneCount}/{totalCount} vérifiés
               </span>
             )}
           </div>
@@ -170,7 +217,7 @@ function PurchaseRecommendationCard({ pr }: { pr: PurchaseRecommendation }) {
                   }
                   <span
                     className="text-xs leading-relaxed transition-colors"
-                    style={{ color: done ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.65)", textDecoration: done ? "line-through" : "none" }}
+                    style={{ color: done ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.65)", textDecoration: done ? "line-through" : "none" }}
                   >
                     {item}
                   </span>
@@ -184,7 +231,13 @@ function PurchaseRecommendationCard({ pr }: { pr: PurchaseRecommendation }) {
   );
 }
 
-export default function ReportDisplay({ report }: { report: GeneratedReport }) {
+export default function ReportDisplay({
+  report,
+  onSignupPrompt,
+}: {
+  report: GeneratedReport;
+  onSignupPrompt?: () => void;
+}) {
   const handleDownload = async () => {
     try {
       const res = await fetch("/api/reports/download-pdf", {
@@ -193,10 +246,14 @@ export default function ReportDisplay({ report }: { report: GeneratedReport }) {
         body: JSON.stringify(report),
       });
       if (res.status === 401) {
-        const proceed = window.confirm(
-          "Le téléchargement PDF est réservé aux membres inscrits.\n\nCréer un compte gratuit maintenant ?"
-        );
-        if (proceed) window.location.href = "/signup";
+        if (onSignupPrompt) {
+          onSignupPrompt();
+        } else {
+          const proceed = window.confirm(
+            "Le téléchargement PDF est réservé aux membres inscrits.\n\nCréer un compte gratuit maintenant ?"
+          );
+          if (proceed) window.location.href = "/signup";
+        }
         return;
       }
       if (!res.ok) throw new Error();
@@ -204,121 +261,79 @@ export default function ReportDisplay({ report }: { report: GeneratedReport }) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `diagnostic-${report.vehicleInfo.make}-${Date.now()}.pdf`;
+      a.download = `rapport-${report.vehicleInfo.make}-${report.vehicleInfo.model}-${Date.now()}.html`;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch {
-      alert("Impossible de télécharger le PDF");
+      alert("Impossible de télécharger le rapport");
     }
   };
 
   const urgencyCfg = SEVERITY_CONFIG[report.urgencyLevel] || SEVERITY_CONFIG.medium;
   const UrgencyIcon = urgencyCfg.Icon;
 
-  const sectionsByGroup = (report.sections || []).reduce((acc, s) => {
-    const sev = s.severity || "medium";
-    acc[sev] = (acc[sev] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const chartData = Object.entries(sectionsByGroup).map(([sev, count]) => ({
-    name: SEVERITY_CONFIG[sev as keyof typeof SEVERITY_CONFIG]?.label || sev,
-    value: count,
-    color: SEVERITY_CONFIG[sev as keyof typeof SEVERITY_CONFIG]?.color || "#888",
-  }));
-
   return (
     <div className="space-y-4">
-      {/* Urgency bar */}
+
+      {/* Verdict + Score — element principal */}
+      {report.purchaseRecommendation && (
+        <PurchaseRecommendationCard pr={report.purchaseRecommendation} onSignupPrompt={onSignupPrompt} />
+      )}
+
+      {/* Urgency strip */}
       <div
-        className="flex items-center justify-between gap-3 px-4 py-3 rounded-md"
+        className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-md"
         style={{ background: urgencyCfg.bg, border: `1px solid ${urgencyCfg.border}` }}
       >
         <div className="flex items-center gap-2">
-          <UrgencyIcon className="h-4 w-4" style={{ color: urgencyCfg.color }} />
-          <span className="text-sm font-bold text-white">Urgence : {urgencyCfg.label}</span>
+          <UrgencyIcon className="h-3.5 w-3.5" style={{ color: urgencyCfg.color }} />
+          <span className="text-xs font-bold text-white/80">Niveau d'urgence : <span style={{ color: urgencyCfg.color }}>{urgencyCfg.label}</span></span>
         </div>
         {report.estimatedCost && (
-          <span className="text-xs font-mono font-bold" style={{ color: "#C9A656" }}>
+          <span className="text-xs font-mono font-bold shrink-0" style={{ color: "#C9A656" }}>
             {report.estimatedCost}
           </span>
         )}
       </div>
 
-      {/* Purchase recommendation — shown near the top for purchase context */}
-      {report.purchaseRecommendation && (
-        <PurchaseRecommendationCard pr={report.purchaseRecommendation} />
-      )}
-
-      {/* Summary */}
+      {/* Summary / Bilan rapide */}
       <div className="hud-card rounded-md p-4">
-        <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2 font-mono">// RÉSUMÉ</p>
-        <p className="text-sm text-white/80 leading-relaxed">{report.summary}</p>
+        <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2 font-mono">// BILAN_RAPIDE</p>
+        <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line">{report.summary}</p>
       </div>
 
-      {report.estimatedCost && (
-        <div className="hud-card rounded-md p-4">
-          <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2 font-mono">// COÛTS</p>
-          <p className="text-base font-mono font-bold" style={{ color: "#C9A656" }}>{report.estimatedCost}</p>
-        </div>
-      )}
-
-      {chartData.length > 1 && (
-        <div className="hud-card rounded-md p-4 flex flex-col sm:flex-row items-center gap-4">
-          <div className="w-32 h-32 shrink-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={chartData} dataKey="value" cx="50%" cy="50%" innerRadius={28} outerRadius={52} strokeWidth={0}>
-                  {chartData.map((entry) => <Cell key={entry.name} fill={entry.color} />)}
-                </Pie>
-                <Tooltip contentStyle={{ background: "#0a0a14", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "#fff", fontSize: 12 }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex-1">
-            <p className="text-[10px] text-white/30 uppercase tracking-wider mb-3 font-mono">// ANALYSE_GLOBALE</p>
-            <div className="space-y-1.5">
-              {chartData.map((d) => (
-                <div key={d.name} className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: d.color }} />
-                  <span className="text-xs text-white/60">{d.name}</span>
-                  <span className="ml-auto text-xs font-mono font-bold" style={{ color: d.color }}>{d.value}</span>
+      {/* Sections */}
+      {(report.sections || []).length > 0 && (
+        <div className="space-y-3">
+          <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// ANALYSE_DÉTAILLÉE</p>
+          {(report.sections || []).map((section, i) => {
+            const sev = section.severity || "medium";
+            const cfg = SEVERITY_CONFIG[sev as keyof typeof SEVERITY_CONFIG] || SEVERITY_CONFIG.medium;
+            return (
+              <div
+                key={i}
+                className="rounded-md p-4"
+                style={{ background: cfg.bg, borderLeft: `3px solid ${cfg.color}`, border: `1px solid ${cfg.border}`, borderLeftWidth: 3 }}
+              >
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <h4 className="text-sm font-bold text-white/90">{section.title}</h4>
+                  <SeverityBadge severity={sev as keyof typeof SEVERITY_CONFIG} />
                 </div>
-              ))}
-            </div>
-          </div>
+                <p className="text-xs text-white/60 leading-relaxed whitespace-pre-line">{section.content}</p>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* Diagnostic sections */}
-      <div className="space-y-3">
-        <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// POINTS_DE_VIGILANCE</p>
-        {(report.sections || []).map((section, i) => {
-          const sev = section.severity || "medium";
-          return (
-            <div
-              key={i}
-              className={`rounded-md p-4 border-l-2 severity-${sev}`}
-              style={{ background: "rgba(255,255,255,0.02)", borderRight: "1px solid rgba(255,255,255,0.04)", borderTop: "1px solid rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}
-            >
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <h4 className="text-sm font-bold text-white/90">{section.title}</h4>
-                <SeverityBadge severity={sev as keyof typeof SEVERITY_CONFIG} />
-              </div>
-              <p className="text-xs text-white/55 leading-relaxed">{section.content}</p>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Recommendations */}
+      {/* Recommendations / Conseils pratiques */}
       {(report.recommendations || []).length > 0 && (
         <div className="hud-card rounded-md p-4">
-          <p className="text-[10px] text-white/30 uppercase tracking-wider mb-3 font-mono">// CHECKLIST</p>
-          <ol className="space-y-2">
+          <p className="text-[10px] text-white/30 uppercase tracking-wider mb-3 font-mono">// CONSEILS_PRATIQUES</p>
+          <ol className="space-y-2.5">
             {report.recommendations.map((rec, i) => (
               <li key={i} className="flex items-start gap-3">
-                <span className="shrink-0 w-5 h-5 rounded-sm bg-[#CE1126]/20 border border-[#CE1126]/30 text-[#CE1126] text-[10px] font-mono font-bold flex items-center justify-center">
+                <span className="shrink-0 w-5 h-5 rounded-sm bg-[#CE1126]/15 border border-[#CE1126]/25 text-[#CE1126] text-[10px] font-mono font-bold flex items-center justify-center">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <span className="text-xs text-white/65 leading-relaxed">{rec}</span>
@@ -329,14 +344,14 @@ export default function ReportDisplay({ report }: { report: GeneratedReport }) {
       )}
 
       {/* Action buttons */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 pt-1">
         <button
           onClick={handleDownload}
           data-testid="button-download-pdf"
           className="flex-1 flex items-center justify-center gap-2 bg-[#CE1126] hover:bg-[#b8101f] text-white text-xs font-bold py-2.5 rounded-md transition-colors neon-red-glow"
         >
           <Download className="h-3.5 w-3.5" />
-          Exporter PDF
+          Télécharger le rapport
         </button>
         <button
           onClick={() => window.location.reload()}
