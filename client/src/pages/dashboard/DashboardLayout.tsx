@@ -1,11 +1,12 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, FileText, CreditCard, Receipt, LifeBuoy, LogOut, ShieldCheck } from "lucide-react";
+import { Home, LayoutDashboard, FileText, CreditCard, Receipt, LifeBuoy, LogOut, ShieldCheck } from "lucide-react";
 import { AutoReportLogo } from "@/components/autoreport-logo";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
+  { href: "/", label: "Accueil", icon: Home, exact: true },
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/reports", label: "Mes rapports", icon: FileText },
   { href: "/dashboard/subscriptions", label: "Abonnements & paiements", icon: CreditCard },
