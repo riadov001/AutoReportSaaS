@@ -358,6 +358,7 @@ export interface IStorage {
   updateAiReport(id: string, data: Partial<InsertAiReport>): Promise<AiReport>;
   deleteAiReport(id: string): Promise<void>;
   getAllAiReports(): Promise<AiReport[]>;
+  claimGuestReports(userId: string, ipAddress: string, guestEmail?: string | null): Promise<number>;
   countFreeReportsByIp(ip: string): Promise<number>;
   countFreeReportsByEmail(email: string): Promise<number>;
   countFreeReportsByUser(userId: string): Promise<number>;

@@ -93,8 +93,16 @@ export async function syncGuestReportToAccount(): Promise<void> {
 
       if (res.ok) {
         const data = await res.json();
-        clearGuestReport();
-        console.log(`[GuestReport] Synchronisation réussie ✓ (${data.claimed ?? 0} rapport(s) attribué(s))`);
+        if ((data.claimed ?? 0) > 0) {
+          // Des rapports ont bien été attribués → on peut supprimer le localStorage
+          clearGuestReport();
+          console.log(`[GuestReport] Synchronisation réussie ✓ (${data.claimed} rapport(s) attribué(s))`);
+        } else {
+          // claimed=0 : l'IP n'avait aucun rapport anonyme en base (déjà réclamé ou
+          // rapport généré via un autre réseau). On conserve le localStorage pour ne pas
+          // perdre les données de l'utilisateur.
+          console.log("[GuestReport] Sync OK mais 0 rapport anonyme trouvé en base — localStorage conservé");
+        }
         return;
       }
 
