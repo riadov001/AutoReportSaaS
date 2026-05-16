@@ -1063,6 +1063,7 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
     try {
       const { email, password, role, firstName, lastName } = req.body;
       if (!email || !password) return res.status(400).json({ message: "Email et mot de passe requis" });
+      if (password.length < 8) return res.status(400).json({ message: "Le mot de passe doit contenir au moins 8 caractères" });
       const allowedRole = role || "manager";
       const VALID_ROLES = ["manager", "admin", "superadmin"];
       if (!VALID_ROLES.includes(allowedRole)) return res.status(400).json({ message: "Rôle invalide" });
@@ -1114,6 +1115,7 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       }
       // Superadmin: no restriction — can edit any user
       const { email, password, role, firstName, lastName } = req.body;
+      if (password && password.length < 8) return res.status(400).json({ message: "Le mot de passe doit contenir au moins 8 caractères" });
       const VALID_ROLES = ["manager", "admin", "superadmin"];
       if (role && !VALID_ROLES.includes(role)) return res.status(400).json({ message: "Rôle invalide" });
       if (role && req.panelUser.role !== "superadmin") {
