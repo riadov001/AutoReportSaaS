@@ -16,7 +16,7 @@ export interface ScoreBreakdown {
 
 export interface PurchaseRecommendation {
   score: number;
-  scoreBreakdown?: ScoreBreakdown;
+  scoreBreakdown: ScoreBreakdown;
   verdict: "BONNE AFFAIRE" | "CORRECT" | "RISQUÉ" | "À ÉVITER";
   negotiationTips: string[];
   inspectionChecklist: string[];
@@ -160,16 +160,14 @@ function PurchaseRecommendationCard({ pr, onSignupPrompt }: { pr: PurchaseRecomm
         </div>
       </div>
 
-      {/* Score breakdown */}
-      {pr.scoreBreakdown && (
-        <div className="space-y-2 pt-1">
-          <p className="text-[10px] text-white/25 uppercase tracking-wider font-mono mb-2">// SOUS-SCORES</p>
-          <SubScoreBar label="Fiabilité" value={pr.scoreBreakdown.fiabilite} />
-          <SubScoreBar label="Coût" value={pr.scoreBreakdown.cout} />
-          <SubScoreBar label="Sécurité" value={pr.scoreBreakdown.securite} />
-          <SubScoreBar label="Praticité" value={pr.scoreBreakdown.praticite} />
-        </div>
-      )}
+      {/* Score breakdown — always rendered (mandatory field) */}
+      <div className="space-y-2 pt-1">
+        <p className="text-[10px] text-white/25 uppercase tracking-wider font-mono mb-2">// SOUS-SCORES</p>
+        <SubScoreBar label="Fiabilité" value={pr.scoreBreakdown.fiabilite} />
+        <SubScoreBar label="Coût" value={pr.scoreBreakdown.cout} />
+        <SubScoreBar label="Sécurité" value={pr.scoreBreakdown.securite} />
+        <SubScoreBar label="Praticité" value={pr.scoreBreakdown.praticite} />
+      </div>
 
       {/* Negotiation tips */}
       {pr.negotiationTips.length > 0 && (

@@ -49,7 +49,7 @@ export interface ScoreBreakdown {
 
 export interface PurchaseRecommendation {
   score: number;
-  scoreBreakdown?: ScoreBreakdown;
+  scoreBreakdown: ScoreBreakdown;
   verdict: "BONNE AFFAIRE" | "CORRECT" | "RISQUÉ" | "À ÉVITER";
   negotiationTips: string[];
   inspectionChecklist: string[];
@@ -120,6 +120,16 @@ FORMAT DE RÉPONSE : JSON uniquement, aucun texte avant ou après, respectant EX
     {
       "title": "💶 Coût Annuel Estimé",
       "content": "Budget annuel réaliste : Entretien courant (vidanges, filtres, pneus) : X-Y €/an. Pièces d'usure à prévoir : X-Y €/an. Assurance estimée (profil standard) : X-Y €/an. TOTAL estimé : X-Y €/an.",
+      "severity": "low"
+    },
+    {
+      "title": "🗒️ Checklist Avant Achat",
+      "content": "6 à 8 points physiques à vérifier OBLIGATOIREMENT lors de la visite du véhicule. Chaque point doit être spécifique aux faiblesses connues de ce modèle. Aucune mention d'OBD ou de valise. Ex : carnet d'entretien complet, état de la carrosserie, démarrage à froid, essai routier, état des pneus, etc.",
+      "severity": "medium"
+    },
+    {
+      "title": "💡 Conseils Pratiques",
+      "content": "3 conseils actionnables et personnalisés pour CE véhicule : (1) conseil d'achat ou de négociation, (2) conseil d'entretien prioritaire, (3) conseil sur l'usage ou les coûts. Chaque conseil cite ce modèle et sa motorisation.",
       "severity": "low"
     }
   ],
@@ -324,6 +334,16 @@ function generateFallbackReport(vehicleInfo: VehicleInfo): GeneratedReport {
         content: `Budget annuel estimé : Entretien courant : 600-1 000 €/an. Pièces d'usure à prévoir : 200-500 €/an. Assurance (profil standard) : 600-1 200 €/an. TOTAL estimé : 1 400-2 700 €/an.`,
         severity: "low",
       },
+      {
+        title: "🗒️ Checklist Avant Achat",
+        content: `• Vérifier l'état général de la carrosserie et peinture — traces de chocs, rouille, réparations masquées\n• Contrôler le carnet d'entretien complet — factures justifiant chaque vidange et révision\n• Essai routier d'au moins 20 minutes — noter tout bruit anormal, vibration ou comportement suspect\n• Vérifier les niveaux visibles : huile moteur (couleur + niveau), liquide de refroidissement\n• Inspecter l'état des pneus — usure uniforme, même marque sur chaque essieu\n• Demander l'historique Histovec pour vérifier les sinistres déclarés`,
+        severity: "medium",
+      },
+      {
+        title: "💡 Conseils Pratiques",
+        content: `1. Vérifier le carnet d'entretien complet — toutes les révisions justifiées par factures\n2. Faire un essai routier d'au moins 20 minutes sur différents types de routes\n3. Consulter l'historique Histovec (gratuit sur histovec.interieur.gouv.fr) pour vérifier les sinistres déclarés`,
+        severity: "low",
+      },
     ],
     recommendations: [
       `Vérifier le carnet d'entretien complet — toutes les révisions justifiées par factures`,
@@ -361,18 +381,19 @@ export async function generateAiReport(vehicleInfo: VehicleInfo, adminContextPro
     const pr = parsed.purchaseRecommendation;
     const validVerdict = VALID_VERDICTS.includes(pr?.verdict) ? pr.verdict : undefined;
 
-    const scoreBreakdown = pr?.scoreBreakdown && typeof pr.scoreBreakdown === "object" ? {
-      fiabilite: Math.min(10, Math.max(0, Number(pr.scoreBreakdown.fiabilite) || 5)),
-      cout: Math.min(10, Math.max(0, Number(pr.scoreBreakdown.cout) || 5)),
-      securite: Math.min(10, Math.max(0, Number(pr.scoreBreakdown.securite) || 5)),
-      praticite: Math.min(10, Math.max(0, Number(pr.scoreBreakdown.praticite) || 5)),
-    } : undefined;
+    const sb = pr?.scoreBreakdown;
+    const scoreBreakdown: ScoreBreakdown = {
+      fiabilite: Math.min(10, Math.max(0, Number(sb?.fiabilite) || 5)),
+      cout: Math.min(10, Math.max(0, Number(sb?.cout) || 5)),
+      securite: Math.min(10, Math.max(0, Number(sb?.securite) || 5)),
+      praticite: Math.min(10, Math.max(0, Number(sb?.praticite) || 5)),
+    };
 
     const fallback = generateFallbackReport(vehicleInfo);
     const parsedSections: ReportSection[] = Array.isArray(parsed.sections) ? parsed.sections : [];
 
-    // Enforce structural completeness: require at least 8 sections
-    const sections = parsedSections.length >= 8
+    // Enforce structural completeness: require all 10 sections (fill missing ones from fallback)
+    const sections = parsedSections.length >= 10
       ? parsedSections
       : [...parsedSections, ...fallback.sections.slice(parsedSections.length)];
 
