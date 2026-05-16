@@ -8,6 +8,7 @@ import PanelRepairSheets from "./PanelRepairSheets";
 import PanelSettings from "./PanelSettings";
 import PanelFeatureFlags from "./PanelFeatureFlags";
 import PanelPlans from "./PanelPlans";
+import PanelUsers from "./PanelUsers";
 import { AutoReportLogo } from "@/components/autoreport-logo";
 import {
   LayoutDashboard,
@@ -21,16 +22,35 @@ import {
   User,
   Flag,
   CreditCard,
+  Users,
+  Shield,
 } from "lucide-react";
 
+const ROLE_LEVELS: Record<string, number> = { manager: 1, admin: 2, superadmin: 3 };
+
 const NAV_ITEMS = [
-  { path: "/panel", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { path: "/panel/reports", label: "Rapports", icon: FileText },
-  { path: "/panel/repair-sheets", label: "Fiches Réparation", icon: Wrench },
-  { path: "/panel/plans", label: "Plans & Abonnements", icon: CreditCard },
-  { path: "/panel/feature-flags", label: "Feature Flags", icon: Flag },
-  { path: "/panel/settings", label: "Paramètres", icon: Settings },
+  { path: "/panel", label: "Dashboard", icon: LayoutDashboard, exact: true, minRole: "manager" },
+  { path: "/panel/reports", label: "Rapports", icon: FileText, minRole: "manager" },
+  { path: "/panel/repair-sheets", label: "Fiches Réparation", icon: Wrench, minRole: "manager" },
+  { path: "/panel/users", label: "Utilisateurs", icon: Users, minRole: "manager" },
+  { path: "/panel/plans", label: "Plans & Abonnements", icon: CreditCard, minRole: "admin" },
+  { path: "/panel/feature-flags", label: "Feature Flags", icon: Flag, minRole: "admin" },
+  { path: "/panel/settings", label: "Paramètres", icon: Settings, minRole: "superadmin" },
 ];
+
+function AccessDenied() {
+  return (
+    <div className="flex flex-col items-center justify-center py-24 text-center">
+      <div className="h-12 w-12 rounded-full bg-[#CE1126]/10 flex items-center justify-center mb-4">
+        <Shield className="h-6 w-6 text-[#CE1126]/60" />
+      </div>
+      <h2 className="text-white font-semibold text-sm mb-1">Accès refusé</h2>
+      <p className="text-white/30 text-xs max-w-xs">
+        Votre rôle ne vous permet pas d'accéder à cette section.
+      </p>
+    </div>
+  );
+}
 
 export default function PanelApp() {
   const { user, isLoading, login, logout } = usePanelAuth();
@@ -58,13 +78,25 @@ export default function PanelApp() {
     return location.startsWith(path);
   };
 
+  const userLevel = ROLE_LEVELS[user.role] ?? 0;
+
   const renderPage = () => {
     if (location === "/panel") return <PanelDashboard />;
     if (location.startsWith("/panel/reports")) return <PanelReports />;
     if (location.startsWith("/panel/repair-sheets")) return <PanelRepairSheets />;
-    if (location.startsWith("/panel/plans")) return <PanelPlans />;
-    if (location.startsWith("/panel/feature-flags")) return <PanelFeatureFlags user={user} />;
-    if (location.startsWith("/panel/settings")) return <PanelSettings user={user} />;
+    if (location.startsWith("/panel/users")) return <PanelUsers user={user} />;
+    if (location.startsWith("/panel/plans")) {
+      if (userLevel < ROLE_LEVELS.admin) return <AccessDenied />;
+      return <PanelPlans />;
+    }
+    if (location.startsWith("/panel/feature-flags")) {
+      if (userLevel < ROLE_LEVELS.admin) return <AccessDenied />;
+      return <PanelFeatureFlags user={user} />;
+    }
+    if (location.startsWith("/panel/settings")) {
+      if (userLevel < ROLE_LEVELS.superadmin) return <AccessDenied />;
+      return <PanelSettings user={user} />;
+    }
     return <PanelDashboard />;
   };
 
@@ -92,7 +124,7 @@ export default function PanelApp() {
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.filter(item => userLevel >= (ROLE_LEVELS[item.minRole] ?? 0)).map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path, item.exact);
           return (
