@@ -1064,6 +1064,8 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       const { email, password, role, firstName, lastName } = req.body;
       if (!email || !password) return res.status(400).json({ message: "Email et mot de passe requis" });
       const allowedRole = role || "manager";
+      const VALID_ROLES = ["manager", "admin", "superadmin"];
+      if (!VALID_ROLES.includes(allowedRole)) return res.status(400).json({ message: "Rôle invalide" });
       const callerRole = req.panelUser.role;
       const callerLevel = ROLE_LEVELS[callerRole] ?? 0;
       const targetLevel = ROLE_LEVELS[allowedRole] ?? 0;
@@ -1112,6 +1114,8 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       }
       // Superadmin: no restriction — can edit any user
       const { email, password, role, firstName, lastName } = req.body;
+      const VALID_ROLES = ["manager", "admin", "superadmin"];
+      if (role && !VALID_ROLES.includes(role)) return res.status(400).json({ message: "Rôle invalide" });
       if (role && req.panelUser.role !== "superadmin") {
         const targetLevel = ROLE_LEVELS[role] ?? 0;
         const maxAssignableLevel = isManager ? ROLE_LEVELS.manager : callerLevel - 1;
