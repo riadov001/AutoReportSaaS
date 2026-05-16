@@ -42,9 +42,9 @@ export interface ReportSection {
 
 export interface ScoreBreakdown {
   fiabilite: number;
-  coutEntretien: number;
-  valeurRevente: number;
-  adaptéUsage: number;
+  cout: number;
+  securite: number;
+  praticite: number;
 }
 
 export interface PurchaseRecommendation {
@@ -84,7 +84,7 @@ FORMAT DE RÉPONSE : JSON uniquement, aucun texte avant ou après, respectant EX
   "sections": [
     {
       "title": "⭐ Score Global & Sous-critères",
-      "content": "Score global : X/10. Fiabilité : X/10 — [justification spécifique à ce modèle]. Coût d'entretien : X/10 — [justification]. Valeur de revente : X/10 — [justification]. Adapté à l'usage déclaré : X/10 — [justification basée sur l'usage fourni].",
+      "content": "Score global : X/10. Fiabilité : X/10 — [justification spécifique à ce modèle]. Coût : X/10 — [coût annuel d'entretien estimé, faible = bon score]. Sécurité : X/10 — [résultats crash-tests EuroNCAP, systèmes d'aide à la conduite disponibles]. Praticité : X/10 — [facilité au quotidien, espace, consommation, coût assurance].",
       "severity": "low"
     },
     {
@@ -138,9 +138,9 @@ FORMAT DE RÉPONSE : JSON uniquement, aucun texte avant ou après, respectant EX
     "score": 0.0,
     "scoreBreakdown": {
       "fiabilite": 0.0,
-      "coutEntretien": 0.0,
-      "valeurRevente": 0.0,
-      "adaptéUsage": 0.0
+      "cout": 0.0,
+      "securite": 0.0,
+      "praticite": 0.0
     },
     "verdict": "BONNE AFFAIRE ou CORRECT ou RISQUÉ ou À ÉVITER",
     "negotiationTips": [
@@ -263,7 +263,7 @@ function generateFallbackPurchaseRecommendation(vehicleInfo: VehicleInfo): Purch
 
   return {
     score: 5.0,
-    scoreBreakdown: { fiabilite: 5.0, coutEntretien: 5.0, valeurRevente: 5.0, adaptéUsage: 5.0 },
+    scoreBreakdown: { fiabilite: 5.0, cout: 5.0, securite: 5.0, praticite: 5.0 },
     verdict: "CORRECT",
     negotiationTips: [
       `Vérifiez l'historique Histovec (gratuit sur histovec.interieur.gouv.fr) — un sinistre non déclaré justifie une réduction de 10 à 20%`,
@@ -305,8 +305,23 @@ function generateFallbackReport(vehicleInfo: VehicleInfo): GeneratedReport {
         severity: "medium",
       },
       {
-        title: "✅ Points à vérifier",
-        content: `Carnet d'entretien complet, essai routier approfondi, vérification niveaux et pneus. Consultez l'historique Histovec gratuit.`,
+        title: "✅ Points Forts",
+        content: `Vérification du carnet d'entretien requise — les points forts ne peuvent être confirmés sans inspection physique et historique complet.`,
+        severity: "low",
+      },
+      {
+        title: "⚠️ Points Faibles",
+        content: `Des points faibles potentiels sont à investiguer lors de la visite physique — voir la checklist avant achat.`,
+        severity: "medium",
+      },
+      {
+        title: "🔴 Risques Spécifiques au Kilométrage",
+        content: `À ${vehicleInfo.mileage ? `${parseInt(vehicleInfo.mileage.replace(/\D/g, ""), 10).toLocaleString("fr-FR")} km` : "ce kilométrage"} : vérifier l'état de la distribution, de l'embrayage et des amortisseurs — pièces d'usure critiques à surveiller.`,
+        severity: "high",
+      },
+      {
+        title: "💶 Coût Annuel Estimé",
+        content: `Budget annuel estimé : Entretien courant : 600-1 000 €/an. Pièces d'usure à prévoir : 200-500 €/an. Assurance (profil standard) : 600-1 200 €/an. TOTAL estimé : 1 400-2 700 €/an.`,
         severity: "low",
       },
     ],
@@ -348,27 +363,41 @@ export async function generateAiReport(vehicleInfo: VehicleInfo, adminContextPro
 
     const scoreBreakdown = pr?.scoreBreakdown && typeof pr.scoreBreakdown === "object" ? {
       fiabilite: Math.min(10, Math.max(0, Number(pr.scoreBreakdown.fiabilite) || 5)),
-      coutEntretien: Math.min(10, Math.max(0, Number(pr.scoreBreakdown.coutEntretien) || 5)),
-      valeurRevente: Math.min(10, Math.max(0, Number(pr.scoreBreakdown.valeurRevente) || 5)),
-      adaptéUsage: Math.min(10, Math.max(0, Number(pr.scoreBreakdown.adaptéUsage) || 5)),
+      cout: Math.min(10, Math.max(0, Number(pr.scoreBreakdown.cout) || 5)),
+      securite: Math.min(10, Math.max(0, Number(pr.scoreBreakdown.securite) || 5)),
+      praticite: Math.min(10, Math.max(0, Number(pr.scoreBreakdown.praticite) || 5)),
     } : undefined;
+
+    const fallback = generateFallbackReport(vehicleInfo);
+    const parsedSections: ReportSection[] = Array.isArray(parsed.sections) ? parsed.sections : [];
+
+    // Enforce structural completeness: require at least 8 sections
+    const sections = parsedSections.length >= 8
+      ? parsedSections
+      : [...parsedSections, ...fallback.sections.slice(parsedSections.length)];
 
     const report: GeneratedReport = {
       vehicleInfo,
-      summary: parsed.summary || "Rapport généré par IA.",
-      sections: Array.isArray(parsed.sections) ? parsed.sections : [],
-      recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
-      estimatedCost: parsed.estimatedCost || undefined,
+      summary: parsed.summary || fallback.summary,
+      sections,
+      recommendations: Array.isArray(parsed.recommendations) && parsed.recommendations.length >= 3
+        ? parsed.recommendations
+        : fallback.recommendations,
+      estimatedCost: parsed.estimatedCost || fallback.estimatedCost,
       urgencyLevel: parsed.urgencyLevel || "medium",
       purchaseRecommendation: pr && typeof pr.score === "number" && validVerdict
         ? {
             score: Math.min(10, Math.max(0, pr.score)),
             scoreBreakdown,
             verdict: validVerdict as PurchaseRecommendation["verdict"],
-            negotiationTips: Array.isArray(pr.negotiationTips) ? pr.negotiationTips : [],
-            inspectionChecklist: Array.isArray(pr.inspectionChecklist) ? pr.inspectionChecklist : [],
+            negotiationTips: Array.isArray(pr.negotiationTips) && pr.negotiationTips.length > 0
+              ? pr.negotiationTips
+              : fallback.purchaseRecommendation!.negotiationTips,
+            inspectionChecklist: Array.isArray(pr.inspectionChecklist) && pr.inspectionChecklist.length > 0
+              ? pr.inspectionChecklist
+              : fallback.purchaseRecommendation!.inspectionChecklist,
           }
-        : generateFallbackPurchaseRecommendation(vehicleInfo),
+        : fallback.purchaseRecommendation!,
       generatedAt: new Date().toISOString(),
     };
 
@@ -414,9 +443,9 @@ export function generateReportHtml(report: GeneratedReport): string {
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
       ${[
         { label: "Fiabilité", val: pr.scoreBreakdown.fiabilite },
-        { label: "Coût entretien", val: pr.scoreBreakdown.coutEntretien },
-        { label: "Valeur revente", val: pr.scoreBreakdown.valeurRevente },
-        { label: "Adapté à l'usage", val: pr.scoreBreakdown.adaptéUsage },
+        { label: "Coût", val: pr.scoreBreakdown.cout },
+        { label: "Sécurité", val: pr.scoreBreakdown.securite },
+        { label: "Praticité", val: pr.scoreBreakdown.praticite },
       ].map(({ label, val }) => {
         const col = val >= 7 ? "#22c55e" : val >= 4 ? "#f59e0b" : "#dc2626";
         return `<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px;">

@@ -9,9 +9,9 @@ export interface ReportSection {
 
 export interface ScoreBreakdown {
   fiabilite: number;
-  coutEntretien: number;
-  valeurRevente: number;
-  adaptéUsage: number;
+  cout: number;
+  securite: number;
+  praticite: number;
 }
 
 export interface PurchaseRecommendation {
@@ -165,9 +165,9 @@ function PurchaseRecommendationCard({ pr, onSignupPrompt }: { pr: PurchaseRecomm
         <div className="space-y-2 pt-1">
           <p className="text-[10px] text-white/25 uppercase tracking-wider font-mono mb-2">// SOUS-SCORES</p>
           <SubScoreBar label="Fiabilité" value={pr.scoreBreakdown.fiabilite} />
-          <SubScoreBar label="Coût d'entretien" value={pr.scoreBreakdown.coutEntretien} />
-          <SubScoreBar label="Valeur de revente" value={pr.scoreBreakdown.valeurRevente} />
-          <SubScoreBar label="Adapté à l'usage" value={pr.scoreBreakdown.adaptéUsage} />
+          <SubScoreBar label="Coût" value={pr.scoreBreakdown.cout} />
+          <SubScoreBar label="Sécurité" value={pr.scoreBreakdown.securite} />
+          <SubScoreBar label="Praticité" value={pr.scoreBreakdown.praticite} />
         </div>
       )}
 
@@ -261,7 +261,7 @@ export default function ReportDisplay({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `rapport-${report.vehicleInfo.make}-${report.vehicleInfo.model}-${Date.now()}.html`;
+      a.download = `rapport-${report.vehicleInfo.make}-${report.vehicleInfo.model}-${Date.now()}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch {
