@@ -1346,6 +1346,9 @@ export const landingSettings = pgTable("landing_settings", {
   primaryColor: varchar("primary_color", { length: 20 }).default("#CE1126"),
   fontFamily: varchar("font_family", { length: 100 }).default("Exo 2"),
   aiPrompt: text("ai_prompt"),
+  stripePublishableKey: text("stripe_publishable_key"),
+  stripeSecretKey: text("stripe_secret_key"),
+  geminiApiKey: text("gemini_api_key"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 

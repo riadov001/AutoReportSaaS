@@ -1221,6 +1221,33 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
     }
   });
 
+  // Admin+: Get API keys (Stripe + Gemini) — secret key masked unless superadmin
+  app.get('/api/panel/keys', requirePanelAuth("admin"), async (req: any, res) => {
+    try {
+      const settings = await storage.getLandingSettings();
+      const isSuperAdmin = req.panelUser.role === "superadmin";
+      const mask = (v: string | null | undefined) => v ? (isSuperAdmin ? v : `${v.slice(0, 8)}${"*".repeat(Math.max(0, v.length - 8))}`) : "";
+      res.json({
+        stripePublishableKey: settings.stripePublishableKey || "",
+        stripeSecretKey: mask(settings.stripeSecretKey),
+        geminiApiKey: mask(settings.geminiApiKey),
+      });
+    } catch { res.status(500).json({ message: "Erreur" }); }
+  });
+
+  // Admin+: Update API keys (Stripe + Gemini)
+  app.put('/api/panel/keys', requirePanelAuth("admin"), async (req: any, res) => {
+    try {
+      const { stripePublishableKey, stripeSecretKey, geminiApiKey } = req.body;
+      const updates: Record<string, string | null> = {};
+      if (stripePublishableKey !== undefined) updates.stripePublishableKey = stripePublishableKey || null;
+      if (stripeSecretKey !== undefined && !stripeSecretKey.includes("*")) updates.stripeSecretKey = stripeSecretKey || null;
+      if (geminiApiKey !== undefined && !geminiApiKey.includes("*")) updates.geminiApiKey = geminiApiKey || null;
+      const updated = await storage.updateLandingSettings(updates);
+      res.json({ message: "Clés mises à jour", updatedAt: updated.updatedAt });
+    } catch { res.status(500).json({ message: "Erreur" }); }
+  });
+
   // Admin: Get all reports for panel
   app.get('/api/panel/reports', requirePanelAuth(), async (req: any, res) => {
     try {
