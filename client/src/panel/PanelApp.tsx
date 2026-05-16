@@ -33,7 +33,7 @@ const NAV_ITEMS = [
   { path: "/panel/reports", label: "Rapports", icon: FileText, minRole: "manager" },
   { path: "/panel/repair-sheets", label: "Fiches Réparation", icon: Wrench, minRole: "manager" },
   { path: "/panel/users", label: "Utilisateurs", icon: Users, minRole: "manager" },
-  { path: "/panel/plans", label: "Plans & Abonnements", icon: CreditCard, minRole: "admin" },
+  { path: "/panel/plans", label: "Plans & Abonnements", icon: CreditCard, minRole: "manager" },
   { path: "/panel/feature-flags", label: "Feature Flags", icon: Flag, minRole: "admin" },
   { path: "/panel/settings", label: "Paramètres", icon: Settings, minRole: "admin" },
 ];
@@ -85,10 +85,7 @@ export default function PanelApp() {
     if (location.startsWith("/panel/reports")) return <PanelReports />;
     if (location.startsWith("/panel/repair-sheets")) return <PanelRepairSheets />;
     if (location.startsWith("/panel/users")) return <PanelUsers user={user} />;
-    if (location.startsWith("/panel/plans")) {
-      if (userLevel < ROLE_LEVELS.admin) return <AccessDenied />;
-      return <PanelPlans />;
-    }
+    if (location.startsWith("/panel/plans")) return <PanelPlans />;
     if (location.startsWith("/panel/feature-flags")) {
       if (userLevel < ROLE_LEVELS.admin) return <AccessDenied />;
       return <PanelFeatureFlags user={user} />;

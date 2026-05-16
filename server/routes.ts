@@ -1088,9 +1088,8 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
   });
 
   // Panel: update user
-  // - managers can only edit users they created
-  // - admins cannot modify superadmin accounts
-  // - cannot promote above own level
+  // Managers: can edit same-level (manager) users they own via createdBy
+  // Admin+: can only edit users strictly below their own level
   app.put('/api/panel/users/:id', requirePanelAuth("manager"), async (req: any, res) => {
     try {
       const callerLevel = ROLE_LEVELS[req.panelUser.role] ?? 0;
@@ -1098,16 +1097,18 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       const target = await storage.getPanelUserById(req.params.id);
       if (!target) return res.status(404).json({ message: "Utilisateur introuvable" });
       const targetCurrentLevel = ROLE_LEVELS[(target as any).role] ?? 0;
-      // Cannot modify a user whose current role is equal or higher than your own
-      if (targetCurrentLevel >= callerLevel) return res.status(403).json({ message: "Vous ne pouvez pas modifier un utilisateur de niveau supérieur ou égal au vôtre" });
-      // Managers can only edit users they created
-      if (isManager && (target as any).createdBy !== req.panelUser.id) {
-        return res.status(403).json({ message: "Accès refusé — vous ne pouvez modifier que vos utilisateurs" });
+      if (isManager) {
+        // Manager can only edit manager-level users they created
+        if (targetCurrentLevel > callerLevel) return res.status(403).json({ message: "Vous ne pouvez pas modifier un utilisateur de niveau supérieur au vôtre" });
+        if ((target as any).createdBy !== req.panelUser.id) return res.status(403).json({ message: "Accès refusé — vous ne pouvez modifier que vos utilisateurs" });
+      } else {
+        // Admin+ cannot touch users of equal or higher level
+        if (targetCurrentLevel >= callerLevel) return res.status(403).json({ message: "Vous ne pouvez pas modifier un utilisateur de niveau supérieur ou égal au vôtre" });
       }
       const { email, password, role, firstName, lastName } = req.body;
       if (role) {
         const targetLevel = ROLE_LEVELS[role] ?? 0;
-        const maxAssignableLevel = req.panelUser.role === "manager" ? ROLE_LEVELS.manager : callerLevel - 1;
+        const maxAssignableLevel = isManager ? ROLE_LEVELS.manager : callerLevel - 1;
         if (targetLevel > maxAssignableLevel) return res.status(403).json({ message: "Vous ne pouvez pas assigner un rôle supérieur au niveau autorisé" });
       }
       const updates: any = { firstName, lastName };
@@ -1127,9 +1128,9 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
   });
 
   // Panel: delete user
-  // - managers can only delete users they created
-  // - admins cannot delete superadmin accounts
-  // - cannot delete self
+  // Managers: can delete same-level (manager) users they own via createdBy
+  // Admin+: can only delete users strictly below their own level
+  // Cannot delete self
   app.delete('/api/panel/users/:id', requirePanelAuth("manager"), async (req: any, res) => {
     try {
       if (req.panelUser.id === req.params.id) return res.status(400).json({ message: "Vous ne pouvez pas vous supprimer" });
@@ -1138,10 +1139,13 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       const target = await storage.getPanelUserById(req.params.id);
       if (!target) return res.status(404).json({ message: "Utilisateur introuvable" });
       const targetCurrentLevel = ROLE_LEVELS[(target as any).role] ?? 0;
-      // Cannot delete a user whose current role is equal or higher than your own
-      if (targetCurrentLevel >= callerLevel) return res.status(403).json({ message: "Vous ne pouvez pas supprimer un utilisateur de niveau supérieur ou égal au vôtre" });
-      if (isManager && (target as any).createdBy !== req.panelUser.id) {
-        return res.status(403).json({ message: "Accès refusé — vous ne pouvez supprimer que vos utilisateurs" });
+      if (isManager) {
+        // Manager can only delete manager-level users they created
+        if (targetCurrentLevel > callerLevel) return res.status(403).json({ message: "Vous ne pouvez pas supprimer un utilisateur de niveau supérieur au vôtre" });
+        if ((target as any).createdBy !== req.panelUser.id) return res.status(403).json({ message: "Accès refusé — vous ne pouvez supprimer que vos utilisateurs" });
+      } else {
+        // Admin+ cannot touch users of equal or higher level
+        if (targetCurrentLevel >= callerLevel) return res.status(403).json({ message: "Vous ne pouvez pas supprimer un utilisateur de niveau supérieur ou égal au vôtre" });
       }
       await storage.deletePanelUser(req.params.id);
       res.json({ message: "Utilisateur supprimé" });

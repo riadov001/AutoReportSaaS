@@ -322,6 +322,18 @@ export default function PanelUsers({ user }: Props) {
                   {roleLabel[u.role] || u.role}
                 </span>
 
+                {isAdmin && u.createdBy && (() => {
+                  const creator = users.find(x => x.id === u.createdBy);
+                  const name = creator
+                    ? (creator.firstName ? `${creator.firstName} ${creator.lastName || ""}`.trim() : creator.email)
+                    : u.createdBy?.slice(0, 8) + "…";
+                  return (
+                    <span className="hidden lg:block text-[11px] text-white/25 font-mono shrink-0 max-w-[110px] truncate" title={name}>
+                      via {name}
+                    </span>
+                  );
+                })()}
+
                 {u.createdAt && (
                   <span className="hidden sm:block text-[11px] text-white/20 font-mono shrink-0">
                     {new Date(u.createdAt).toLocaleDateString("fr-FR")}
