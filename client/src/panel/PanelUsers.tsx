@@ -77,9 +77,9 @@ export default function PanelUsers({ user }: Props) {
 
   // Manager can create managers (same level, tracked via createdBy)
   // Admin can create managers only (strictly below)
-  // Superadmin can create admins and managers
+  // Superadmin can create any role (including superadmin) — no restriction
   const availableRoles = isSuperAdmin
-    ? ["manager", "admin"]
+    ? ["manager", "admin", "superadmin"]
     : isAdmin
     ? ["manager"]
     : user.role === "manager"
@@ -231,15 +231,17 @@ export default function PanelUsers({ user }: Props) {
 
   const canManage = (u: PanelUserRow) => {
     if (u.id === user.id) return false;
+    if (user.role === "superadmin") return true; // superadmin: full access
     if (user.role === "manager") return u.createdBy === user.id;
-    if (user.role === "admin") return u.role !== "superadmin";
-    return true;
+    // admin: can only manage users strictly below their own level (managers only)
+    return (ROLE_LEVELS[u.role] ?? 0) < (ROLE_LEVELS[user.role] ?? 0);
   };
 
   const canEditRole = (u: PanelUserRow) => {
+    if (user.role === "superadmin") return true; // superadmin: can assign any role
     if (user.role === "manager") return false;
-    if (user.role === "admin") return u.role === "manager";
-    return u.role !== "superadmin";
+    // admin: can only change role of manager-level users
+    return u.role === "manager";
   };
 
   return (
