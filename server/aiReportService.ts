@@ -452,22 +452,32 @@ function parseMarkdownReport(rawText: string, vehicleInfo: VehicleInfo): Generat
   let preambleLines: string[] = [];
   let inSection = false;
 
+  // Regex pour détecter les débuts de section dans les formats variés :
+  //   ## 1. Titre  /  ### Titre  /  **1. Titre**  /  **Titre :**  (en début de ligne)
+  const SECTION_HEADER_RE = /^(?:#{2,3}\s+|(?:\*\*\d+[.)]\s*|\*\*(?=[A-ZÀÉÈÊÛÙÎ🚗✅⚠️🔴💰💶🗒️💡📋🏆⭐])))/;
+
   for (const line of lines) {
-    if (line.match(/^##\s+/)) {
+    if (line.match(SECTION_HEADER_RE)) {
       // Save previous section
       if (inSection && currentTitle) {
         const content = currentLines.join("\n").trim();
         sections.push({
-          title: currentTitle.replace(/^\d+\.\s*/, "").trim(),
+          title: currentTitle.replace(/^\d+[.)]\s*/, "").replace(/\*\*/g, "").replace(/:$/, "").trim(),
           content,
           severity: sectionSeverityFromTitle(currentTitle, content),
         });
       }
-      currentTitle = line.replace(/^##\s+/, "").trim();
+      // Extract title from various formats
+      currentTitle = line
+        .replace(/^#{2,3}\s+/, "")
+        .replace(/^\*\*/, "")
+        .replace(/\*\*$/, "")
+        .replace(/\*\*.*$/, "")
+        .trim();
       currentLines = [];
       inSection = true;
     } else if (line.match(/^---\s*$/) || (line.match(/^#\s+/) && !inSection)) {
-      // Skip separators and H1 title lines
+      // Skip horizontal rules and H1 title lines before first section
       if (!inSection) preambleLines.push(line);
     } else {
       if (inSection) {
@@ -552,9 +562,31 @@ export async function generateAiReport(vehicleInfo: VehicleInfo, adminContextPro
       : buildPrompt(vehicleInfo);
     const rawResponse = await callGemini(userPrompt, systemPrompt, !isCustom);
 
-    // --- Mode prompt admin custom : parsing markdown ---
+    // --- Mode prompt admin custom : parsing adaptatif ---
+    // On essaie d'abord le JSON (l'admin a pu écrire un prompt qui retourne du JSON),
+    // puis on bascule en markdown si le JSON échoue.
     if (isCustom) {
-      console.info("[AIReport] Parsing réponse en mode markdown (prompt admin custom)");
+      try {
+        const cleanJson = extractJson(rawResponse);
+        const parsed = JSON.parse(cleanJson);
+        if (parsed && Array.isArray(parsed.sections) && parsed.sections.length > 0) {
+          console.info("[AIReport] Prompt custom → réponse JSON détectée, parsing JSON");
+          const fallback = generateFallbackReport(vehicleInfo);
+          return {
+            vehicleInfo,
+            summary: parsed.summary || fallback.summary,
+            sections: parsed.sections,
+            recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : fallback.recommendations,
+            estimatedCost: parsed.estimatedCost || fallback.estimatedCost,
+            urgencyLevel: parsed.urgencyLevel || "medium",
+            purchaseRecommendation: undefined,
+            generatedAt: new Date().toISOString(),
+          };
+        }
+      } catch {
+        // Pas du JSON valide — continuer vers le parsing markdown
+      }
+      console.info("[AIReport] Prompt custom → parsing markdown");
       return parseMarkdownReport(rawResponse, vehicleInfo);
     }
 
