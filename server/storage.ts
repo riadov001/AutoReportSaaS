@@ -1903,21 +1903,22 @@ export class DatabaseStorage implements IStorage {
    * Dé-duplication par IP (obligatoire) + guestEmail (optionnel, couche supplémentaire)
    */
   async claimGuestReports(userId: string, ipAddress: string, guestEmail?: string | null): Promise<number> {
-    // Condition : rapport anonyme (user_id IS NULL) correspondant à l'IP et/ou l'email
-    const matchConditions = [isNull(aiReports.userId), eq(aiReports.ipAddress, ipAddress)];
-    if (guestEmail) {
-      // UPDATE WHERE (ip = X OR guest_email = Y) AND user_id IS NULL
-      const result = await db
-        .update(aiReports)
-        .set({ userId })
-        .where(and(isNull(aiReports.userId), or(eq(aiReports.ipAddress, ipAddress), eq(aiReports.guestEmail, guestEmail.toLowerCase()))))
-        .returning({ id: aiReports.id });
-      return result.length;
-    }
+    // L'IP est TOUJOURS requise (filtre primaire de sécurité).
+    // Le guestEmail, s'il est fourni, est un filtre ADDITIONNEL (AND, pas OR) pour éviter
+    // qu'un utilisateur malveillant ne puisse réclamer des rapports d'une autre IP
+    // en fournissant l'email d'un tiers.
+    //
+    // Condition finale :
+    //   user_id IS NULL AND ip_address = $ip [AND guest_email = $email]
+    const baseWhere = and(isNull(aiReports.userId), eq(aiReports.ipAddress, ipAddress));
+    const whereClause = guestEmail
+      ? and(baseWhere, eq(aiReports.guestEmail, guestEmail.toLowerCase()))
+      : baseWhere;
+
     const result = await db
       .update(aiReports)
       .set({ userId })
-      .where(and(...matchConditions))
+      .where(whereClause)
       .returning({ id: aiReports.id });
     return result.length;
   }

@@ -603,9 +603,12 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       const userRole = req.user?.role;
       const isAdminUser = !!userRole && ["admin", "superadmin", "rootadmin", "employe"].includes(userRole);
 
-      // Validation défensive : un utilisateur authentifié doit toujours avoir un userId
+      // Validation défensive : un utilisateur authentifié doit toujours avoir un userId.
+      // Si ce n'est pas le cas, la session est corrompue — on refuse la requête plutôt que
+      // d'insérer un rapport avec user_id=null pour un utilisateur qui se croit connecté.
       if (req.user && !userId) {
-        console.error("[AIReport] ALERTE: req.user présent mais userId est null — session corrompue ?", { user: req.user });
+        console.error("[AIReport] ALERTE: req.user présent mais userId est null — session corrompue", { user: req.user });
+        return res.status(500).json({ message: "Session invalide, veuillez vous reconnecter.", code: "SESSION_CORRUPTED" });
       }
       const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
 
@@ -711,11 +714,13 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
         || 'unknown';
 
       // guestEmail optionnel : couche de dé-duplication supplémentaire (en plus de l'IP)
-      const { guestEmail } = req.body;
+      // Normalisé (trim + lowercase) côté serveur pour éviter les variations de casse
+      const rawEmail = req.body?.guestEmail;
+      const guestEmail = rawEmail && typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : null;
 
       // UPDATE en batch : attribue les rapports anonymes (user_id IS NULL) correspondant
-      // à cette IP (et/ou cet email) au userId de l'utilisateur connecté.
-      const claimed = await storage.claimGuestReports(userId, ip, guestEmail || null);
+      // à cette IP (et guestEmail si fourni — filtre AND, pas OR) au userId connecté.
+      const claimed = await storage.claimGuestReports(userId, ip, guestEmail);
 
       console.log(`[SyncGuest] ${claimed} rapport(s) attribué(s) à userId=${userId} (ip=${ip}${guestEmail ? `, email=${guestEmail}` : ""})`);
 
