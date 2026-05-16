@@ -35,7 +35,7 @@ const NAV_ITEMS = [
   { path: "/panel/users", label: "Utilisateurs", icon: Users, minRole: "manager" },
   { path: "/panel/plans", label: "Plans & Abonnements", icon: CreditCard, minRole: "admin" },
   { path: "/panel/feature-flags", label: "Feature Flags", icon: Flag, minRole: "admin" },
-  { path: "/panel/settings", label: "Paramètres", icon: Settings, minRole: "superadmin" },
+  { path: "/panel/settings", label: "Paramètres", icon: Settings, minRole: "admin" },
 ];
 
 function AccessDenied() {
@@ -94,7 +94,7 @@ export default function PanelApp() {
       return <PanelFeatureFlags user={user} />;
     }
     if (location.startsWith("/panel/settings")) {
-      if (userLevel < ROLE_LEVELS.superadmin) return <AccessDenied />;
+      if (userLevel < ROLE_LEVELS.admin) return <AccessDenied />;
       return <PanelSettings user={user} />;
     }
     return <PanelDashboard />;

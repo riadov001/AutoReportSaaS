@@ -75,9 +75,14 @@ export default function PanelUsers({ user }: Props) {
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Manager can create managers (same level, tracked via createdBy)
+  // Admin can create managers only (strictly below)
+  // Superadmin can create admins and managers
   const availableRoles = isSuperAdmin
     ? ["manager", "admin"]
     : isAdmin
+    ? ["manager"]
+    : user.role === "manager"
     ? ["manager"]
     : [];
 

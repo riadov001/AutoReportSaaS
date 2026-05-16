@@ -6,7 +6,10 @@ interface Props {
   user: PanelUser;
 }
 
+const ROLE_LEVELS: Record<string, number> = { manager: 1, admin: 2, superadmin: 3 };
+
 export default function PanelSettings({ user }: Props) {
+  const isAdmin = (ROLE_LEVELS[user.role] ?? 0) >= ROLE_LEVELS.admin;
   const [prompt, setPrompt] = useState("");
   const [promptOriginal, setPromptOriginal] = useState("");
   const [promptSaving, setPromptSaving] = useState(false);
@@ -51,13 +54,16 @@ export default function PanelSettings({ user }: Props) {
     <div className="space-y-8 max-w-3xl">
       <div>
         <h1 className="text-xl font-bold text-white tracking-tight">Paramètres</h1>
-        <p className="text-white/40 text-sm mt-1">Configuration du panel AutoReport (accès Super Admin)</p>
+        <p className="text-white/40 text-sm mt-1">Configuration du panel AutoReport</p>
       </div>
 
       <section className="bg-white/[0.03] border border-white/[0.06] rounded-md p-5">
         <div className="flex items-center gap-2 mb-5">
           <Cpu className="h-4 w-4 text-[#CE1126]" />
           <h2 className="text-sm font-bold text-white">Prompt IA Personnalisé</h2>
+          {!isAdmin && (
+            <span className="ml-auto text-xs text-white/30 italic">Lecture seule (accès admin requis)</span>
+          )}
         </div>
         {promptLoading ? (
           <div className="h-32 bg-white/[0.03] rounded-md animate-pulse" />
@@ -88,36 +94,39 @@ export default function PanelSettings({ user }: Props) {
             <textarea
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
+              disabled={!isAdmin}
               rows={16}
               placeholder="Ex: Tu es un expert automobile. Génère un rapport markdown structuré pour {marque} {modele} {annee} ({motorisation}, {kilometrage}). Sections : Verdict, Bilan rapide, Prix, Points forts, Points faibles, Risques, Coût annuel, Checklist, Conseils."
               data-testid="textarea-ai-prompt"
-              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-md px-4 py-3 text-white placeholder:text-white/20 text-sm focus:outline-none focus:border-[#CE1126]/40 font-mono resize-y"
+              className="w-full bg-white/[0.04] border border-white/[0.08] rounded-md px-4 py-3 text-white placeholder:text-white/20 text-sm focus:outline-none focus:border-[#CE1126]/40 font-mono resize-y disabled:opacity-40 disabled:cursor-not-allowed"
             />
-            <div className="flex items-center justify-between mt-3">
-              {prompt.trim() !== promptOriginal.trim() && (
-                <span className="text-xs text-amber-400/70">● Modifications non sauvegardées</span>
-              )}
-              <div className="ml-auto flex gap-2">
-                {prompt.trim() && (
-                  <button
-                    onClick={() => setPrompt("")}
-                    disabled={promptSaving}
-                    className="flex items-center gap-1.5 px-3 py-2 border border-white/[0.08] text-white/40 rounded-md text-xs hover:text-white/60 hover:border-white/[0.15] transition-colors"
-                  >
-                    Vider (revenir au défaut)
-                  </button>
+            {isAdmin && (
+              <div className="flex items-center justify-between mt-3">
+                {prompt.trim() !== promptOriginal.trim() && (
+                  <span className="text-xs text-amber-400/70">● Modifications non sauvegardées</span>
                 )}
-                <button
-                  onClick={savePrompt}
-                  disabled={promptSaving || prompt === promptOriginal}
-                  data-testid="button-save-prompt"
-                  className="flex items-center gap-2 px-4 py-2 bg-[#CE1126] text-white rounded-md text-sm font-semibold hover:bg-[#b8101f] transition-colors disabled:opacity-50"
-                >
-                  {promptSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  {promptSaving ? "Sauvegarde..." : "Sauvegarder le prompt"}
-                </button>
+                <div className="ml-auto flex gap-2">
+                  {prompt.trim() && (
+                    <button
+                      onClick={() => setPrompt("")}
+                      disabled={promptSaving}
+                      className="flex items-center gap-1.5 px-3 py-2 border border-white/[0.08] text-white/40 rounded-md text-xs hover:text-white/60 hover:border-white/[0.15] transition-colors"
+                    >
+                      Vider (revenir au défaut)
+                    </button>
+                  )}
+                  <button
+                    onClick={savePrompt}
+                    disabled={promptSaving || prompt === promptOriginal}
+                    data-testid="button-save-prompt"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#CE1126] text-white rounded-md text-sm font-semibold hover:bg-[#b8101f] transition-colors disabled:opacity-50"
+                  >
+                    {promptSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {promptSaving ? "Sauvegarde..." : "Sauvegarder le prompt"}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </>
         )}
       </section>
