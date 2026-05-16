@@ -85,7 +85,7 @@ export default function PanelApp() {
     if (location.startsWith("/panel/reports")) return <PanelReports />;
     if (location.startsWith("/panel/repair-sheets")) return <PanelRepairSheets />;
     if (location.startsWith("/panel/users")) return <PanelUsers user={user} />;
-    if (location.startsWith("/panel/plans")) return <PanelPlans />;
+    if (location.startsWith("/panel/plans")) return <PanelPlans user={user} />;
     if (location.startsWith("/panel/feature-flags")) {
       if (userLevel < ROLE_LEVELS.admin) return <AccessDenied />;
       return <PanelFeatureFlags user={user} />;

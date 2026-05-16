@@ -167,7 +167,7 @@ export default function PanelUsers({ user }: Props) {
           }),
         });
       } else {
-        const body: any = {
+        const body: { email: string; role: string; firstName?: string; lastName?: string; password?: string } = {
           email: form.email,
           role: form.role,
           firstName: form.firstName || undefined,

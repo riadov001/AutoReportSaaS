@@ -4,7 +4,9 @@ import {
   Plus, Pencil, Trash2, Check, X, CreditCard, Users, TrendingUp,
   RefreshCw, Zap, Calendar, Package,
 } from "lucide-react";
-import { panelFetch } from "./usePanelAuth";
+import { panelFetch, PanelUser } from "./usePanelAuth";
+
+const ROLE_LEVELS: Record<string, number> = { manager: 1, admin: 2, superadmin: 3 };
 
 interface Plan {
   id: string;
@@ -61,7 +63,8 @@ const emptyForm = {
   sortOrder: 0,
 };
 
-export default function PanelPlans() {
+export default function PanelPlans({ user }: { user?: PanelUser }) {
+  const isAdmin = (ROLE_LEVELS[user?.role ?? ""] ?? 0) >= ROLE_LEVELS.admin;
   const qc = useQueryClient();
   const [tab, setTab] = useState<"plans" | "subscriptions">("plans");
   const [showForm, setShowForm] = useState(false);
@@ -172,13 +175,15 @@ export default function PanelPlans() {
           </div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight">Plans & Abonnements</h1>
         </div>
-        <button
-          onClick={() => { resetForm(); setShowForm(true); }}
-          className="flex items-center gap-2 px-4 py-2 bg-[#CE1126] hover:bg-[#b8101f] text-white text-sm font-bold rounded-md transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          Nouveau plan
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => { resetForm(); setShowForm(true); }}
+            className="flex items-center gap-2 px-4 py-2 bg-[#CE1126] hover:bg-[#b8101f] text-white text-sm font-bold rounded-md transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Nouveau plan
+          </button>
+        )}
       </div>
 
       {/* Stats */}
@@ -257,20 +262,22 @@ export default function PanelPlans() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => openEdit(plan)}
-                      className="p-2 rounded-md border border-white/10 hover:border-white/20 text-white/40 hover:text-white transition-all"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => setDeleteId(plan.id)}
-                      className="p-2 rounded-md border border-white/10 hover:border-red-500/30 text-white/40 hover:text-red-400 transition-all"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                  {isAdmin && (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => openEdit(plan)}
+                        className="p-2 rounded-md border border-white/10 hover:border-white/20 text-white/40 hover:text-white transition-all"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteId(plan.id)}
+                        className="p-2 rounded-md border border-white/10 hover:border-red-500/30 text-white/40 hover:text-red-400 transition-all"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))
