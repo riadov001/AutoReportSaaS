@@ -1322,6 +1322,7 @@ export const panelUsers = pgTable("panel_users", {
   role: varchar("role", { length: 20 }).default("admin").notNull(),
   firstName: varchar("first_name", { length: 100 }),
   lastName: varchar("last_name", { length: 100 }),
+  createdBy: varchar("created_by", { length: 36 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
