@@ -20,15 +20,21 @@ export interface GuestReportEntry {
     codePostal?: string;
     puissance?: string;
   };
+  guestEmail?: string;
   savedAt: string;
   synced: boolean;
 }
 
-export function saveGuestReport(reportData: unknown, vehicleInfo: GuestReportEntry["vehicleInfo"]): void {
+export function saveGuestReport(
+  reportData: unknown,
+  vehicleInfo: GuestReportEntry["vehicleInfo"],
+  guestEmail?: string
+): void {
   try {
     const entry: GuestReportEntry = {
       reportData,
       vehicleInfo,
+      guestEmail: guestEmail || undefined,
       savedAt: new Date().toISOString(),
       synced: false,
     };
@@ -72,32 +78,29 @@ export async function syncGuestReportToAccount(): Promise<void> {
     try {
       attempts++;
       console.log(`[GuestReport] Tentative de synchronisation ${attempts}/${maxAttempts}…`);
+
+      // On envoie uniquement le guestEmail (optionnel) — le backend fait un UPDATE par IP + email,
+      // plus de création de doublon. reportData/vehicleInfo conservés dans le localStorage
+      // uniquement pour l'affichage local (ReportDisplay), pas envoyés au backend.
       const res = await fetch("/api/reports/sync-guest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          reportData: entry.reportData,
-          vehicleInfo: entry.vehicleInfo,
+          guestEmail: entry.guestEmail || undefined,
         }),
         credentials: "include",
       });
 
       if (res.ok) {
+        const data = await res.json();
         clearGuestReport();
-        console.log("[GuestReport] Synchronisation réussie ✓");
+        console.log(`[GuestReport] Synchronisation réussie ✓ (${data.claimed ?? 0} rapport(s) attribué(s))`);
         return;
       }
 
       // 401 = non authentifié — on arrête
       if (res.status === 401) {
         console.warn("[GuestReport] Non authentifié — sync annulée");
-        return;
-      }
-
-      // 409 = doublon — rapport déjà synchronisé
-      if (res.status === 409) {
-        clearGuestReport();
-        console.log("[GuestReport] Rapport déjà présent dans le compte — nettoyage local");
         return;
       }
 

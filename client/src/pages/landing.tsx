@@ -362,7 +362,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
         prix: vehicleInfo.prix || undefined,
         codePostal: vehicleInfo.codePostal || undefined,
         puissance: vehicleInfo.puissance || undefined,
-      });
+      }, guestEmail.trim() || undefined);
     } catch {
       toast({ title: "Erreur", description: "Impossible de générer le rapport. Réessayez.", variant: "destructive" });
     } finally {

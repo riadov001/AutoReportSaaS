@@ -602,6 +602,11 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       const userId = req.user?.id ?? null;
       const userRole = req.user?.role;
       const isAdminUser = !!userRole && ["admin", "superadmin", "rootadmin", "employe"].includes(userRole);
+
+      // Validation défensive : un utilisateur authentifié doit toujours avoir un userId
+      if (req.user && !userId) {
+        console.error("[AIReport] ALERTE: req.user présent mais userId est null — session corrompue ?", { user: req.user });
+      }
       const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
 
       // Check free report limit (admins are exempt from all quotas)
@@ -686,7 +691,13 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
     }
   });
 
-  // Sync guest report after login/signup — attaches localStorage report to user account
+  // Sync guest report after login/signup — claims existing anonymous DB rows for this user.
+  // Previously this did a createAiReport() which caused duplicates. Now it does a batch UPDATE
+  // (SET user_id = userId WHERE ip_address = req_ip AND user_id IS NULL) via claimGuestReports().
+  //
+  // Scenarios validated:
+  // 1. Génération connecté  → userId set at insert time in /api/reports/generate → visible directement
+  // 2. Guest puis sync      → UPDATE des lignes anonymes existantes → 1 seul rapport, sans doublon
   app.post('/api/reports/sync-guest', async (req: any, res) => {
     try {
       const userId = req.user?.id;
@@ -694,55 +705,26 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
         return res.status(401).json({ message: "Non authentifié" });
       }
 
-      const { reportData, vehicleInfo } = req.body;
-      if (!reportData || typeof reportData !== "object") {
-        return res.status(400).json({ message: "Données de rapport invalides" });
+      // Extraire l'IP réelle de la requête de sync (même logique que /api/reports/generate)
+      const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim()
+        || req.socket.remoteAddress
+        || 'unknown';
+
+      // guestEmail optionnel : couche de dé-duplication supplémentaire (en plus de l'IP)
+      const { guestEmail } = req.body;
+
+      // UPDATE en batch : attribue les rapports anonymes (user_id IS NULL) correspondant
+      // à cette IP (et/ou cet email) au userId de l'utilisateur connecté.
+      const claimed = await storage.claimGuestReports(userId, ip, guestEmail || null);
+
+      console.log(`[SyncGuest] ${claimed} rapport(s) attribué(s) à userId=${userId} (ip=${ip}${guestEmail ? `, email=${guestEmail}` : ""})`);
+
+      if (claimed === 0) {
+        // Aucun rapport anonyme trouvé pour cette IP — déjà synchronisé ou généré connecté
+        return res.json({ success: true, claimed: 0, message: "Aucun rapport invité à synchroniser" });
       }
 
-      const vi = vehicleInfo || (reportData as any).vehicleInfo || {};
-      const make = vi.make || "Inconnu";
-      const model = vi.model || "Inconnu";
-      const year = String(vi.year || "");
-      const issue = vi.issue || "Rapport pré-achat VO (synchronisé)";
-      const mileage = vi.mileage || null;
-
-      // Eviter les doublons : si l'utilisateur a déjà des rapports, vérifier le contenu
-      const existingReports = await storage.getAiReports(userId);
-      const contentStr = JSON.stringify(reportData);
-      const alreadyExists = existingReports.some((r) => r.content === contentStr);
-      if (alreadyExists) {
-        return res.status(409).json({ message: "Rapport déjà présent dans le compte" });
-      }
-
-      // Créer l'entrée DB — isFree=false car le quota gratuit a déjà été consommé côté invité
-      await storage.createAiReport({
-        userId,
-        garageId: null,
-        make,
-        model,
-        year,
-        mileage,
-        issue,
-        content: contentStr,
-        status: "generated",
-        metadata: {
-          syncedFromGuest: true,
-          finition: vi.finition || null,
-          motorisation: vi.motorisation || null,
-          carburant: vi.carburant || null,
-          gearbox: vi.gearbox || null,
-          usage: vi.usage || null,
-          prix: vi.prix || null,
-          codePostal: vi.codePostal || null,
-          puissance: vi.puissance || null,
-        },
-        guestEmail: null,
-        ipAddress: null,
-        isFree: false,
-      });
-
-      console.log(`[SyncGuest] Rapport synchronisé pour userId=${userId} (${make} ${model} ${year})`);
-      res.json({ success: true, message: "Rapport synchronisé avec votre compte" });
+      res.json({ success: true, claimed, message: `${claimed} rapport(s) synchronisé(s) avec votre compte` });
     } catch (err: any) {
       console.error("[SyncGuest] Erreur :", err?.message || err);
       res.status(500).json({ message: "Erreur lors de la synchronisation du rapport" });

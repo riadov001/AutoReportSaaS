@@ -132,7 +132,7 @@ import {
   type InsertSupportTicket,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql, inArray } from "drizzle-orm";
+import { eq, desc, and, sql, inArray, or, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // Garage methods (multi-tenant)
@@ -1888,6 +1888,38 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAiReport(id: string): Promise<void> {
     await db.delete(aiReports).where(eq(aiReports.id, id));
+  }
+
+  /**
+   * Attribue les rapports anonymes existants à un utilisateur qui vient de se connecter.
+   * Fait un UPDATE en batch (pas un re-insert) pour éviter les doublons.
+   *
+   * Scénario testé :
+   * 1. Utilisateur génère un rapport en anonyme → rapport inséré avec ip_address=X, user_id=NULL
+   * 2. Utilisateur se connecte → /api/reports/sync-guest appelé
+   * 3. claimGuestReports met à jour les lignes correspondantes : SET user_id=userId WHERE ip=X AND user_id IS NULL
+   * 4. Résultat : UN seul rapport en base, maintenant lié au compte, sans doublon
+   *
+   * Dé-duplication par IP (obligatoire) + guestEmail (optionnel, couche supplémentaire)
+   */
+  async claimGuestReports(userId: string, ipAddress: string, guestEmail?: string | null): Promise<number> {
+    // Condition : rapport anonyme (user_id IS NULL) correspondant à l'IP et/ou l'email
+    const matchConditions = [isNull(aiReports.userId), eq(aiReports.ipAddress, ipAddress)];
+    if (guestEmail) {
+      // UPDATE WHERE (ip = X OR guest_email = Y) AND user_id IS NULL
+      const result = await db
+        .update(aiReports)
+        .set({ userId })
+        .where(and(isNull(aiReports.userId), or(eq(aiReports.ipAddress, ipAddress), eq(aiReports.guestEmail, guestEmail.toLowerCase()))))
+        .returning({ id: aiReports.id });
+      return result.length;
+    }
+    const result = await db
+      .update(aiReports)
+      .set({ userId })
+      .where(and(...matchConditions))
+      .returning({ id: aiReports.id });
+    return result.length;
   }
 
   async getAllAiReports(): Promise<AiReport[]> {
