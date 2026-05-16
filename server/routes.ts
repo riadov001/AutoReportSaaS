@@ -1186,7 +1186,9 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
   app.get('/api/landing/settings', async (req, res) => {
     try {
       const settings = await storage.getLandingSettings();
-      res.json(settings);
+      // Never expose secrets to unauthenticated public consumers
+      const { stripeSecretKey: _s, stripePublishableKey: _p, geminiApiKey: _g, ...publicSettings } = settings as any;
+      res.json(publicSettings);
     } catch (error) {
       console.error("Error fetching landing settings:", error);
       res.json({
