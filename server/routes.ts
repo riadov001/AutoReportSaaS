@@ -1200,10 +1200,16 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
     }
   });
 
-  // Admin: Get landing settings
+  // Panel: Get landing settings — secrets stripped for non-admin roles
   app.get('/api/panel/settings', requirePanelAuth(), async (req: any, res) => {
     try {
       const settings = await storage.getLandingSettings();
+      const callerLevel = ROLE_LEVELS[req.panelUser.role] ?? 0;
+      // Managers must never see secret keys — strip them from response
+      if (callerLevel < ROLE_LEVELS.admin) {
+        const { stripeSecretKey: _s, stripePublishableKey: _p, geminiApiKey: _g, ...safe } = settings as any;
+        return res.json(safe);
+      }
       res.json(settings);
     } catch (error) {
       res.status(500).json({ message: "Erreur" });
