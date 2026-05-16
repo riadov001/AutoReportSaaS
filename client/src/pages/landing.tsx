@@ -1,5 +1,6 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { AutoReportLogo } from "@/components/autoreport-logo";
 import { CookieConsent } from "@/components/cookie-consent";
 import {
@@ -257,8 +258,11 @@ function ContactModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+const VEHICLE_FORM_KEY = "autoreport_vehicle_form";
+
 export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {}) {
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   const [vehicleInfo, setVehicleInfo] = useState({ make: "", model: "", year: "", finition: "", motorisation: "", carburant: "", mileage: "", gearbox: "", usage: [] as string[], issue: "", puissance: "", prix: "", codePostal: "" });
   const [guestEmail, setGuestEmail] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -266,13 +270,42 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
   const [limitReached, setLimitReached] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showLegal, setShowLegal] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  const handleGenerateReport = async (e: React.FormEvent) => {
+  // Restaurer le formulaire si l'utilisateur revient après une auth
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(VEHICLE_FORM_KEY);
+      if (saved) {
+        const { vehicleInfo: sv, guestEmail: se } = JSON.parse(saved);
+        if (sv) setVehicleInfo(sv);
+        if (se) setGuestEmail(se);
+        localStorage.removeItem(VEHICLE_FORM_KEY);
+        setTimeout(() => document.getElementById("generator")?.scrollIntoView({ behavior: "smooth" }), 400);
+      }
+    } catch {}
+  }, []);
+
+  // Sauvegarder le formulaire avant redirect vers auth
+  const saveVehicleForm = () => {
+    try {
+      localStorage.setItem(VEHICLE_FORM_KEY, JSON.stringify({ vehicleInfo, guestEmail }));
+    } catch {}
+  };
+
+  // Étape 1 : validation + popup de confirmation
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!vehicleInfo.make || !vehicleInfo.model || !vehicleInfo.year) {
       toast({ title: "Champs requis", description: "Remplissez au minimum la marque, le modèle et l'année.", variant: "destructive" });
       return;
     }
+    setShowConfirm(true);
+  };
+
+  // Étape 2 : génération réelle après confirmation
+  const handleConfirmGenerate = async () => {
+    setShowConfirm(false);
     const builtIssue = [
       "Analyse pré-achat véhicule d'occasion",
       vehicleInfo.motorisation ? `Motorisation : ${vehicleInfo.motorisation}` : "",
@@ -315,7 +348,6 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
       if (!res.ok) throw new Error();
       const data = await res.json();
       setReport(data);
-      // Persist report locally so it survives navigation to /signin or /signup
       saveGuestReport(data, {
         make: vehicleInfo.make,
         model: vehicleInfo.model,
@@ -346,6 +378,110 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
       {showContact && <ContactModal onClose={() => setShowContact(false)} />}
       {showLegal && <LegalModal onClose={() => setShowLegal(false)} />}
 
+      {/* ── POPUP CONFIRMATION ANALYSE ── */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm" onClick={() => setShowConfirm(false)}>
+          <div className="w-full max-w-md bg-[#09090F] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            {/* Header stripe */}
+            <div className="h-1 w-full bg-gradient-to-r from-[#CE1126] via-[#ff3350] to-[#CE1126]" />
+            <div className="p-6">
+              <p className="text-[10px] font-mono text-[#CE1126] uppercase tracking-[0.3em] mb-1">// CONFIRMER_ANALYSE</p>
+              <h2 className="text-lg font-extrabold text-white mb-4 tracking-tight">Votre véhicule à analyser</h2>
+
+              {/* Récap véhicule */}
+              <div className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-4 mb-5 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-white/30 uppercase tracking-wider">Véhicule</span>
+                  <span className="text-sm font-bold text-white">{vehicleInfo.make} {vehicleInfo.model} {vehicleInfo.year}</span>
+                </div>
+                {vehicleInfo.finition && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-white/30 uppercase tracking-wider">Finition</span>
+                    <span className="text-xs text-white/70">{vehicleInfo.finition}</span>
+                  </div>
+                )}
+                {vehicleInfo.motorisation && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-white/30 uppercase tracking-wider">Motorisation</span>
+                    <span className="text-xs text-white/70">{vehicleInfo.motorisation}{vehicleInfo.puissance ? ` · ${vehicleInfo.puissance}` : ""}</span>
+                  </div>
+                )}
+                {vehicleInfo.carburant && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-white/30 uppercase tracking-wider">Carburant</span>
+                    <span className="text-xs text-white/70">{vehicleInfo.carburant}{vehicleInfo.gearbox ? ` · ${vehicleInfo.gearbox}` : ""}</span>
+                  </div>
+                )}
+                {vehicleInfo.mileage && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-white/30 uppercase tracking-wider">Kilométrage</span>
+                    <span className="text-xs text-white/70">{Number(vehicleInfo.mileage).toLocaleString("fr-FR")} km</span>
+                  </div>
+                )}
+                {vehicleInfo.prix && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-white/30 uppercase tracking-wider">Prix demandé</span>
+                    <span className="text-xs text-white/70">{Number(vehicleInfo.prix).toLocaleString("fr-FR")} €</span>
+                  </div>
+                )}
+                {vehicleInfo.usage.length > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-white/30 uppercase tracking-wider">Usage</span>
+                    <span className="text-xs text-white/70">{vehicleInfo.usage.join(" / ")}</span>
+                  </div>
+                )}
+              </div>
+
+              {!isAuthenticated ? (
+                <>
+                  <p className="text-xs text-white/50 text-center mb-4 leading-relaxed">
+                    Connectez-vous ou créez un compte pour retrouver votre rapport dans votre espace personnel et le télécharger en PDF.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <button
+                      onClick={() => { saveVehicleForm(); window.location.href = "/signin"; }}
+                      className="flex items-center justify-center gap-2 py-2.5 border border-white/20 hover:border-white/40 text-white text-xs font-bold rounded-md transition-colors"
+                    >
+                      <LogIn className="h-3.5 w-3.5" />
+                      Se connecter
+                    </button>
+                    <button
+                      onClick={() => { saveVehicleForm(); window.location.href = "/signup"; }}
+                      className="flex items-center justify-center gap-2 py-2.5 bg-[#CE1126] hover:bg-[#b8101f] text-white text-xs font-bold rounded-md transition-colors neon-red-glow"
+                    >
+                      <Zap className="h-3.5 w-3.5" />
+                      Créer un compte
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleConfirmGenerate}
+                    className="w-full text-center text-[11px] text-white/25 hover:text-white/50 transition-colors py-1"
+                  >
+                    Continuer sans compte →
+                  </button>
+                </>
+              ) : (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowConfirm(false)}
+                    className="flex-1 py-2.5 border border-white/10 hover:border-white/20 text-white/60 hover:text-white text-xs font-bold rounded-md transition-colors"
+                  >
+                    Modifier
+                  </button>
+                  <button
+                    onClick={handleConfirmGenerate}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#CE1126] hover:bg-[#b8101f] text-white text-xs font-bold rounded-md transition-colors neon-red-glow"
+                  >
+                    <Zap className="h-3.5 w-3.5" />
+                    Confirmer &amp; Générer
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── HEADER ── */}
       <header className="fixed top-0 left-0 right-0 z-50 racing-stripe">
         <div className="bg-[#05050A]/85 backdrop-blur-xl border-b border-white/[0.04]">
@@ -367,21 +503,34 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                   <span>Espace Admin</span>
                 </a>
               )}
-              <a
-                href="/signin"
-                data-testid="link-header-signin"
-                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 border border-white/20 hover:border-white/40 hover:bg-white/[0.04] text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-md transition-colors"
-              >
-                <LogIn className="h-3.5 w-3.5" />
-                <span>Se connecter</span>
-              </a>
-              <a
-                href="/signup"
-                data-testid="link-header-signup"
-                className="hidden md:inline-flex items-center px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white/70 hover:text-white transition-colors"
-              >
-                Inscription
-              </a>
+              {isAuthenticated && !isAdmin ? (
+                <a
+                  href="/dashboard"
+                  data-testid="link-header-dashboard"
+                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 border border-[#CE1126]/40 hover:border-[#CE1126]/70 hover:bg-[#CE1126]/[0.08] text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-md transition-colors"
+                >
+                  <LogIn className="h-3.5 w-3.5" />
+                  <span>Mon espace</span>
+                </a>
+              ) : !isAuthenticated && (
+                <>
+                  <a
+                    href="/signin"
+                    data-testid="link-header-signin"
+                    className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 border border-white/20 hover:border-white/40 hover:bg-white/[0.04] text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider rounded-md transition-colors"
+                  >
+                    <LogIn className="h-3.5 w-3.5" />
+                    <span>Se connecter</span>
+                  </a>
+                  <a
+                    href="/signup"
+                    data-testid="link-header-signup"
+                    className="hidden md:inline-flex items-center px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white/70 hover:text-white transition-colors"
+                  >
+                    Inscription
+                  </a>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -544,7 +693,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
 
             <div className="grid lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
               <div className="hud-card rounded-md p-6 scan-line">
-                <form onSubmit={handleGenerateReport} className="space-y-4">
+                <form onSubmit={handleFormSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     {[
                       { key: "make", label: "MARQUE *", placeholder: "BMW / Peugeot / Renault" },

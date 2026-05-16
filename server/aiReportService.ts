@@ -355,151 +355,207 @@ export function generateReportHtml(report: GeneratedReport): string {
     low: "#22c55e",
     medium: "#f59e0b",
     high: "#f97316",
-    critical: "#ef4444",
+    critical: "#dc2626",
   };
-
+  const severityBg: Record<string, string> = {
+    low: "#f0fdf4",
+    medium: "#fffbeb",
+    high: "#fff7ed",
+    critical: "#fef2f2",
+  };
   const urgencyLabels: Record<string, string> = {
     low: "Faible",
     medium: "Moyen",
     high: "Élevé",
     critical: "Critique",
   };
-
   const verdictColors: Record<string, string> = {
     Acheter: "#22c55e",
     Négocier: "#f59e0b",
-    Éviter: "#ef4444",
+    Éviter: "#dc2626",
   };
 
-  const sectionsHtml = report.sections
-    .map(
-      (s) => `
-    <div style="margin-bottom: 20px; padding: 16px; border-left: 4px solid ${severityColors[s.severity || "medium"]}; background: #f8f9fa; border-radius: 4px;">
-      <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #1a1a1a;">${s.title}</h3>
-      <p style="margin: 0; color: #444; line-height: 1.6; font-size: 13px;">${s.content}</p>
-      ${s.severity ? `<span style="display: inline-block; margin-top: 8px; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; color: white; background: ${severityColors[s.severity]};">${urgencyLabels[s.severity]}</span>` : ""}
-    </div>`,
-    )
-    .join("");
+  const ref = `AR-${Date.now().toString(36).toUpperCase()}`;
+  const dateStr = new Date(report.generatedAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 
-  const recsHtml = report.recommendations
-    .map((r, i) => `<li style="margin-bottom: 10px; color: #333; font-size: 13px; line-height:1.6;"><strong style="color:#dc2626;">#${i + 1}</strong> ${r}</li>`)
-    .join("");
+  // Catégories de score par section (chaque section = une barre)
+  const scoreFromSeverity: Record<string, number> = { low: 85, medium: 60, high: 35, critical: 15 };
+  const colorFromSeverity: Record<string, string> = { low: "#22c55e", medium: "#f59e0b", high: "#f97316", critical: "#dc2626" };
+
+  const categoryBarsHtml = report.sections.slice(0, 6).map(s => {
+    const pct = scoreFromSeverity[s.severity || "medium"];
+    const col = colorFromSeverity[s.severity || "medium"];
+    return `
+      <div style="margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <span style="font-size: 11px; font-weight: 600; color: #333; max-width: 65%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.title}</span>
+          <span style="font-size: 11px; font-weight: 700; color: ${col};">${pct}/100</span>
+        </div>
+        <div style="height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden;">
+          <div style="height: 100%; width: ${pct}%; background: ${col}; border-radius: 3px; transition: width 0.4s;"></div>
+        </div>
+      </div>`;
+  }).join("");
+
+  // Points forts = sections low severity, points faibles = high/critical
+  const pointsForts = report.sections.filter(s => s.severity === "low").slice(0, 5);
+  const pointsFaibles = report.sections.filter(s => s.severity === "high" || s.severity === "critical").slice(0, 5);
+  // Fallback: si vide, utiliser recommendations pour points forts
+  const fortsItems = pointsForts.length > 0
+    ? pointsForts.map(s => `<li style="margin-bottom: 7px; font-size: 12px; color: #166534; line-height: 1.5; padding-left: 6px; border-left: 2px solid #22c55e;">${s.title}</li>`).join("")
+    : report.recommendations.slice(0, 4).map(r => `<li style="margin-bottom: 7px; font-size: 12px; color: #166534; line-height: 1.5; padding-left: 6px; border-left: 2px solid #22c55e;">${r}</li>`).join("");
+  const faiblesItems = pointsFaibles.length > 0
+    ? pointsFaibles.map(s => `<li style="margin-bottom: 7px; font-size: 12px; color: #991b1b; line-height: 1.5; padding-left: 6px; border-left: 2px solid #dc2626;">${s.title}</li>`).join("")
+    : report.sections.filter(s => s.severity === "medium").slice(0, 4).map(s => `<li style="margin-bottom: 7px; font-size: 12px; color: #92400e; line-height: 1.5; padding-left: 6px; border-left: 2px solid #f59e0b;">${s.title}</li>`).join("");
 
   const pr = report.purchaseRecommendation;
-  const purchaseHtml = pr ? `
-    <div style="margin-bottom: 30px; padding: 20px; border-radius: 8px; border: 2px solid ${verdictColors[pr.verdict] || "#f59e0b"}; background: ${verdictColors[pr.verdict] || "#f59e0b"}08;">
-      <h2 style="font-size: 16px; font-weight: 700; margin-bottom: 14px; color: #0a0a0a; text-transform: uppercase; letter-spacing: 1px;">Recommandation d'achat</h2>
-      <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 16px; flex-wrap: wrap;">
-        <div style="text-align: center;">
-          <div style="width: 64px; height: 64px; border-radius: 50%; border: 4px solid ${verdictColors[pr.verdict] || "#f59e0b"}; display: flex; align-items: center; justify-content: center;">
-            <span style="font-size: 22px; font-weight: 800; color: ${verdictColors[pr.verdict] || "#f59e0b"};">${pr.score.toFixed(1)}</span>
-          </div>
-          <p style="font-size: 10px; color: #888; margin-top: 4px;">/ 10</p>
-        </div>
-        <div>
-          <span style="display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 16px; font-weight: 800; color: white; background: ${verdictColors[pr.verdict] || "#f59e0b"};">${pr.verdict}</span>
-        </div>
+  const verdictColor = pr ? (verdictColors[pr.verdict] || "#f59e0b") : "#f59e0b";
+
+  // Sections détaillées
+  const sectionsDetailHtml = report.sections.map(s => `
+    <div style="margin-bottom: 18px; padding: 14px 16px; background: ${severityBg[s.severity || "medium"]}; border-left: 4px solid ${severityColors[s.severity || "medium"]}; border-radius: 0 6px 6px 0;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+        <h3 style="font-size: 13px; font-weight: 700; color: #111; margin: 0;">${s.title}</h3>
+        <span style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; color: white; background: ${severityColors[s.severity || "medium"]}; white-space: nowrap; margin-left: 8px;">${urgencyLabels[s.severity || "medium"]}</span>
       </div>
-      ${pr.negotiationTips.length > 0 ? `
-      <div style="margin-bottom: 14px;">
-        <h3 style="font-size: 13px; font-weight: 700; color: #0a0a0a; margin-bottom: 8px;">💰 Arguments de négociation</h3>
-        <ul style="padding-left: 16px; margin: 0;">
-          ${pr.negotiationTips.map(t => `<li style="font-size: 12px; color: #444; margin-bottom: 6px; line-height: 1.5;">${t}</li>`).join("")}
-        </ul>
-      </div>` : ""}
-      ${pr.inspectionChecklist.length > 0 ? `
-      <div>
-        <h3 style="font-size: 13px; font-weight: 700; color: #0a0a0a; margin-bottom: 8px;">✅ Points à vérifier avant signature</h3>
-        <ul style="padding-left: 16px; margin: 0; list-style: none;">
-          ${pr.inspectionChecklist.map(item => `<li style="font-size: 12px; color: #444; margin-bottom: 6px; line-height: 1.5; padding-left: 4px;">☐ ${item}</li>`).join("")}
-        </ul>
-      </div>` : ""}
+      <p style="font-size: 12px; color: #444; line-height: 1.65; margin: 0;">${s.content}</p>
+    </div>`).join("");
+
+  const checklistHtml = pr && pr.inspectionChecklist.length > 0 ? `
+    <div style="margin-top: 28px; padding: 18px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; page-break-inside: avoid;">
+      <h2 style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #111; margin-bottom: 12px;">✅ Checklist avant signature</h2>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+        ${pr.inspectionChecklist.map(item => `
+          <div style="display: flex; align-items: flex-start; gap: 6px; font-size: 11px; color: #374151; line-height: 1.4;">
+            <span style="width: 13px; height: 13px; border: 1.5px solid #9ca3af; border-radius: 3px; display: inline-block; flex-shrink: 0; margin-top: 1px;"></span>
+            <span>${item}</span>
+          </div>`).join("")}
+      </div>
+    </div>` : "";
+
+  const negotiationHtml = pr && pr.negotiationTips.length > 0 ? `
+    <div style="margin-top: 14px; padding: 14px 16px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;">
+      <h3 style="font-size: 12px; font-weight: 700; color: #92400e; margin-bottom: 8px;">💰 Arguments de négociation</h3>
+      <ul style="padding-left: 16px; margin: 0;">
+        ${pr.negotiationTips.map(t => `<li style="font-size: 12px; color: #78350f; margin-bottom: 5px; line-height: 1.5;">${t}</li>`).join("")}
+      </ul>
     </div>` : "";
 
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoReport — ${report.vehicleInfo.make} ${report.vehicleInfo.model} ${report.vehicleInfo.year}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Exo 2', sans-serif; color: #1a1a1a; background: white; }
+    body { font-family: 'Exo 2', sans-serif; color: #1a1a1a; background: #ffffff; }
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-break { page-break-inside: avoid; }
+    }
   </style>
 </head>
 <body>
-  <div style="max-width: 800px; margin: 0 auto; padding: 40px 30px;">
-    <!-- Header -->
-    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 24px; border-bottom: 3px solid #dc2626; margin-bottom: 30px;">
+  <!-- Racing stripe -->
+  <div style="height: 5px; background: linear-gradient(90deg, #CE1126 0%, #ff3350 50%, #CE1126 100%);"></div>
+
+  <div style="max-width: 794px; margin: 0 auto; padding: 28px 32px 40px;">
+
+    <!-- HEADER -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid #e5e7eb;">
       <div>
-        <h1 style="font-size: 28px; font-weight: 800; letter-spacing: 1px;">Auto<span style="color: #dc2626;">Report</span></h1>
-        <p style="font-size: 11px; color: #888; letter-spacing: 3px; text-transform: uppercase; margin-top: 2px;">Rapport IA Automobile</p>
+        <div style="font-size: 26px; font-weight: 900; letter-spacing: -0.5px; line-height: 1;">
+          <span style="color: #111;">Auto</span><span style="color: #CE1126;">Report</span>
+        </div>
+        <div style="font-size: 9px; color: #999; text-transform: uppercase; letter-spacing: 3px; margin-top: 3px;">Analyse Pré-Achat · Véhicule d'Occasion</div>
       </div>
       <div style="text-align: right;">
-        <p style="font-size: 12px; color: #666;">Date: ${new Date(report.generatedAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}</p>
-        <p style="font-size: 12px; color: #666;">Réf: AR-${Date.now().toString(36).toUpperCase()}</p>
+        <div style="font-size: 10px; font-weight: 700; color: #CE1126; letter-spacing: 1px; font-family: monospace;">Réf: ${ref}</div>
+        <div style="font-size: 10px; color: #888; margin-top: 2px;">${dateStr}</div>
       </div>
     </div>
 
-    <!-- Vehicle Info -->
-    <div style="background: #0a0a0a; color: white; padding: 20px 24px; border-radius: 8px; margin-bottom: 30px;">
-      <h2 style="font-size: 14px; color: #dc2626; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;">Véhicule analysé</h2>
-      <div style="display: flex; gap: 30px; flex-wrap: wrap;">
-        <div>
-          <span style="font-size: 11px; color: #888; text-transform: uppercase;">Marque / Modèle</span>
-          <p style="font-size: 18px; font-weight: 700; margin-top: 2px;">${report.vehicleInfo.make} ${report.vehicleInfo.model}</p>
-        </div>
-        <div>
-          <span style="font-size: 11px; color: #888; text-transform: uppercase;">Année</span>
-          <p style="font-size: 18px; font-weight: 700; margin-top: 2px;">${report.vehicleInfo.year}</p>
-        </div>
-        ${report.vehicleInfo.mileage ? `<div>
-          <span style="font-size: 11px; color: #888; text-transform: uppercase;">Kilométrage</span>
-          <p style="font-size: 18px; font-weight: 700; margin-top: 2px;">${report.vehicleInfo.mileage} km</p>
-        </div>` : ""}
+    <!-- VÉHICULE -->
+    <div style="background: #0d0d12; color: white; border-radius: 8px; padding: 18px 22px; margin-bottom: 22px; position: relative; overflow: hidden;">
+      <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #CE1126, #ff3350, #CE1126);"></div>
+      <div style="font-size: 9px; color: #CE1126; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 8px; font-weight: 700;">Véhicule analysé</div>
+      <div style="font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 10px;">${report.vehicleInfo.make} ${report.vehicleInfo.model}</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 18px;">
+        <div><span style="font-size: 9px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; display: block;">Année</span><span style="font-size: 14px; font-weight: 700; color: #f9fafb;">${report.vehicleInfo.year}</span></div>
+        ${report.vehicleInfo.mileage ? `<div><span style="font-size: 9px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; display: block;">Km</span><span style="font-size: 14px; font-weight: 700; color: #f9fafb;">${Number(report.vehicleInfo.mileage).toLocaleString("fr-FR")} km</span></div>` : ""}
+        ${(report.vehicleInfo as any).carburant ? `<div><span style="font-size: 9px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; display: block;">Carburant</span><span style="font-size: 14px; font-weight: 700; color: #f9fafb;">${(report.vehicleInfo as any).carburant}</span></div>` : ""}
+        ${(report.vehicleInfo as any).gearbox ? `<div><span style="font-size: 9px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; display: block;">Boîte</span><span style="font-size: 14px; font-weight: 700; color: #f9fafb;">${(report.vehicleInfo as any).gearbox}</span></div>` : ""}
+        ${(report.vehicleInfo as any).motorisation ? `<div><span style="font-size: 9px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; display: block;">Motorisation</span><span style="font-size: 14px; font-weight: 700; color: #f9fafb;">${(report.vehicleInfo as any).motorisation}</span></div>` : ""}
+        ${pr ? `<div style="margin-left: auto; text-align: right;"><span style="font-size: 9px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; display: block;">Score global</span><span style="font-size: 24px; font-weight: 900; color: ${verdictColor};">${pr.score.toFixed(1)}<span style="font-size: 12px; font-weight: 400; color: #6b7280;">/10</span></span></div>` : ""}
+      </div>
+      ${pr ? `<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #ffffff12; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 11px; font-weight: 800; padding: 4px 14px; border-radius: 20px; color: white; background: ${verdictColor}; letter-spacing: 0.5px;">${pr.verdict}</span>
+        <span style="font-size: 11px; color: #9ca3af;">${pr.verdict === "Acheter" ? "Ce véhicule présente un bon rapport qualité / risque" : pr.verdict === "Négocier" ? "Ce véhicule mérite une négociation avant achat" : "Des risques importants ont été identifiés"}</span>
+      </div>` : ""}
+    </div>
+
+    <!-- SYNTHÈSE -->
+    <div style="margin-bottom: 22px;" class="no-break">
+      <h2 style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #111; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #CE1126; display: inline-block;">Synthèse de l'analyse</h2>
+      <p style="font-size: 12.5px; color: #374151; line-height: 1.75;">${report.summary}</p>
+    </div>
+
+    <!-- SCORES PAR CATÉGORIE -->
+    ${report.sections.length > 0 ? `
+    <div style="margin-bottom: 22px;" class="no-break">
+      <h2 style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #111; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid #CE1126; display: inline-block;">Scores par catégorie</h2>
+      ${categoryBarsHtml}
+    </div>` : ""}
+
+    <!-- POINTS FORTS / POINTS FAIBLES -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px;" class="no-break">
+      <div style="padding: 14px 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
+        <h3 style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #166534; margin-bottom: 10px;">✓ Points forts</h3>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          ${fortsItems || '<li style="font-size: 12px; color: #6b7280; font-style: italic;">Aucun point fort identifié</li>'}
+        </ul>
+      </div>
+      <div style="padding: 14px 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;">
+        <h3 style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #991b1b; margin-bottom: 10px;">✗ Points faibles</h3>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          ${faiblesItems || '<li style="font-size: 12px; color: #6b7280; font-style: italic;">Aucun point faible critique identifié</li>'}
+        </ul>
       </div>
     </div>
 
-    <!-- Urgency -->
-    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding: 14px 18px; border-radius: 8px; background: ${severityColors[report.urgencyLevel]}15; border: 1px solid ${severityColors[report.urgencyLevel]}30;">
-      <div style="width: 12px; height: 12px; border-radius: 50%; background: ${severityColors[report.urgencyLevel]};"></div>
-      <span style="font-weight: 600; font-size: 14px;">Niveau d'urgence : ${urgencyLabels[report.urgencyLevel]}</span>
-      ${report.estimatedCost ? `<span style="margin-left: auto; font-weight: 600; font-size: 14px; color: #555;">Estimation : ${report.estimatedCost}</span>` : ""}
+    ${negotiationHtml}
+
+    <!-- ANALYSE DÉTAILLÉE -->
+    <div style="margin-top: 24px; margin-bottom: 22px;">
+      <h2 style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #111; margin-bottom: 14px; padding-bottom: 6px; border-bottom: 2px solid #CE1126; display: inline-block;">Analyse détaillée</h2>
+      ${sectionsDetailHtml}
     </div>
 
-    <!-- Purchase Recommendation -->
-    ${purchaseHtml}
-
-    <!-- Summary -->
-    <div style="margin-bottom: 30px;">
-      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 12px; color: #0a0a0a;">Résumé du diagnostic</h2>
-      <p style="line-height: 1.7; color: #444; font-size: 14px;">${report.summary}</p>
-    </div>
-
-    <!-- Problem -->
-    <div style="margin-bottom: 30px; padding: 16px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
-      <h3 style="font-size: 14px; color: #dc2626; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Problème signalé</h3>
-      <p style="color: #333; line-height: 1.6; font-size: 13px;">${report.vehicleInfo.issue}</p>
-    </div>
-
-    <!-- Sections -->
-    <div style="margin-bottom: 30px;">
-      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #0a0a0a;">Analyse détaillée</h2>
-      ${sectionsHtml}
-    </div>
-
-    <!-- Recommendations -->
-    <div style="margin-bottom: 30px;">
-      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #0a0a0a;">Recommandations</h2>
-      <ol style="padding-left: 20px; line-height: 1.8;">
-        ${recsHtml}
+    <!-- RECOMMANDATIONS -->
+    ${report.recommendations.length > 0 ? `
+    <div style="margin-bottom: 22px; padding: 16px 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;" class="no-break">
+      <h2 style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #111; margin-bottom: 12px;">Conseils pratiques</h2>
+      <ol style="padding-left: 18px; margin: 0;">
+        ${report.recommendations.map((r, i) => `<li style="font-size: 12px; color: #374151; margin-bottom: 8px; line-height: 1.6;"><strong style="color: #CE1126;">${i + 1}.</strong> ${r}</li>`).join("")}
       </ol>
-    </div>
+    </div>` : ""}
 
-    <!-- Footer -->
-    <div style="border-top: 2px solid #e5e5e5; padding-top: 20px; margin-top: 40px; text-align: center;">
-      <p style="font-size: 11px; color: #999; margin-bottom: 4px;">Ce rapport a été généré automatiquement par AutoReport — Intelligence Artificielle Automobile</p>
-      <p style="font-size: 11px; color: #999;">support@autoreport.com | +33 (0)1 21 40 80 80 | www.autoreport.com</p>
+    <!-- CHECKLIST -->
+    ${checklistHtml}
+
+    <!-- FOOTER -->
+    <div style="margin-top: 36px; padding-top: 16px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <span style="font-size: 10px; font-weight: 800; color: #CE1126;">Auto</span><span style="font-size: 10px; font-weight: 800; color: #111;">Report</span>
+        <span style="font-size: 9px; color: #9ca3af; margin-left: 6px;">· Intelligence Artificielle Automobile</span>
+      </div>
+      <div style="font-size: 9px; color: #9ca3af; text-align: right;">
+        <span>support@autoreport.com</span>
+        <span style="margin: 0 6px;">·</span>
+        <span>www.autoreport.com</span>
+      </div>
     </div>
   </div>
 </body>
