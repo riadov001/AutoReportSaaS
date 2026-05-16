@@ -296,7 +296,7 @@ function generateFallbackReport(vehicleInfo: VehicleInfo): GeneratedReport {
     sections: [
       {
         title: "⭐ Score Global & Sous-critères",
-        content: `Score global : 5/10\n\nFiabilité : 5/10 — Non évaluable sans plus de données sur ce modèle précis.\nCoût d'entretien : 5/10 — Variable selon l'historique d'entretien.\nValeur de revente : 5/10 — Dépend de l'état général.\nAdapté à l'usage : 5/10 — À vérifier lors de l'essai routier.`,
+        content: `Score global : 5/10\n\nFiabilité : 5/10 — Non évaluable sans plus de données sur ce modèle précis.\nCoût : 5/10 — Variable selon l'historique d'entretien et la motorisation.\nSécurité : 5/10 — À vérifier : résultats EuroNCAP et équipements de sécurité disponibles.\nPraticité : 5/10 — À confirmer lors de l'essai routier selon l'usage déclaré.`,
         severity: "medium",
       },
       {
@@ -392,10 +392,26 @@ export async function generateAiReport(vehicleInfo: VehicleInfo, adminContextPro
     const fallback = generateFallbackReport(vehicleInfo);
     const parsedSections: ReportSection[] = Array.isArray(parsed.sections) ? parsed.sections : [];
 
-    // Enforce structural completeness: require all 10 sections (fill missing ones from fallback)
-    const sections = parsedSections.length >= 10
-      ? parsedSections
-      : [...parsedSections, ...fallback.sections.slice(parsedSections.length)];
+    // Canonical 10-section titles in required order
+    const CANONICAL_TITLES = [
+      "⭐ Score Global & Sous-critères",
+      "🏆 Verdict Expert",
+      "💰 Analyse du Prix",
+      "📋 Bilan Rapide",
+      "✅ Points Forts",
+      "⚠️ Points Faibles",
+      "🔴 Risques Spécifiques au Kilométrage",
+      "💶 Coût Annuel Estimé",
+      "🗒️ Checklist Avant Achat",
+      "💡 Conseils Pratiques",
+    ];
+
+    // Merge by canonical title key — fill any missing section from fallback
+    const parsedByTitle = new Map(parsedSections.map(s => [s.title, s]));
+    const fallbackByTitle = new Map(fallback.sections.map(s => [s.title, s]));
+    const sections: ReportSection[] = CANONICAL_TITLES.map(title =>
+      parsedByTitle.get(title) ?? fallbackByTitle.get(title) ?? { title, content: "Données insuffisantes.", severity: "medium" as const }
+    );
 
     const report: GeneratedReport = {
       vehicleInfo,
