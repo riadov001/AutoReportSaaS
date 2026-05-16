@@ -169,12 +169,56 @@ FORMAT DE RÉPONSE : JSON uniquement, aucun texte avant ou après, respectant EX
   }
 }`;
 
-function buildSystemPrompt(customAdminContext?: string): string {
-  if (!customAdminContext || !customAdminContext.trim()) return SYSTEM_PROMPT_BASE;
-  return `${SYSTEM_PROMPT_BASE}\n\nCONTEXTE MÉTIER SUPPLÉMENTAIRE (fourni par l'administrateur) :\n${customAdminContext.trim()}`;
+/**
+ * Substitue les variables {marque}, {modele}, etc. dans le prompt admin.
+ * Permet à l'admin d'écrire son prompt avec des placeholders standard.
+ */
+function substituteVehicleVariables(prompt: string, vehicleInfo: VehicleInfo): string {
+  const motorization = vehicleInfo.carburant || inferMotorization(vehicleInfo.make, vehicleInfo.model, vehicleInfo.year);
+  const usageStr = vehicleInfo.usage
+    ? (Array.isArray(vehicleInfo.usage) ? vehicleInfo.usage.join(", ") : vehicleInfo.usage)
+    : "non précisé";
+  const motorisationStr = [vehicleInfo.motorisation, vehicleInfo.puissance].filter(Boolean).join(", ") || motorization;
+
+  return prompt
+    .replace(/\{marque\}/gi, vehicleInfo.make || "")
+    .replace(/\{modele\}/gi, vehicleInfo.model || "")
+    .replace(/\{motorisation\}/gi, motorisationStr)
+    .replace(/\{annee\}/gi, vehicleInfo.year || "")
+    .replace(/\{kilometrage\}/gi, vehicleInfo.mileage || "non précisé")
+    .replace(/\{carburant\}/gi, vehicleInfo.carburant || motorization)
+    .replace(/\{boite\}/gi, vehicleInfo.gearbox || "non précisé")
+    .replace(/\{finition\}/gi, vehicleInfo.finition || "non précisée")
+    .replace(/\{usage\}/gi, usageStr)
+    .replace(/\{prix\}/gi, vehicleInfo.prix || "non précisé")
+    .replace(/\{ville\}/gi, vehicleInfo.codePostal || "non précisée")
+    .replace(/\{puissance\}/gi, vehicleInfo.puissance || "non précisée")
+    .replace(/\{autres_infos\}/gi, vehicleInfo.issue || "");
 }
 
-async function callGemini(prompt: string, systemPrompt: string): Promise<string> {
+/**
+ * Construit le prompt système.
+ * - Si un prompt admin est défini → il REMPLACE le prompt JSON de base (mode markdown).
+ *   Les variables {marque}, {modele}, etc. sont substituées par les données du véhicule.
+ * - Si le champ est vide → le prompt JSON structuré par défaut (task #2) est utilisé.
+ * Retourne { prompt, isCustom } pour permettre au générateur d'adapter le mode de parsing.
+ */
+function buildSystemPrompt(customAdminPrompt?: string, vehicleInfo?: VehicleInfo): { prompt: string; isCustom: boolean } {
+  const trimmed = customAdminPrompt?.trim();
+  if (trimmed) {
+    const prompt = vehicleInfo ? substituteVehicleVariables(trimmed, vehicleInfo) : trimmed;
+    console.info("[AIReport] Mode prompt custom admin (markdown) — prompt JSON de base ignoré.");
+    return { prompt, isCustom: true };
+  }
+  return { prompt: SYSTEM_PROMPT_BASE, isCustom: false };
+}
+
+/**
+ * Appelle Gemini.
+ * jsonMode=true → responseMimeType: application/json (mode structuré, task #2)
+ * jsonMode=false → pas de contrainte MIME (mode texte libre, prompt admin custom)
+ */
+async function callGemini(prompt: string, systemPrompt: string, jsonMode = true): Promise<string> {
   const response = await ai.models.generateContent({
     model: GEMINI_MODEL,
     contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -183,7 +227,7 @@ async function callGemini(prompt: string, systemPrompt: string): Promise<string>
       temperature: 0.65,
       maxOutputTokens: 8192,
       topP: 0.92,
-      responseMimeType: "application/json",
+      ...(jsonMode ? { responseMimeType: "application/json" } : {}),
     },
   });
 
@@ -367,13 +411,154 @@ function extractJson(raw: string): string {
   return cleaned;
 }
 
+// ---------------------------------------------------------------------------
+// Markdown report parser (used when admin custom prompt is active)
+// ---------------------------------------------------------------------------
+
+function detectVerdictFromText(text: string): {
+  verdict: string;
+  urgencyLevel: "low" | "medium" | "high" | "critical";
+} {
+  const u = text.toUpperCase();
+  if (u.includes("BONNE AFFAIRE")) return { verdict: "BONNE AFFAIRE", urgencyLevel: "low" };
+  if (u.includes("À ÉVITER") || u.includes("A ÉVITER") || u.includes("À EVITER") || u.includes("A EVITER"))
+    return { verdict: "À ÉVITER", urgencyLevel: "critical" };
+  if (u.includes("RISQUÉ") || u.includes("RISQUE")) return { verdict: "RISQUÉ", urgencyLevel: "high" };
+  return { verdict: "CORRECT", urgencyLevel: "medium" };
+}
+
+function sectionSeverityFromTitle(title: string, content: string): ReportSection["severity"] {
+  const t = title.toLowerCase();
+  if (t.includes("risque") || t.includes("risqué") || t.includes("danger")) return "high";
+  if (t.includes("faible") || t.includes("vigilance") || t.includes("vérifier") || t.includes("checklist") || t.includes("avant achat"))
+    return "medium";
+  if (t.includes("verdict")) {
+    const { urgencyLevel } = detectVerdictFromText(content);
+    return urgencyLevel as ReportSection["severity"];
+  }
+  return "low";
+}
+
+/**
+ * Parse une réponse markdown en GeneratedReport.
+ * Utilisé quand le prompt admin custom est actif (pas de JSON structuré attendu).
+ * Le rapport n'a pas de purchaseRecommendation (aucun scoring) — le frontend l'affiche proprement.
+ */
+function parseMarkdownReport(rawText: string, vehicleInfo: VehicleInfo): GeneratedReport {
+  const lines = rawText.split("\n");
+  const sections: ReportSection[] = [];
+  let currentTitle = "";
+  let currentLines: string[] = [];
+  let preambleLines: string[] = [];
+  let inSection = false;
+
+  for (const line of lines) {
+    if (line.match(/^##\s+/)) {
+      // Save previous section
+      if (inSection && currentTitle) {
+        const content = currentLines.join("\n").trim();
+        sections.push({
+          title: currentTitle.replace(/^\d+\.\s*/, "").trim(),
+          content,
+          severity: sectionSeverityFromTitle(currentTitle, content),
+        });
+      }
+      currentTitle = line.replace(/^##\s+/, "").trim();
+      currentLines = [];
+      inSection = true;
+    } else if (line.match(/^---\s*$/) || (line.match(/^#\s+/) && !inSection)) {
+      // Skip separators and H1 title lines
+      if (!inSection) preambleLines.push(line);
+    } else {
+      if (inSection) {
+        currentLines.push(line);
+      } else {
+        preambleLines.push(line);
+      }
+    }
+  }
+  // Flush last section
+  if (inSection && currentTitle) {
+    const content = currentLines.join("\n").trim();
+    sections.push({
+      title: currentTitle.replace(/^\d+\.\s*/, "").trim(),
+      content,
+      severity: sectionSeverityFromTitle(currentTitle, content),
+    });
+  }
+
+  // Detect verdict + urgencyLevel from verdict section (first section generally)
+  const verdictSection = sections.find(s => s.title.toLowerCase().includes("verdict"));
+  const { urgencyLevel } = verdictSection
+    ? detectVerdictFromText(verdictSection.content)
+    : { urgencyLevel: "medium" as const };
+
+  // Summary: use "Bilan rapide" section content, or vehicle header from preamble
+  const bilanSection = sections.find(s =>
+    s.title.toLowerCase().includes("bilan") || s.title.toLowerCase().includes("résumé")
+  );
+  const vehicleHeader = preambleLines
+    .filter(l => l.includes("**Véhicule analysé**") || l.startsWith("**Véhicule"))
+    .map(l => l.replace(/\*\*/g, "").replace(/^Véhicule analysé\s*:\s*/, "").trim())
+    .join(" ");
+
+  const summary = bilanSection?.content
+    || vehicleHeader
+    || `${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.year}${vehicleInfo.mileage ? ` — ${vehicleInfo.mileage} km` : ""}`;
+
+  // Estimated cost: try "Coût" section, look for "total" line
+  const coutSection = sections.find(s =>
+    s.title.toLowerCase().includes("coût") || s.title.toLowerCase().includes("cout") || s.title.toLowerCase().includes("budget")
+  );
+  const estimatedCost = coutSection?.content
+    .split("\n")
+    .find(l => l.toLowerCase().includes("total") || l.toLowerCase().includes("€/an"))
+    ?.replace(/^[-•*]\s*/, "").trim();
+
+  // Recommendations: extract from "Conseils" section (numbered items)
+  const conseilsSection = sections.find(s =>
+    s.title.toLowerCase().includes("conseil") || s.title.toLowerCase().includes("pratique")
+  );
+  const recommendations: string[] = conseilsSection
+    ? conseilsSection.content
+        .split("\n")
+        .filter(l => l.trim() && !l.match(/^#{1,4}\s/))
+        .map(l => l.replace(/^\d+\.\s*/, "").replace(/^[-•*]\s*/, "").trim())
+        .filter(l => l.length > 5)
+        .slice(0, 5)
+    : [];
+
+  return {
+    vehicleInfo,
+    summary,
+    sections,
+    recommendations,
+    estimatedCost,
+    urgencyLevel,
+    purchaseRecommendation: undefined, // No scoring in custom prompt mode
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+
 const VALID_VERDICTS = ["BONNE AFFAIRE", "CORRECT", "RISQUÉ", "À ÉVITER"] as const;
 
 export async function generateAiReport(vehicleInfo: VehicleInfo, adminContextPrompt?: string): Promise<GeneratedReport> {
   try {
-    const systemPrompt = buildSystemPrompt(adminContextPrompt);
-    const userPrompt = buildPrompt(vehicleInfo);
-    const rawResponse = await callGemini(userPrompt, systemPrompt);
+    const { prompt: systemPrompt, isCustom } = buildSystemPrompt(adminContextPrompt, vehicleInfo);
+    const userPrompt = isCustom
+      ? `Génère le rapport avant achat complet pour ce véhicule : ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.year}${vehicleInfo.mileage ? `, ${vehicleInfo.mileage} km` : ""}.`
+      : buildPrompt(vehicleInfo);
+    const rawResponse = await callGemini(userPrompt, systemPrompt, !isCustom);
+
+    // --- Mode prompt admin custom : parsing markdown ---
+    if (isCustom) {
+      console.info("[AIReport] Parsing réponse en mode markdown (prompt admin custom)");
+      return parseMarkdownReport(rawResponse, vehicleInfo);
+    }
+
+    // --- Mode JSON structuré (prompt par défaut, task #2) ---
 
     let cleanJson = extractJson(rawResponse);
     const parsed = JSON.parse(cleanJson);
