@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Download, Info, AlertTriangle, AlertCircle, TriangleAlert, CheckSquare, Square, TrendingUp, Minus, TrendingDown, Ban } from "lucide-react";
 
 export interface ReportSection {
@@ -53,12 +53,31 @@ export const SEVERITY_CONFIG = {
   critical: { label: "Critique", color: "#CE1126", bg: "rgba(206,17,38,0.08)",  border: "rgba(206,17,38,0.2)",  Icon: TriangleAlert },
 };
 
-const VERDICT_CONFIG = {
+const VERDICT_CONFIG: Record<string, { color: string; bg: string; border: string; Icon: React.ElementType; label: string }> = {
   "BONNE AFFAIRE": { color: "#22c55e", bg: "rgba(34,197,94,0.07)",  border: "rgba(34,197,94,0.2)",  Icon: TrendingUp,   label: "Bonne affaire — excellent rapport qualité/risque" },
   "CORRECT":       { color: "#3b82f6", bg: "rgba(59,130,246,0.07)", border: "rgba(59,130,246,0.2)", Icon: Minus,        label: "Correct — acceptable mais quelques vérifications s'imposent" },
   "RISQUÉ":        { color: "#f97316", bg: "rgba(249,115,22,0.07)", border: "rgba(249,115,22,0.2)", Icon: TrendingDown, label: "Risqué — des problèmes identifiés, négociez le prix" },
   "À ÉVITER":      { color: "#CE1126", bg: "rgba(206,17,38,0.07)",  border: "rgba(206,17,38,0.2)",  Icon: Ban,          label: "À éviter — les risques déconseillent fortement cet achat" },
+  // Legacy verdict mapping (old schema compatibility)
+  "Acheter":   { color: "#22c55e", bg: "rgba(34,197,94,0.07)",  border: "rgba(34,197,94,0.2)",  Icon: TrendingUp,   label: "Bonne affaire — excellent rapport qualité/risque" },
+  "Négocier":  { color: "#f97316", bg: "rgba(249,115,22,0.07)", border: "rgba(249,115,22,0.2)", Icon: TrendingDown, label: "Risqué — des problèmes identifiés, négociez le prix" },
+  "Éviter":    { color: "#CE1126", bg: "rgba(206,17,38,0.07)",  border: "rgba(206,17,38,0.2)",  Icon: Ban,          label: "À éviter — les risques déconseillent fortement cet achat" },
 };
+
+const DEFAULT_SCORE_BREAKDOWN: ScoreBreakdown = { fiabilite: 5, cout: 5, securite: 5, praticite: 5 };
+
+function normalizePR(pr: PurchaseRecommendation): Required<PurchaseRecommendation> {
+  const sb = (pr.scoreBreakdown as ScoreBreakdown | undefined) ?? DEFAULT_SCORE_BREAKDOWN;
+  return {
+    ...pr,
+    scoreBreakdown: {
+      fiabilite: Number(sb.fiabilite) || 5,
+      cout: Number(sb.cout) || 5,
+      securite: Number(sb.securite) || 5,
+      praticite: Number(sb.praticite) || 5,
+    },
+  };
+}
 
 export function SeverityBadge({ severity }: { severity: keyof typeof SEVERITY_CONFIG }) {
   const cfg = SEVERITY_CONFIG[severity] || SEVERITY_CONFIG.medium;
@@ -124,7 +143,8 @@ function SubScoreBar({ label, value }: { label: string; value: number }) {
   );
 }
 
-function PurchaseRecommendationCard({ pr, onSignupPrompt }: { pr: PurchaseRecommendation; onSignupPrompt?: () => void }) {
+function PurchaseRecommendationCard({ pr: prRaw, onSignupPrompt }: { pr: PurchaseRecommendation; onSignupPrompt?: () => void }) {
+  const pr = normalizePR(prRaw);
   const [checked, setChecked] = useState<Set<number>>(new Set());
   const vcfg = VERDICT_CONFIG[pr.verdict] || VERDICT_CONFIG["CORRECT"];
   const VerdictIcon = vcfg.Icon;
