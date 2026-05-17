@@ -1,0 +1,32 @@
+Tu travailles sur une application Node.js + Express (backend) + Vue.js (frontend).
+
+**Tâches précises à réaliser :**
+
+1. **Page de chargement / écran d’attente de génération du rapport**
+   - Localise le composant qui affiche l’écran "Analyse en cours..." (celui avec le cercle rouge + les 3 bullets : Lecture des paramètres, Analyse des symptômes, Génération du rapport).
+   - **Change uniquement le wording** (texte), mais **garde exactement le même design** (même couleurs, même animation, même disposition, même cercle, même flèche, etc.).
+   - Nouveau texte demandé :
+     - Titre principal : "Analyse en cours..."
+     - Sous-titre : "Interrogation du moteur IA"
+     - Bullet 1 : "Lecture des paramètres du véhicule"
+     - Bullet 2 : "Analyse des symptômes et historique"
+     - Bullet 3 : "Génération du rapport détaillé"
+
+2. **Rapport final (résultats)**
+   - Supprime toutes les couleurs de mise en évidence (badges "ÉLEVÉ", "RISQUÉ", vert/orange/rouge, etc.).
+   - Rends tout le rapport en texte noir/gris sur fond sombre (style actuel), sans badges colorés.
+   - Supprime tous les doublons identifiés dans les screenshots :
+     - Le bloc "Bilan rapide" ne doit apparaître **qu’une seule fois**.
+     - La section "Verdict expert" et le texte répété en dessous doivent être nettoyés.
+     - Dans la partie "Conseils pratiques", supprime les doublons de texte (les points 1,2,3 ne doivent apparaître qu’une seule fois).
+
+3. **Autres corrections**
+   - Assure-toi que la version **mobile** (responsive) reste parfaitement fonctionnelle et belle (test sur téléphone).
+   - Le backend Express reste inchangé (même API endpoints).
+
+**Contraintes importantes :**
+- Ne change rien d’autre dans le design (police, espacement, icônes, layout, dark mode, etc.).
+- Garde le même style global de l’application.
+- Après modification, teste la génération complète du rapport (écran de chargement → rapport final) sur desktop ET mobile.
+
+Fais les modifications proprement et dis-moi quand c’est terminé.

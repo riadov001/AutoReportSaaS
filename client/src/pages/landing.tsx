@@ -943,7 +943,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                       <p className="text-xs text-white/30 font-mono">Interrogation du moteur IA</p>
                     </div>
                     <div className="w-full max-w-xs space-y-1.5">
-                      {["Lecture des paramètres", "Analyse des symptômes", "Génération du rapport"].map((step, i) => (
+                      {["Lecture des paramètres du véhicule", "Analyse des symptômes et historique", "Génération du rapport détaillé"].map((step, i) => (
                         <div key={step} className="flex items-center gap-2">
                           <span className="w-1.5 h-1.5 rounded-full bg-[#CE1126] animate-pulse" style={{ animationDelay: `${i * 0.3}s` }} />
                           <span className="text-[10px] font-mono text-white/30">{step}</span>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Download, Info, AlertTriangle, AlertCircle, TriangleAlert, CheckSquare, Square, TrendingUp, Minus, TrendingDown, Ban } from "lucide-react";
+import { Download, CheckSquare, Square, TrendingUp, Minus, TrendingDown, Ban } from "lucide-react";
 
 export interface ReportSection {
   title: string;
@@ -47,21 +47,30 @@ export interface GeneratedReport {
 }
 
 export const SEVERITY_CONFIG = {
-  low:      { label: "Faible",   color: "#22c55e", bg: "rgba(34,197,94,0.08)",  border: "rgba(34,197,94,0.2)",  Icon: Info },
-  medium:   { label: "Moyen",    color: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)", Icon: AlertTriangle },
-  high:     { label: "Élevé",    color: "#f97316", bg: "rgba(249,115,22,0.08)", border: "rgba(249,115,22,0.2)", Icon: AlertCircle },
-  critical: { label: "Critique", color: "#CE1126", bg: "rgba(206,17,38,0.08)",  border: "rgba(206,17,38,0.2)",  Icon: TriangleAlert },
+  low:      { label: "Faible",   color: "#22c55e", bg: "rgba(34,197,94,0.08)",  border: "rgba(34,197,94,0.2)" },
+  medium:   { label: "Moyen",    color: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)" },
+  high:     { label: "Élevé",    color: "#f97316", bg: "rgba(249,115,22,0.08)", border: "rgba(249,115,22,0.2)" },
+  critical: { label: "Critique", color: "#CE1126", bg: "rgba(206,17,38,0.08)",  border: "rgba(206,17,38,0.2)" },
 };
 
-const VERDICT_CONFIG: Record<string, { color: string; bg: string; border: string; Icon: React.ElementType; label: string }> = {
-  "BONNE AFFAIRE": { color: "#22c55e", bg: "rgba(34,197,94,0.07)",  border: "rgba(34,197,94,0.2)",  Icon: TrendingUp,   label: "Bonne affaire — excellent rapport qualité/risque" },
-  "CORRECT":       { color: "#3b82f6", bg: "rgba(59,130,246,0.07)", border: "rgba(59,130,246,0.2)", Icon: Minus,        label: "Correct — acceptable mais quelques vérifications s'imposent" },
-  "RISQUÉ":        { color: "#f97316", bg: "rgba(249,115,22,0.07)", border: "rgba(249,115,22,0.2)", Icon: TrendingDown, label: "Risqué — des problèmes identifiés, négociez le prix" },
-  "À ÉVITER":      { color: "#CE1126", bg: "rgba(206,17,38,0.07)",  border: "rgba(206,17,38,0.2)",  Icon: Ban,          label: "À éviter — les risques déconseillent fortement cet achat" },
-  // Legacy verdict mapping (old schema compatibility)
-  "Acheter":   { color: "#22c55e", bg: "rgba(34,197,94,0.07)",  border: "rgba(34,197,94,0.2)",  Icon: TrendingUp,   label: "Bonne affaire — excellent rapport qualité/risque" },
-  "Négocier":  { color: "#f97316", bg: "rgba(249,115,22,0.07)", border: "rgba(249,115,22,0.2)", Icon: TrendingDown, label: "Risqué — des problèmes identifiés, négociez le prix" },
-  "Éviter":    { color: "#CE1126", bg: "rgba(206,17,38,0.07)",  border: "rgba(206,17,38,0.2)",  Icon: Ban,          label: "À éviter — les risques déconseillent fortement cet achat" },
+const VERDICT_ICONS: Record<string, React.ElementType> = {
+  "BONNE AFFAIRE": TrendingUp,
+  "CORRECT":       Minus,
+  "RISQUÉ":        TrendingDown,
+  "À ÉVITER":      Ban,
+  "Acheter":       TrendingUp,
+  "Négocier":      TrendingDown,
+  "Éviter":        Ban,
+};
+
+const VERDICT_LABELS: Record<string, string> = {
+  "BONNE AFFAIRE": "Bonne affaire — excellent rapport qualité/risque",
+  "CORRECT":       "Correct — acceptable mais quelques vérifications s'imposent",
+  "RISQUÉ":        "Risqué — des problèmes identifiés, négociez le prix",
+  "À ÉVITER":      "À éviter — les risques déconseillent fortement cet achat",
+  "Acheter":       "Bonne affaire — excellent rapport qualité/risque",
+  "Négocier":      "Risqué — des problèmes identifiés, négociez le prix",
+  "Éviter":        "À éviter — les risques déconseillent fortement cet achat",
 };
 
 const DEFAULT_SCORE_BREAKDOWN: ScoreBreakdown = { fiabilite: 5, cout: 5, securite: 5, praticite: 5 };
@@ -79,22 +88,8 @@ function normalizePR(pr: PurchaseRecommendation): Required<PurchaseRecommendatio
   };
 }
 
-export function SeverityBadge({ severity }: { severity: keyof typeof SEVERITY_CONFIG }) {
-  const cfg = SEVERITY_CONFIG[severity] || SEVERITY_CONFIG.medium;
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider shrink-0"
-      style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}` }}
-    >
-      <span className="h-1.5 w-1.5 rounded-full inline-block" style={{ background: cfg.color }} />
-      {cfg.label}
-    </span>
-  );
-}
-
 function ScoreRing({ score, size = 72 }: { score: number; size?: number }) {
   const clamped = Math.min(10, Math.max(0, score));
-  const color = clamped >= 8 ? "#22c55e" : clamped >= 6 ? "#3b82f6" : clamped >= 4 ? "#f97316" : "#CE1126";
   const r = 22;
   const circ = 2 * Math.PI * r;
   const pct = clamped / 10;
@@ -107,7 +102,7 @@ function ScoreRing({ score, size = 72 }: { score: number; size?: number }) {
           <circle
             cx="26" cy="26" r={r}
             fill="none"
-            stroke={color}
+            stroke="rgba(255,255,255,0.35)"
             strokeWidth="5"
             strokeDasharray={circ}
             strokeDashoffset={circ * (1 - pct)}
@@ -116,7 +111,7 @@ function ScoreRing({ score, size = 72 }: { score: number; size?: number }) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-black leading-none" style={{ color, fontSize: size * 0.27 }}>{clamped.toFixed(1)}</span>
+          <span className="font-black leading-none text-white/80" style={{ fontSize: size * 0.27 }}>{clamped.toFixed(1)}</span>
           <span className="text-white/25 font-mono" style={{ fontSize: size * 0.12 }}>/10</span>
         </div>
       </div>
@@ -126,28 +121,51 @@ function ScoreRing({ score, size = 72 }: { score: number; size?: number }) {
 
 function SubScoreBar({ label, value }: { label: string; value: number }) {
   const clamped = Math.min(10, Math.max(0, value));
-  const color = clamped >= 8 ? "#22c55e" : clamped >= 6 ? "#3b82f6" : clamped >= 4 ? "#f97316" : "#CE1126";
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
         <span className="text-[10px] text-white/40 font-mono">{label}</span>
-        <span className="text-[11px] font-bold" style={{ color }}>{clamped.toFixed(1)}/10</span>
+        <span className="text-[11px] font-bold text-white/50">{clamped.toFixed(1)}/10</span>
       </div>
       <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden">
         <div
-          className="h-full rounded-full"
-          style={{ width: `${clamped * 10}%`, background: color, transition: "width 0.7s ease" }}
+          className="h-full rounded-full bg-white/25"
+          style={{ width: `${clamped * 10}%`, transition: "width 0.7s ease" }}
         />
       </div>
     </div>
   );
 }
 
+// Titres de sections à ne pas afficher (déjà rendus par les blocs dédiés)
+const DUPLICATE_SECTION_TITLES = [
+  "bilan rapide", "bilan", "résumé",
+  "verdict expert", "verdict",
+  "conseils pratiques", "conseils",
+  "recommandations",
+];
+
+function isDuplicateSection(title: string): boolean {
+  const normalized = title.toLowerCase().trim();
+  return DUPLICATE_SECTION_TITLES.some(t => normalized.includes(t));
+}
+
+// Dédoublonne un tableau de chaînes (garde la première occurrence)
+function deduplicateStrings(arr: string[]): string[] {
+  const seen = new Set<string>();
+  return arr.filter(item => {
+    const key = item.trim().toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function PurchaseRecommendationCard({ pr: prRaw, onSignupPrompt }: { pr: PurchaseRecommendation; onSignupPrompt?: () => void }) {
   const pr = normalizePR(prRaw);
   const [checked, setChecked] = useState<Set<number>>(new Set());
-  const vcfg = VERDICT_CONFIG[pr.verdict] || VERDICT_CONFIG["CORRECT"];
-  const VerdictIcon = vcfg.Icon;
+  const VerdictIcon = VERDICT_ICONS[pr.verdict] || Minus;
+  const verdictLabel = VERDICT_LABELS[pr.verdict] || "";
 
   const toggle = (i: number) => setChecked(prev => {
     const next = new Set(prev);
@@ -157,30 +175,26 @@ function PurchaseRecommendationCard({ pr: prRaw, onSignupPrompt }: { pr: Purchas
 
   const doneCount = checked.size;
   const totalCount = pr.inspectionChecklist.length;
+  const dedupedTips = deduplicateStrings(pr.negotiationTips);
+  const dedupedChecklist = deduplicateStrings(pr.inspectionChecklist);
 
   return (
-    <div
-      className="rounded-md p-4 space-y-4"
-      style={{ background: vcfg.bg, border: `1px solid ${vcfg.border}` }}
-    >
+    <div className="rounded-md p-4 space-y-4 hud-card">
       <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// VERDICT_EXPERT</p>
 
       {/* Score + Verdict */}
       <div className="flex items-center gap-4">
         <ScoreRing score={pr.score} size={72} />
         <div className="flex flex-col gap-2 flex-1">
-          <span
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-black self-start"
-            style={{ color: vcfg.color, background: `${vcfg.color}18`, border: `1px solid ${vcfg.border}` }}
-          >
-            <VerdictIcon className="h-3.5 w-3.5" />
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-black self-start text-white/70 bg-white/[0.06] border border-white/10">
+            <VerdictIcon className="h-3.5 w-3.5 text-white/50" />
             {pr.verdict}
           </span>
-          <p className="text-[11px] text-white/40 leading-tight">{vcfg.label}</p>
+          <p className="text-[11px] text-white/40 leading-tight">{verdictLabel}</p>
         </div>
       </div>
 
-      {/* Score breakdown — always rendered (mandatory field) */}
+      {/* Score breakdown */}
       <div className="space-y-2 pt-1">
         <p className="text-[10px] text-white/25 uppercase tracking-wider font-mono mb-2">// SOUS-SCORES</p>
         <SubScoreBar label="Fiabilité" value={pr.scoreBreakdown.fiabilite} />
@@ -190,16 +204,13 @@ function PurchaseRecommendationCard({ pr: prRaw, onSignupPrompt }: { pr: Purchas
       </div>
 
       {/* Negotiation tips */}
-      {pr.negotiationTips.length > 0 && (
+      {dedupedTips.length > 0 && (
         <div>
           <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono mb-2">// ARGUMENTS_NÉGOCIATION</p>
           <ul className="space-y-2">
-            {pr.negotiationTips.map((tip, i) => (
+            {dedupedTips.map((tip, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span
-                  className="shrink-0 mt-0.5 text-[10px] font-black px-1.5 py-0.5 rounded"
-                  style={{ color: "#C9A656", background: "rgba(201,166,86,0.12)", border: "1px solid rgba(201,166,86,0.2)" }}
-                >
+                <span className="shrink-0 mt-0.5 text-[10px] font-black px-1.5 py-0.5 rounded text-white/50 bg-white/[0.06] border border-white/10">
                   €
                 </span>
                 <span className="text-xs text-white/65 leading-relaxed">{tip}</span>
@@ -210,18 +221,18 @@ function PurchaseRecommendationCard({ pr: prRaw, onSignupPrompt }: { pr: Purchas
       )}
 
       {/* Checklist */}
-      {pr.inspectionChecklist.length > 0 && (
+      {dedupedChecklist.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-2">
             <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// CHECKLIST_AVANT_ACHAT</p>
             {totalCount > 0 && (
-              <span className="text-[10px] font-mono" style={{ color: doneCount === totalCount ? "#22c55e" : "#f59e0b" }}>
-                {doneCount}/{totalCount} vérifiés
+              <span className="text-[10px] font-mono text-white/30">
+                {doneCount}/{dedupedChecklist.length} vérifiés
               </span>
             )}
           </div>
           <ul className="space-y-2">
-            {pr.inspectionChecklist.map((item, i) => {
+            {dedupedChecklist.map((item, i) => {
               const done = checked.has(i);
               return (
                 <li
@@ -230,7 +241,7 @@ function PurchaseRecommendationCard({ pr: prRaw, onSignupPrompt }: { pr: Purchas
                   onClick={() => toggle(i)}
                 >
                   {done
-                    ? <CheckSquare className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "#22c55e" }} />
+                    ? <CheckSquare className="h-3.5 w-3.5 shrink-0 mt-0.5 text-white/50" />
                     : <Square className="h-3.5 w-3.5 shrink-0 mt-0.5 text-white/25 group-hover:text-white/50 transition-colors" />
                   }
                   <span
@@ -287,71 +298,60 @@ export default function ReportDisplay({
     }
   };
 
-  const urgencyCfg = SEVERITY_CONFIG[report.urgencyLevel] || SEVERITY_CONFIG.medium;
-  const UrgencyIcon = urgencyCfg.Icon;
+  // Filtrer les sections qui doublonnent les blocs dédiés
+  const filteredSections = (report.sections || []).filter(s => !isDuplicateSection(s.title));
+
+  // Dédoublonner les recommandations
+  const dedupedRecs = deduplicateStrings(report.recommendations || []);
 
   return (
     <div className="space-y-4">
 
-      {/* Verdict + Score — element principal */}
+      {/* Verdict + Score */}
       {report.purchaseRecommendation && (
         <PurchaseRecommendationCard pr={report.purchaseRecommendation} onSignupPrompt={onSignupPrompt} />
       )}
 
-      {/* Urgency strip */}
-      <div
-        className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-md"
-        style={{ background: urgencyCfg.bg, border: `1px solid ${urgencyCfg.border}` }}
-      >
-        <div className="flex items-center gap-2">
-          <UrgencyIcon className="h-3.5 w-3.5" style={{ color: urgencyCfg.color }} />
-          <span className="text-xs font-bold text-white/80">Niveau d'urgence : <span style={{ color: urgencyCfg.color }}>{urgencyCfg.label}</span></span>
-        </div>
-        {report.estimatedCost && (
-          <span className="text-xs font-mono font-bold shrink-0" style={{ color: "#C9A656" }}>
-            {report.estimatedCost}
-          </span>
-        )}
-      </div>
-
-      {/* Summary / Bilan rapide */}
-      <div className="hud-card rounded-md p-4">
-        <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2 font-mono">// BILAN_RAPIDE</p>
-        <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line">{report.summary}</p>
-      </div>
-
-      {/* Sections */}
-      {(report.sections || []).length > 0 && (
-        <div className="space-y-3">
-          <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// ANALYSE_DÉTAILLÉE</p>
-          {(report.sections || []).map((section, i) => {
-            const sev = section.severity || "medium";
-            const cfg = SEVERITY_CONFIG[sev as keyof typeof SEVERITY_CONFIG] || SEVERITY_CONFIG.medium;
-            return (
-              <div
-                key={i}
-                className="rounded-md p-4"
-                style={{ background: cfg.bg, borderLeft: `3px solid ${cfg.color}`, border: `1px solid ${cfg.border}`, borderLeftWidth: 3 }}
-              >
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <h4 className="text-sm font-bold text-white/90">{section.title}</h4>
-                  <SeverityBadge severity={sev as keyof typeof SEVERITY_CONFIG} />
-                </div>
-                <p className="text-xs text-white/60 leading-relaxed whitespace-pre-line">{section.content}</p>
-              </div>
-            );
-          })}
+      {/* Coût estimé (si présent, affiché sobrement) */}
+      {report.estimatedCost && (
+        <div className="flex items-center gap-3 px-4 py-2.5 rounded-md hud-card">
+          <span className="text-xs text-white/40">Coût annuel estimé :</span>
+          <span className="text-xs font-mono font-bold text-white/70">{report.estimatedCost}</span>
         </div>
       )}
 
-      {/* Recommendations / Conseils pratiques */}
-      {(report.recommendations || []).length > 0 && (
+      {/* Bilan rapide — une seule fois */}
+      {report.summary && (
+        <div className="hud-card rounded-md p-4">
+          <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2 font-mono">// BILAN_RAPIDE</p>
+          <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line">{report.summary}</p>
+        </div>
+      )}
+
+      {/* Sections détaillées — sans couleurs, sans badges, sans doublons */}
+      {filteredSections.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// ANALYSE_DÉTAILLÉE</p>
+          {filteredSections.map((section, i) => (
+            <div
+              key={i}
+              className="hud-card rounded-md p-4"
+            >
+              <h4 className="text-sm font-bold text-white/90 mb-2">{section.title}</h4>
+              <p className="text-xs text-white/60 leading-relaxed whitespace-pre-line">{section.content}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Conseils pratiques — dédoublonnés, une seule fois */}
+      {dedupedRecs.length > 0 && (
         <div className="hud-card rounded-md p-4">
           <p className="text-[10px] text-white/30 uppercase tracking-wider mb-3 font-mono">// CONSEILS_PRATIQUES</p>
           <ol className="space-y-2.5">
-            {report.recommendations.map((rec, i) => (
+            {dedupedRecs.map((rec, i) => (
               <li key={i} className="flex items-start gap-3">
-                <span className="shrink-0 w-5 h-5 rounded-sm bg-[#CE1126]/15 border border-[#CE1126]/25 text-[#CE1126] text-[10px] font-mono font-bold flex items-center justify-center">
+                <span className="shrink-0 w-5 h-5 rounded-sm bg-white/[0.06] border border-white/10 text-white/40 text-[10px] font-mono font-bold flex items-center justify-center">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <span className="text-xs text-white/65 leading-relaxed">{rec}</span>
@@ -361,7 +361,7 @@ export default function ReportDisplay({
         </div>
       )}
 
-      {/* Action buttons */}
+      {/* Boutons d'action */}
       <div className="flex gap-3 pt-1">
         <button
           onClick={handleDownload}
