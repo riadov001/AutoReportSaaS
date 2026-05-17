@@ -1,119 +1,128 @@
-# AutoReport — Guide d'installation Hostinger
+# AutoReport — Déploiement Hostinger Business (Node.js)
 
-## Prérequis sur Hostinger
+## Architecture
 
-- Hébergement **VPS** ou **Cloud** avec Node.js 20+
-- Base de données **PostgreSQL** (Hostinger en propose une)
-- Accès SSH ou panneau de fichiers
+```
+Hostinger Business (Node.js)
+  └── server.js          ← sert le frontend React
+        ├── /assets/*    → fichiers statiques (cache 1 an)
+        ├── /api/*       → proxy vers PUBLIC_BASE_URL (Replit)
+        ├── /panel/*     → proxy vers PUBLIC_BASE_URL (Replit)
+        └── /*           → index.html (SPA fallback)
+
+Backend + BDD → https://auto-report.replit.app (Replit, inchangé)
+```
+
+---
+
+## Structure du dossier à uploader
+
+```
+hostinger-deploy/
+├── dist/
+│   └── public/          ← frontend React compilé
+│       ├── index.html
+│       └── assets/
+├── server.js            ← FICHIER D'ENTRÉE (node server.js)
+├── package.json
+├── package-lock.json
+├── ecosystem.config.cjs ← config PM2 (optionnel)
+├── nginx.conf           ← config Nginx (optionnel)
+├── .env.example
+└── .env                 ← à créer depuis .env.example
+```
 
 ---
 
 ## Étape 1 — Uploader les fichiers
 
-Uploadez **tout le contenu** de ce dossier zip à la racine de votre site
-(généralement `/home/user/htdocs/votre-domaine.com/` ou `/public_html/`).
-
-Structure attendue après upload :
-```
-dist/
-  index.js          ← serveur Node.js bundlé
-  public/           ← frontend React compilé
-    index.html
-    assets/
-uploads/            ← dossier pour les fichiers uploadés
-package.json
-package-lock.json
-.env                ← à créer depuis .env.example
-```
+Via SFTP ou le gestionnaire de fichiers Hostinger, uploadez **tout le contenu** du dossier `hostinger-deploy/` vers le répertoire racine de votre application Node.js Hostinger.
 
 ---
 
 ## Étape 2 — Configurer les variables d'environnement
 
-1. Copiez `.env.example` → `.env`
-2. Remplissez **au minimum** :
-   - `DATABASE_URL` — votre base PostgreSQL
-   - `SESSION_SECRET` — chaîne aléatoire (`openssl rand -hex 64`)
-   - `PANEL_JWT_SECRET` — chaîne aléatoire (`openssl rand -hex 32`)
-   - `GEMINI_API_KEY` — clé Google Gemini (gratuite sur [aistudio.google.com](https://aistudio.google.com/app/apikey))
-3. Ne commitez jamais le fichier `.env` !
+Dans le **panneau Hostinger → Node.js → Variables d'environnement**, ajoutez :
 
-> **Note IA :** Sur Hostinger, utilisez `GEMINI_API_KEY` avec votre propre clé Google.
-> Le modèle utilisé est **gemini-2.5-flash** via l'API Google directe.
+| Variable | Valeur |
+|---|---|
+| `NODE_ENV` | `production` |
+| `PORT` | `3000` (ou celui assigné par Hostinger) |
+| `PUBLIC_BASE_URL` | `https://auto-report.replit.app` |
+
+Ou copiez `.env.example` → `.env` et remplissez les valeurs :
+
+```bash
+cp .env.example .env
+nano .env
+```
 
 ---
 
 ## Étape 3 — Installer les dépendances
 
-Via SSH ou le terminal Hostinger :
-
 ```bash
 npm install --omit=dev
 ```
 
-> Cela installe uniquement les dépendances de production (pas les outils de dev).
+Seul `express` sera installé (~500 Ko). Pas de base de données, pas de backend.
 
 ---
 
-## Étape 4 — Initialiser la base de données
+## Étape 4 — Démarrer l'application
 
-La base de données est automatiquement initialisée au premier démarrage.
-Assurez-vous que `DATABASE_URL` est correctement configurée dans `.env`.
+### Via le panneau Hostinger (recommandé)
 
----
+Dans **Hostinger → Node.js**, configurez :
+- **Fichier d'entrée** : `server.js`
+- **Commande de démarrage** : `node server.js`
 
-## Étape 5 — Démarrer l'application
-
-### Commande de démarrage (à configurer dans Hostinger) :
+### Via PM2 (si accès SSH)
 
 ```bash
-NODE_ENV=production node dist/index.js
+pm2 start ecosystem.config.cjs
+pm2 save
+pm2 startup
 ```
 
-> ⚠️ Le `NODE_ENV=production` est **obligatoire** pour éviter un crash lié à Vite.
+### Directement
 
-### Variables à configurer dans le panneau Hostinger :
-
-| Variable | Valeur |
-|----------|--------|
-| `NODE_ENV` | `production` |
-| `PORT` | `3000` (ou celui assigné par Hostinger) |
+```bash
+NODE_ENV=production node server.js
+```
 
 ---
 
-## Étape 6 — Configurer le domaine
+## Étape 5 — Vérification
 
-Dans le panneau Hostinger :
-1. Pointez votre domaine vers le serveur Node.js (port 3000)
-2. Activez le SSL/HTTPS (certificat Let's Encrypt)
-3. Configurez la variable `PUBLIC_BASE_URL` avec votre URL finale
-
----
-
-## Accès au panel admin
-
-Une fois déployé, accédez au panel via :
-
-```
-https://votre-domaine.com/panel
-```
-
-Identifiants configurés dans `.env` :
-- Email : valeur de `PANEL_ADMIN_EMAIL`
-- Mot de passe : valeur de `PANEL_ADMIN_PASSWORD`
+1. Ouvrez votre domaine → la landing page AutoReport doit s'afficher
+2. Testez la génération d'un rapport → les requêtes `/api/*` sont proxiées vers Replit
+3. Ouvrez `/panel` → le panel admin est proxié vers Replit
 
 ---
 
-## Résumé des changements récents (mai 2026)
+## Mise à jour du frontend
 
-- **Gemini 2.5 Flash** : modèle IA mis à jour, rapports plus précis et personnalisés
-- **Champs formulaire** : Prix demandé et Code postal ajoutés au formulaire de rapport
-- **Prompt IA** : entièrement reécrit pour des rapports d'aide à l'achat personnalisés (zéro OBD)
-- **SDK Gemini** : migration vers `@google/genai` v1.52+
+Après un nouveau build (`npm run build` sur Replit) :
+
+1. Téléchargez le nouveau dossier `dist/public/` via SFTP
+2. Remplacez l'ancien `dist/public/` sur Hostinger
+3. Redémarrez l'application Node.js dans le panneau Hostinger
+
+---
+
+## Commandes PM2 utiles
+
+```bash
+pm2 status              # état de l'application
+pm2 logs autoreport     # logs en direct
+pm2 restart autoreport  # redémarrer
+pm2 reload autoreport   # rechargement sans downtime
+```
 
 ---
 
 ## Support
 
-Développé par **Straight-Path.eu**
+Développé par **Straight-Path.eu**  
 Contact : contact@straight-path.eu
