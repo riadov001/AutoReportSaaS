@@ -168,10 +168,11 @@ export default function MyReports() {
                     <button
                       onClick={e => handleShare(r, e)}
                       data-testid={`button-share-${r.id}`}
-                      className={`p-1.5 rounded transition-colors ${copiedId === r.id ? "text-white/60" : "text-white/30 hover:text-white/60"}`}
-                      title={copiedId === r.id ? "Lien copié !" : "Partager"}
+                      className={`flex items-center gap-1 px-1.5 py-1 rounded text-[10px] font-mono transition-all ${copiedId === r.id ? "text-emerald-400/70 bg-emerald-400/[0.06]" : "text-white/30 hover:text-white/60"}`}
+                      title="Partager le lien"
                     >
-                      <Link className="h-3.5 w-3.5" />
+                      <Link className="h-3 w-3 shrink-0" />
+                      {copiedId === r.id ? "Copié !" : ""}
                     </button>
                     <button
                       onClick={e => downloadPdf(r, e)}
