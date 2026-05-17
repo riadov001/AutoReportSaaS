@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { AutoReportLogo } from "@/components/autoreport-logo";
@@ -259,6 +259,7 @@ function ContactModal({ onClose }: { onClose: () => void }) {
 }
 
 const VEHICLE_FORM_KEY = "autoreport_vehicle_form";
+const DRAFT_KEY = "autoreport_form_draft";
 
 export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {}) {
   const { toast } = useToast();
@@ -267,12 +268,16 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
   const [guestEmail, setGuestEmail] = useState("");
   const [generating, setGenerating] = useState(false);
   const [report, setReport] = useState<GeneratedReport | null>(null);
+  const [reportId, setReportId] = useState<string | undefined>();
   const [limitReached, setLimitReached] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showLegal, setShowLegal] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  const reportSectionRef = useRef<HTMLDivElement>(null);
 
-  // Restaurer le formulaire si l'utilisateur revient après une auth
+  // Restaurer le formulaire si l'utilisateur revient après une auth, sinon depuis le brouillon
   useEffect(() => {
     try {
       const saved = localStorage.getItem(VEHICLE_FORM_KEY);
@@ -281,10 +286,64 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
         if (sv) setVehicleInfo(sv);
         if (se) setGuestEmail(se);
         localStorage.removeItem(VEHICLE_FORM_KEY);
+        localStorage.removeItem(DRAFT_KEY);
         setTimeout(() => document.getElementById("generator")?.scrollIntoView({ behavior: "smooth" }), 400);
+        return;
+      }
+      const draft = localStorage.getItem(DRAFT_KEY);
+      if (draft) {
+        const { vehicleInfo: dv, guestEmail: de, savedAt } = JSON.parse(draft);
+        if (savedAt && Date.now() - savedAt < 24 * 60 * 60 * 1000) {
+          if (dv) setVehicleInfo(dv);
+          if (de) setGuestEmail(de);
+        } else {
+          localStorage.removeItem(DRAFT_KEY);
+        }
       }
     } catch {}
   }, []);
+
+  // Sauvegarde automatique du brouillon en localStorage (debounce 500ms)
+  useEffect(() => {
+    if (!vehicleInfo.make && !vehicleInfo.model) return;
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ vehicleInfo, guestEmail, savedAt: Date.now() }));
+      } catch {}
+    }, 500);
+    return () => clearTimeout(t);
+  }, [vehicleInfo, guestEmail]);
+
+  // Chrono pendant la génération
+  useEffect(() => {
+    if (!generating) { setElapsed(0); return; }
+    const interval = setInterval(() => setElapsed(e => e + 1), 1000);
+    return () => clearInterval(interval);
+  }, [generating]);
+
+  // Animation des étapes de chargement
+  useEffect(() => {
+    if (!generating) { setLoadingStep(0); return; }
+    const t1 = setTimeout(() => setLoadingStep(1), 800);
+    const t2 = setTimeout(() => setLoadingStep(2), 2500);
+    const t3 = setTimeout(() => setLoadingStep(3), 4500);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [generating]);
+
+  // Auto-scroll vers la zone rapport quand la génération commence
+  useEffect(() => {
+    if (generating) {
+      setTimeout(() => reportSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+    }
+  }, [generating]);
+
+  // Auto-scroll vers le rapport généré + clear draft
+  useEffect(() => {
+    if (report) {
+      setTimeout(() => reportSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+      try { localStorage.removeItem(DRAFT_KEY); } catch {}
+    }
+  }, [report]);
 
   // Sauvegarder le formulaire avant redirect vers auth
   const saveVehicleForm = () => {
@@ -346,8 +405,16 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
         return;
       }
       if (!res.ok) throw new Error();
-      const data = await res.json();
+      const raw = await res.json();
+      const { _reportId: savedId, ...data } = raw;
+      setReportId(savedId);
       setReport(data);
+      if (isAuthenticated && savedId) {
+        toast({
+          title: "Rapport sauvegardé",
+          description: "Retrouvez-le dans votre espace → Mes rapports",
+        });
+      }
       saveGuestReport(data, {
         make: vehicleInfo.make,
         model: vehicleInfo.model,
@@ -371,6 +438,19 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
   };
 
   const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+
+  const handleNewReport = () => {
+    setReport(null);
+    setReportId(undefined);
+    setLimitReached(false);
+    setLoadingStep(0);
+    setElapsed(0);
+    setVehicleInfo({ make: "", model: "", year: "", finition: "", motorisation: "", carburant: "", mileage: "", gearbox: "", usage: [], issue: "", puissance: "", prix: "", codePostal: "" });
+    setGuestEmail("");
+    setTimeout(() => {
+      document.getElementById("generator")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  };
 
   return (
     <div className="min-h-screen bg-[#05050A] text-white flex flex-col overflow-x-hidden">
@@ -927,28 +1007,47 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                 </form>
               </div>
 
-              <div className="hud-card rounded-md p-6" style={{ minHeight: 400 }}>
+              <div ref={reportSectionRef} className="hud-card rounded-md p-6" style={{ minHeight: 400 }}>
                 {report ? (
-                  <Suspense fallback={<div className="flex items-center justify-center h-32 text-white/30 text-sm">Chargement...</div>}>
-                    <ReportDisplay report={report} />
-                  </Suspense>
+                  <div className="report-fade-in">
+                    <Suspense fallback={<div className="flex items-center justify-center h-32 text-white/30 text-sm">Chargement...</div>}>
+                      <ReportDisplay
+                        report={report}
+                        reportId={reportId}
+                        onNewReport={handleNewReport}
+                      />
+                    </Suspense>
+                  </div>
                 ) : generating ? (
-                  <div className="flex flex-col items-center justify-center h-full gap-4">
+                  <div className="flex flex-col items-center justify-center h-full gap-5">
                     <div className="relative">
                       <div className="w-16 h-16 border-2 border-[#CE1126]/20 rounded-full" />
                       <div className="absolute inset-0 w-16 h-16 border-2 border-transparent border-t-[#CE1126] rounded-full animate-spin" />
                     </div>
                     <div className="text-center">
                       <p className="text-sm font-mono text-white/60 mb-1">Analyse en cours...</p>
-                      <p className="text-xs text-white/30 font-mono">Interrogation du moteur IA</p>
+                      <p className="text-xs text-white/30 font-mono">
+                        {elapsed > 0 ? `${elapsed}s — Interrogation du moteur IA` : "Interrogation du moteur IA"}
+                      </p>
                     </div>
-                    <div className="w-full max-w-xs space-y-1.5">
-                      {["Lecture des paramètres du véhicule", "Analyse des symptômes et historique", "Génération du rapport détaillé"].map((step, i) => (
-                        <div key={step} className="flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#CE1126] animate-pulse" style={{ animationDelay: `${i * 0.3}s` }} />
-                          <span className="text-[10px] font-mono text-white/30">{step}</span>
-                        </div>
-                      ))}
+                    <div className="w-full max-w-xs space-y-2.5">
+                      {["Lecture des paramètres du véhicule", "Analyse des symptômes et historique", "Génération du rapport détaillé"].map((step, i) => {
+                        const done = loadingStep > i;
+                        const active = loadingStep === i;
+                        return (
+                          <div key={step} className={`flex items-center gap-3 transition-all duration-500 ${done ? "step-appear" : ""}`}>
+                            <span className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all duration-400 border ${done ? "bg-white/10 border-white/25" : active ? "border-[#CE1126]/60 bg-[#CE1126]/10" : "border-white/10 bg-transparent"}`}>
+                              {done
+                                ? <Check className="w-3 h-3 text-white/60" />
+                                : active
+                                  ? <span className="w-1.5 h-1.5 rounded-full bg-[#CE1126] animate-pulse" />
+                                  : <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                              }
+                            </span>
+                            <span className={`text-xs font-mono transition-colors duration-500 ${done ? "text-white/35 line-through" : active ? "text-white/80" : "text-white/20"}`}>{step}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : (

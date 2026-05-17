@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Download, CheckSquare, Square, TrendingUp, Minus, TrendingDown, Ban } from "lucide-react";
+import { Download, CheckSquare, Square, TrendingUp, Minus, TrendingDown, Ban, Link, RotateCcw } from "lucide-react";
 
 export interface ReportSection {
   title: string;
@@ -44,6 +44,7 @@ export interface GeneratedReport {
   urgencyLevel: "low" | "medium" | "high" | "critical";
   purchaseRecommendation?: PurchaseRecommendation;
   generatedAt: string;
+  _reportId?: string;
 }
 
 export const SEVERITY_CONFIG = {
@@ -88,7 +89,7 @@ function normalizePR(pr: PurchaseRecommendation): Required<PurchaseRecommendatio
   };
 }
 
-function ScoreRing({ score, size = 72 }: { score: number; size?: number }) {
+export function ScoreRing({ score, size = 72 }: { score: number; size?: number }) {
   const clamped = Math.min(10, Math.max(0, score));
   const r = 22;
   const circ = 2 * Math.PI * r;
@@ -137,7 +138,6 @@ function SubScoreBar({ label, value }: { label: string; value: number }) {
   );
 }
 
-// Titres de sections à ne pas afficher (déjà rendus par les blocs dédiés)
 const DUPLICATE_SECTION_TITLES = [
   "bilan rapide", "bilan", "résumé",
   "verdict expert", "verdict",
@@ -150,7 +150,6 @@ function isDuplicateSection(title: string): boolean {
   return DUPLICATE_SECTION_TITLES.some(t => normalized.includes(t));
 }
 
-// Dédoublonne un tableau de chaînes (garde la première occurrence)
 function deduplicateStrings(arr: string[]): string[] {
   const seen = new Set<string>();
   return arr.filter(item => {
@@ -182,7 +181,6 @@ function PurchaseRecommendationCard({ pr: prRaw, onSignupPrompt }: { pr: Purchas
     <div className="rounded-md p-4 space-y-4 hud-card">
       <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// VERDICT_EXPERT</p>
 
-      {/* Score + Verdict */}
       <div className="flex items-center gap-4">
         <ScoreRing score={pr.score} size={72} />
         <div className="flex flex-col gap-2 flex-1">
@@ -194,7 +192,6 @@ function PurchaseRecommendationCard({ pr: prRaw, onSignupPrompt }: { pr: Purchas
         </div>
       </div>
 
-      {/* Score breakdown */}
       <div className="space-y-2 pt-1">
         <p className="text-[10px] text-white/25 uppercase tracking-wider font-mono mb-2">// SOUS-SCORES</p>
         <SubScoreBar label="Fiabilité" value={pr.scoreBreakdown.fiabilite} />
@@ -203,7 +200,6 @@ function PurchaseRecommendationCard({ pr: prRaw, onSignupPrompt }: { pr: Purchas
         <SubScoreBar label="Praticité" value={pr.scoreBreakdown.praticite} />
       </div>
 
-      {/* Negotiation tips */}
       {dedupedTips.length > 0 && (
         <div>
           <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono mb-2">// ARGUMENTS_NÉGOCIATION</p>
@@ -220,7 +216,6 @@ function PurchaseRecommendationCard({ pr: prRaw, onSignupPrompt }: { pr: Purchas
         </div>
       )}
 
-      {/* Checklist */}
       {dedupedChecklist.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-2">
@@ -262,11 +257,17 @@ function PurchaseRecommendationCard({ pr: prRaw, onSignupPrompt }: { pr: Purchas
 
 export default function ReportDisplay({
   report,
+  reportId,
   onSignupPrompt,
+  onNewReport,
 }: {
   report: GeneratedReport;
+  reportId?: string;
   onSignupPrompt?: () => void;
+  onNewReport?: () => void;
 }) {
+  const [copied, setCopied] = useState(false);
+
   const handleDownload = async () => {
     try {
       const res = await fetch("/api/reports/download-pdf", {
@@ -298,21 +299,38 @@ export default function ReportDisplay({
     }
   };
 
-  // Filtrer les sections qui doublonnent les blocs dédiés
-  const filteredSections = (report.sections || []).filter(s => !isDuplicateSection(s.title));
+  const handleShare = async () => {
+    const id = reportId || report._reportId;
+    if (!id) return;
+    const shareUrl = `${window.location.origin}/rapport/${id}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      window.prompt("Copiez ce lien :", shareUrl);
+    }
+  };
 
-  // Dédoublonner les recommandations
+  const handleNewReport = () => {
+    if (onNewReport) {
+      onNewReport();
+    } else {
+      window.location.reload();
+    }
+  };
+
+  const filteredSections = (report.sections || []).filter(s => !isDuplicateSection(s.title));
   const dedupedRecs = deduplicateStrings(report.recommendations || []);
+  const shareId = reportId || report._reportId;
 
   return (
     <div className="space-y-4">
 
-      {/* Verdict + Score */}
       {report.purchaseRecommendation && (
         <PurchaseRecommendationCard pr={report.purchaseRecommendation} onSignupPrompt={onSignupPrompt} />
       )}
 
-      {/* Coût estimé (si présent, affiché sobrement) */}
       {report.estimatedCost && (
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-md hud-card">
           <span className="text-xs text-white/40">Coût annuel estimé :</span>
@@ -320,7 +338,6 @@ export default function ReportDisplay({
         </div>
       )}
 
-      {/* Bilan rapide — une seule fois */}
       {report.summary && (
         <div className="hud-card rounded-md p-4">
           <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2 font-mono">// BILAN_RAPIDE</p>
@@ -328,15 +345,11 @@ export default function ReportDisplay({
         </div>
       )}
 
-      {/* Sections détaillées — sans couleurs, sans badges, sans doublons */}
       {filteredSections.length > 0 && (
         <div className="space-y-3">
           <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// ANALYSE_DÉTAILLÉE</p>
           {filteredSections.map((section, i) => (
-            <div
-              key={i}
-              className="hud-card rounded-md p-4"
-            >
+            <div key={i} className="hud-card rounded-md p-4">
               <h4 className="text-sm font-bold text-white/90 mb-2">{section.title}</h4>
               <p className="text-xs text-white/60 leading-relaxed whitespace-pre-line">{section.content}</p>
             </div>
@@ -344,7 +357,6 @@ export default function ReportDisplay({
         </div>
       )}
 
-      {/* Conseils pratiques — dédoublonnés, une seule fois */}
       {dedupedRecs.length > 0 && (
         <div className="hud-card rounded-md p-4">
           <p className="text-[10px] text-white/30 uppercase tracking-wider mb-3 font-mono">// CONSEILS_PRATIQUES</p>
@@ -361,8 +373,7 @@ export default function ReportDisplay({
         </div>
       )}
 
-      {/* Boutons d'action */}
-      <div className="flex gap-3 pt-1">
+      <div className="flex gap-2 pt-1">
         <button
           onClick={handleDownload}
           data-testid="button-download-pdf"
@@ -371,14 +382,40 @@ export default function ReportDisplay({
           <Download className="h-3.5 w-3.5" />
           Télécharger le rapport
         </button>
+
+        {shareId && (
+          <button
+            onClick={handleShare}
+            data-testid="button-share-report"
+            className={`px-3.5 flex items-center gap-1.5 text-xs border rounded-md transition-all ${copied ? "border-white/30 text-white/70 bg-white/[0.04]" : "text-white/40 border-white/10 hover:border-white/20 hover:text-white/60"}`}
+            title="Partager le rapport"
+          >
+            <Link className="h-3.5 w-3.5" />
+            {copied ? "Copié !" : "Partager"}
+          </button>
+        )}
+
         <button
-          onClick={() => window.location.reload()}
+          onClick={handleNewReport}
           data-testid="button-new-report"
-          className="px-4 text-xs text-white/40 border border-white/10 rounded-md hover:border-white/20 hover:text-white/60 transition-all"
+          className="px-3.5 flex items-center gap-1.5 text-xs text-white/35 border border-white/10 rounded-md hover:border-white/20 hover:text-white/55 transition-all"
+          title="Analyser un autre véhicule"
         >
+          <RotateCcw className="h-3 w-3" />
           Nouveau
         </button>
       </div>
+
+      {onNewReport && (
+        <button
+          onClick={onNewReport}
+          data-testid="button-analyze-another"
+          className="w-full mt-1 flex items-center justify-center gap-2 py-2.5 border border-white/[0.07] hover:border-white/15 text-white/30 hover:text-white/55 text-xs font-mono rounded-md transition-all"
+        >
+          <RotateCcw className="h-3 w-3" />
+          ↺ Analyser un autre véhicule
+        </button>
+      )}
     </div>
   );
 }

@@ -647,9 +647,10 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       const garageId = (req as any).tenantGarageId || null;
       const isSubscribed = userId && !isAdminUser ? !!(await storage.getActiveSubscription(userId)) : false;
 
+      let savedReportId: string | undefined;
       try {
         const contentStr = typeof report === 'object' ? JSON.stringify(report) : String(report);
-        await storage.createAiReport({
+        const savedReport = await storage.createAiReport({
           userId,
           garageId,
           make,
@@ -674,6 +675,7 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
           // Admin-generated reports are NOT counted as "free" so they don't pollute quota counters
           isFree: isAdminUser ? false : !isSubscribed,
         });
+        savedReportId = savedReport.id;
       } catch (dbErr) {
         console.error("[AIReport] Failed to persist report:", dbErr);
       }
@@ -687,7 +689,7 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
         }
       }
 
-      res.json(report);
+      res.json({ ...report, _reportId: savedReportId });
     } catch (error) {
       console.error("Error generating report:", error);
       res.status(500).json({ message: "Erreur lors de la génération du rapport" });
@@ -932,6 +934,20 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
   });
 
   // Get single report (authenticated)
+  app.get('/api/reports/public/:id', async (req, res) => {
+    try {
+      const report = await storage.getAiReport(req.params.id);
+      if (!report) {
+        return res.status(404).json({ message: "Rapport non trouvé" });
+      }
+      const { userId: _u, guestEmail: _g, ipAddress: _ip, ...publicReport } = report as any;
+      res.json(publicReport);
+    } catch (error) {
+      console.error("Error fetching public report:", error);
+      res.status(500).json({ message: "Erreur lors de la récupération du rapport" });
+    }
+  });
+
   app.get('/api/reports/:id', async (req, res) => {
     try {
       if (!req.user) {
