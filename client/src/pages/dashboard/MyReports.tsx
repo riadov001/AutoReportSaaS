@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Download, FileSpreadsheet, X, Link } from "lucide-react";
+import { Download, FileSpreadsheet, X, Link, Eye } from "lucide-react";
 import DashboardLayout from "./DashboardLayout";
 import { useState } from "react";
 import ReportDisplay, { GeneratedReport, ScoreRing } from "@/components/report-display";
@@ -55,7 +55,8 @@ export default function MyReports() {
     }
   };
 
-  const handleShare = async (r: UserReport) => {
+  const handleShare = async (r: UserReport, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     const url = `${window.location.origin}/rapport/${r.id}`;
     try {
       await navigator.clipboard.writeText(url);
@@ -66,12 +67,10 @@ export default function MyReports() {
     }
   };
 
-  const downloadPdf = async (r: UserReport) => {
+  const downloadPdf = async (r: UserReport, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     const report = parseReport(r);
-    if (!report) {
-      alert("Rapport indisponible au format PDF");
-      return;
-    }
+    if (!report) { alert("Rapport indisponible au format PDF"); return; }
     try {
       const res = await fetch("/api/reports/download-pdf", {
         method: "POST",
@@ -82,29 +81,22 @@ export default function MyReports() {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
-      a.download = `diagnostic-${r.make}-${Date.now()}.pdf`;
-      a.click();
+      a.href = url; a.download = `diagnostic-${r.make}-${Date.now()}.pdf`; a.click();
       URL.revokeObjectURL(url);
-    } catch {
-      alert("Impossible de télécharger le PDF");
-    }
+    } catch { alert("Impossible de télécharger le PDF"); }
   };
 
-  const downloadExcel = async (r: UserReport) => {
+  const downloadExcel = async (r: UserReport, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     try {
       const res = await fetch(`/api/user/reports/${r.id}/excel`);
       if (!res.ok) throw new Error();
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
-      a.download = `diagnostic-${r.make}-${Date.now()}.xlsx`;
-      a.click();
+      a.href = url; a.download = `diagnostic-${r.make}-${Date.now()}.xlsx`; a.click();
       URL.revokeObjectURL(url);
-    } catch {
-      alert("Impossible de télécharger l'Excel");
-    }
+    } catch { alert("Impossible de télécharger l'Excel"); }
   };
 
   return (
@@ -135,9 +127,8 @@ export default function MyReports() {
               <div
                 key={r.id}
                 data-testid={`row-report-${r.id}`}
-                className="hud-card rounded-md p-4 flex flex-col gap-3 card-stagger hover:border-white/10 transition-all cursor-pointer group"
+                className="hud-card rounded-md p-4 flex flex-col gap-3 card-stagger hover:border-white/10 transition-all"
                 style={{ animationDelay: `${idx * 50}ms` }}
-                onClick={() => setOpenId(r.id)}
               >
                 <div className="flex items-start gap-3">
                   {score != null ? (
@@ -166,7 +157,16 @@ export default function MyReports() {
                   </span>
                   <div className="flex items-center gap-1">
                     <button
-                      onClick={e => { e.stopPropagation(); handleShare(r); }}
+                      onClick={() => setOpenId(r.id)}
+                      data-testid={`button-voir-${r.id}`}
+                      className="flex items-center gap-1 px-2 py-1 rounded text-xs font-mono text-white/50 hover:text-white/90 hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/15 transition-all"
+                      title="Voir le rapport"
+                    >
+                      <Eye className="h-3 w-3" />
+                      Voir
+                    </button>
+                    <button
+                      onClick={e => handleShare(r, e)}
                       data-testid={`button-share-${r.id}`}
                       className={`p-1.5 rounded transition-colors ${copiedId === r.id ? "text-white/60" : "text-white/30 hover:text-white/60"}`}
                       title={copiedId === r.id ? "Lien copié !" : "Partager"}
@@ -174,7 +174,7 @@ export default function MyReports() {
                       <Link className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      onClick={e => { e.stopPropagation(); downloadPdf(r); }}
+                      onClick={e => downloadPdf(r, e)}
                       data-testid={`button-pdf-${r.id}`}
                       className="p-1.5 rounded text-white/30 hover:text-white/60 transition-colors"
                       title="PDF"
@@ -182,7 +182,7 @@ export default function MyReports() {
                       <Download className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      onClick={e => { e.stopPropagation(); downloadExcel(r); }}
+                      onClick={e => downloadExcel(r, e)}
                       data-testid={`button-excel-${r.id}`}
                       className="p-1.5 rounded text-white/30 hover:text-white/60 transition-colors"
                       title="Excel"
@@ -197,41 +197,49 @@ export default function MyReports() {
         </div>
       )}
 
-      {opened && (
+      {/* Right-side drawer */}
+      <div className={`fixed inset-0 z-50 ${openId ? "" : "pointer-events-none"}`}>
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start sm:items-center justify-center p-4 overflow-auto"
+          className={`absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${openId ? "opacity-100" : "opacity-0"}`}
           onClick={() => setOpenId(null)}
+        />
+        <div
+          className={`absolute inset-y-0 right-0 w-full sm:w-[660px] max-w-full bg-[#08080f] border-l border-white/10 transition-transform duration-300 ease-in-out overflow-auto ${openId ? "translate-x-0" : "translate-x-full"}`}
         >
-          <div
-            className="hud-card rounded-md bg-[#0a0a14] border border-white/10 max-w-3xl w-full p-6 max-h-[90vh] overflow-auto report-fade-in"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <p className="text-[10px] font-mono text-white/25 uppercase tracking-wider mb-0.5">// RAPPORT_DÉTAILLÉ</p>
-                <h3 className="text-lg font-extrabold text-white">{opened.make} {opened.model} <span className="text-white/40 font-normal text-base">· {opened.year}</span></h3>
+          {opened && (
+            <>
+              <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-[#08080f]/95 backdrop-blur-sm">
+                <div>
+                  <p className="text-[10px] font-mono text-white/25 uppercase tracking-wider mb-0.5">// RAPPORT_DÉTAILLÉ</p>
+                  <h3 className="text-base font-extrabold text-white">
+                    {opened.make} {opened.model}
+                    <span className="text-white/40 font-normal text-sm ml-2">· {opened.year}</span>
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setOpenId(null)}
+                  className="p-2 rounded-md border border-white/10 hover:border-white/20 text-white/40 hover:text-white/70 transition-all shrink-0"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <button
-                onClick={() => setOpenId(null)}
-                className="p-2 rounded-md border border-white/10 hover:border-white/20 text-white/40 hover:text-white/70 transition-all"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            {(() => {
-              const report = parseReport(opened);
-              return report ? (
-                <ReportDisplay
-                  report={report}
-                  reportId={opened.id}
-                />
-              ) : (
-                <div className="text-sm text-white/60 whitespace-pre-wrap">{opened.content}</div>
-              );
-            })()}
-          </div>
+              <div className="p-6 report-fade-in">
+                {(() => {
+                  const report = parseReport(opened);
+                  return report ? (
+                    <ReportDisplay
+                      report={report}
+                      reportId={opened.id}
+                    />
+                  ) : (
+                    <div className="text-sm text-white/60 whitespace-pre-wrap">{opened.content}</div>
+                  );
+                })()}
+              </div>
+            </>
+          )}
         </div>
-      )}
+      </div>
     </DashboardLayout>
   );
 }

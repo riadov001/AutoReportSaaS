@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { useAuth } from "@/hooks/useAuth";
 import { AutoReportLogo } from "@/components/autoreport-logo";
 import { CookieConsent } from "@/components/cookie-consent";
@@ -275,6 +276,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
   const [showConfirm, setShowConfirm] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [elapsed, setElapsed] = useState(0);
+  const [reportVisible, setReportVisible] = useState(false);
   const reportSectionRef = useRef<HTMLDivElement>(null);
 
   // Restaurer le formulaire si l'utilisateur revient après une auth, sinon depuis le brouillon
@@ -337,11 +339,15 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
     }
   }, [generating]);
 
-  // Auto-scroll vers le rapport généré + clear draft
+  // Auto-scroll vers le rapport généré + clear draft + transition 200ms
   useEffect(() => {
     if (report) {
+      setReportVisible(false);
       setTimeout(() => reportSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+      setTimeout(() => setReportVisible(true), 220);
       try { localStorage.removeItem(DRAFT_KEY); } catch {}
+    } else {
+      setReportVisible(false);
     }
   }, [report]);
 
@@ -412,7 +418,16 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
       if (isAuthenticated && savedId) {
         toast({
           title: "Rapport sauvegardé",
-          description: "Retrouvez-le dans votre espace → Mes rapports",
+          description: "Retrouvez-le dans votre espace personnel.",
+          duration: 5000,
+          action: (
+            <ToastAction
+              altText="Voir mes rapports"
+              onClick={() => { window.location.href = "/dashboard/reports"; }}
+            >
+              Mes rapports
+            </ToastAction>
+          ),
         });
       }
       saveGuestReport(data, {
@@ -1008,7 +1023,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
               </div>
 
               <div ref={reportSectionRef} className="hud-card rounded-md p-6" style={{ minHeight: 400 }}>
-                {report ? (
+                {report && reportVisible ? (
                   <div className="report-fade-in">
                     <Suspense fallback={<div className="flex items-center justify-center h-32 text-white/30 text-sm">Chargement...</div>}>
                       <ReportDisplay
@@ -1018,8 +1033,8 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                       />
                     </Suspense>
                   </div>
-                ) : generating ? (
-                  <div className="flex flex-col items-center justify-center h-full gap-5">
+                ) : generating || (report && !reportVisible) ? (
+                  <div className={`flex flex-col items-center justify-center h-full gap-5 ${report && !reportVisible ? "loading-exit" : ""}`}>
                     <div className="relative">
                       <div className="w-16 h-16 border-2 border-[#CE1126]/20 rounded-full" />
                       <div className="absolute inset-0 w-16 h-16 border-2 border-transparent border-t-[#CE1126] rounded-full animate-spin" />
