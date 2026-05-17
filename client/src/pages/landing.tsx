@@ -266,6 +266,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
   const [vehicleInfo, setVehicleInfo] = useState({ make: "", model: "", year: "", finition: "", motorisation: "", carburant: "", mileage: "", gearbox: "", usage: [] as string[], issue: "", puissance: "", prix: "", codePostal: "" });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [guestEmail, setGuestEmail] = useState("");
   const [generating, setGenerating] = useState(false);
   const [report, setReport] = useState<GeneratedReport | null>(null);
@@ -358,11 +359,42 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
     } catch {}
   };
 
+  const validateField = (key: string, value: string) => {
+    if (key === "make" && !value.trim()) return "La marque est requise";
+    if (key === "model" && !value.trim()) return "Le modèle est requis";
+    if (key === "year") {
+      if (!value.trim()) return "L'année est requise";
+      const y = parseInt(value);
+      if (isNaN(y) || y < 1900 || y > new Date().getFullYear() + 1) return "Année invalide";
+    }
+    if (key === "puissance" && !value.trim()) return "La puissance est requise";
+    return "";
+  };
+
+  const handleFieldChange = (key: string, value: string) => {
+    setVehicleInfo(v => ({ ...v, [key]: value }));
+    const err = validateField(key, value);
+    setFieldErrors(prev => ({ ...prev, [key]: err }));
+  };
+
   // Étape 1 : validation + popup de confirmation
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!vehicleInfo.make || !vehicleInfo.model || !vehicleInfo.year) {
-      toast({ title: "Champs requis", description: "Remplissez au minimum la marque, le modèle et l'année.", variant: "destructive" });
+    const requiredFields = [
+      { key: "make", value: vehicleInfo.make },
+      { key: "model", value: vehicleInfo.model },
+      { key: "year", value: vehicleInfo.year },
+      { key: "puissance", value: vehicleInfo.puissance },
+    ];
+    const newErrors: Record<string, string> = {};
+    let hasError = false;
+    for (const f of requiredFields) {
+      const err = validateField(f.key, f.value);
+      if (err) { newErrors[f.key] = err; hasError = true; }
+    }
+    if (hasError) {
+      setFieldErrors(prev => ({ ...prev, ...newErrors }));
+      toast({ title: "Champs requis", description: "Veuillez corriger les champs en rouge.", variant: "destructive" });
       return;
     }
     setShowConfirm(true);
@@ -789,26 +821,28 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
             <div className="grid lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
               <div className="hud-card rounded-md p-6 scan-line">
                 <form onSubmit={handleFormSubmit} className="space-y-4">
+                  {/* Ligne 1 : Marque | Modèle */}
                   <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { key: "make", label: "MARQUE *", placeholder: "BMW / Peugeot / Renault" },
-                      { key: "model", label: "MODÈLE *", placeholder: "Série 3 / 308 / Clio" },
-                    ].map(({ key, label, placeholder }) => (
+                    {([
+                      { key: "make", label: "MARQUE *", placeholder: "BMW / Peugeot / Renault", type: "text" },
+                      { key: "model", label: "MODÈLE *", placeholder: "Série 3 / 308 / Clio", type: "text" },
+                    ] as const).map(({ key, label, placeholder, type }) => (
                       <div key={key}>
                         <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">{label}</label>
                         <input
-                          type="text"
-                          required
+                          type={type}
                           placeholder={placeholder}
-                          value={vehicleInfo[key as "make" | "model"]}
-                          onChange={e => setVehicleInfo(v => ({ ...v, [key]: e.target.value }))}
+                          value={vehicleInfo[key]}
+                          onChange={e => handleFieldChange(key, e.target.value)}
                           data-testid={`input-${key}`}
-                          className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-[#CE1126]/60 focus:bg-zinc-900 transition-all font-mono"
+                          className={`w-full bg-zinc-900 border rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:bg-zinc-900 transition-all font-mono ${fieldErrors[key] ? "border-[#CE1126]/80 focus:border-[#CE1126]" : "border-zinc-700 focus:border-[#CE1126]/60"}`}
                         />
+                        {fieldErrors[key] && <p className="mt-1 text-[10px] text-[#CE1126] font-mono">{fieldErrors[key]}</p>}
                       </div>
                     ))}
                   </div>
 
+                  {/* Ligne 2 : Finition | Année */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">FINITION <span className="text-white/15">(optionnel)</span></label>
@@ -822,41 +856,43 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">PUISSANCE <span className="text-white/15">(optionnel)</span></label>
-                      <input
-                        type="text"
-                        placeholder="ex: 150ch, 110kW..."
-                        value={vehicleInfo.puissance}
-                        onChange={e => setVehicleInfo(v => ({ ...v, puissance: e.target.value }))}
-                        data-testid="input-puissance"
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-[#CE1126]/60 focus:bg-zinc-900 transition-all font-mono"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
                       <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">ANNÉE *</label>
                       <input
                         type="number"
-                        required
                         placeholder="2019"
                         value={vehicleInfo.year}
-                        onChange={e => setVehicleInfo(v => ({ ...v, year: e.target.value }))}
+                        onChange={e => handleFieldChange("year", e.target.value)}
                         data-testid="input-year"
-                        className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-[#CE1126]/60 focus:bg-zinc-900 transition-all font-mono"
+                        className={`w-full bg-zinc-900 border rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:bg-zinc-900 transition-all font-mono ${fieldErrors.year ? "border-[#CE1126]/80 focus:border-[#CE1126]" : "border-zinc-700 focus:border-[#CE1126]/60"}`}
                       />
+                      {fieldErrors.year && <p className="mt-1 text-[10px] text-[#CE1126] font-mono">{fieldErrors.year}</p>}
                     </div>
+                  </div>
+
+                  {/* Ligne 3 : Motorisation | Puissance * | KM */}
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
                       <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">MOTORISATION</label>
                       <input
                         type="text"
-                        placeholder="ex: 1.6 TDI, 2.0 TSI..."
+                        placeholder="1.6 TDI, 2.0 TSI..."
                         value={vehicleInfo.motorisation}
                         onChange={e => setVehicleInfo(v => ({ ...v, motorisation: e.target.value }))}
                         data-testid="input-motorisation"
                         className="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:border-[#CE1126]/60 focus:bg-zinc-900 transition-all font-mono"
                       />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">PUISSANCE *</label>
+                      <input
+                        type="text"
+                        placeholder="150ch, 110kW..."
+                        value={vehicleInfo.puissance}
+                        onChange={e => handleFieldChange("puissance", e.target.value)}
+                        data-testid="input-puissance"
+                        className={`w-full bg-zinc-900 border rounded-md px-3 py-2.5 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:bg-zinc-900 transition-all font-mono ${fieldErrors.puissance ? "border-[#CE1126]/80 focus:border-[#CE1126]" : "border-zinc-700 focus:border-[#CE1126]/60"}`}
+                      />
+                      {fieldErrors.puissance && <p className="mt-1 text-[10px] text-[#CE1126] font-mono">{fieldErrors.puissance}</p>}
                     </div>
                     <div>
                       <label className="text-[10px] font-mono text-white/30 uppercase tracking-wider block mb-1.5">KM</label>
