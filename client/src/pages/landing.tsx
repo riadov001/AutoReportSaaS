@@ -259,6 +259,28 @@ function ContactModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+function TypewriterText({ text, active, speed = 28 }: { text: string; active: boolean; speed?: number }) {
+  const [displayed, setDisplayed] = useState("");
+  useEffect(() => {
+    if (!active) return;
+    setDisplayed("");
+    let i = 0;
+    const id = setInterval(() => {
+      i++;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) clearInterval(id);
+    }, speed);
+    return () => clearInterval(id);
+  }, [active, text, speed]);
+  const isTyping = active && displayed.length < text.length;
+  return (
+    <span>
+      {active || displayed ? displayed : ""}
+      {isTyping && <span className="terminal-cursor" />}
+    </span>
+  );
+}
+
 const VEHICLE_FORM_KEY = "autoreport_vehicle_form";
 const DRAFT_KEY = "autoreport_form_draft";
 
@@ -1139,7 +1161,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                       <p className="text-right text-[10px] font-mono text-white/20 mt-1">{loadingProgress}%</p>
                     </div>
 
-                    {/* Phrases séquentielles */}
+                    {/* Phrases séquentielles avec effet machine à écrire */}
                     <div className="w-full max-w-xs space-y-2.5">
                       {[
                         "Analyse des informations renseignées...",
@@ -1159,7 +1181,12 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                                   : <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
                               }
                             </span>
-                            <span className={`text-xs font-mono transition-colors duration-500 ${done ? "text-white/35 line-through" : active ? "text-white/80" : "text-white/20"}`}>{step}</span>
+                            <span className={`text-xs font-mono transition-colors duration-500 ${done ? "text-white/35 line-through" : active ? "text-white/80" : "text-white/20"}`}>
+                              {active
+                                ? <TypewriterText text={step} active={true} speed={28} />
+                                : step
+                              }
+                            </span>
                           </div>
                         );
                       })}

@@ -663,24 +663,6 @@ export async function generateAiReport(vehicleInfo: VehicleInfo, adminContextPro
 }
 
 export function generateReportHtml(report: GeneratedReport): string {
-  const severityColors: Record<string, string> = {
-    low: "#22c55e",
-    medium: "#f59e0b",
-    high: "#f97316",
-    critical: "#dc2626",
-  };
-  const severityBg: Record<string, string> = {
-    low: "#f0fdf4",
-    medium: "#fffbeb",
-    high: "#fff7ed",
-    critical: "#fef2f2",
-  };
-  const urgencyLabels: Record<string, string> = {
-    low: "Faible",
-    medium: "Moyen",
-    high: "Élevé",
-    critical: "Critique",
-  };
   const verdictColors: Record<string, string> = {
     "BONNE AFFAIRE": "#22c55e",
     "CORRECT": "#3b82f6",
@@ -701,23 +683,19 @@ export function generateReportHtml(report: GeneratedReport): string {
         { label: "Sécurité", val: pr.scoreBreakdown.securite },
         { label: "Praticité", val: pr.scoreBreakdown.praticite },
       ].map(({ label, val }) => {
-        const col = val >= 7 ? "#22c55e" : val >= 4 ? "#f59e0b" : "#dc2626";
         return `<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px;">
           <div style="font-size: 10px; color: #6b7280; margin-bottom: 3px;">${label}</div>
-          <div style="font-size: 14px; font-weight: 800; color: ${col};">${val.toFixed(1)}<span style="font-size: 9px; color: #9ca3af;">/10</span></div>
+          <div style="font-size: 14px; font-weight: 800; color: #374151;">${val.toFixed(1)}<span style="font-size: 9px; color: #9ca3af;">/10</span></div>
           <div style="height: 4px; background: #e5e7eb; border-radius: 2px; margin-top: 4px; overflow:hidden;">
-            <div style="height: 100%; width: ${val * 10}%; background: ${col}; border-radius: 2px;"></div>
+            <div style="height: 100%; width: ${val * 10}%; background: #9ca3af; border-radius: 2px;"></div>
           </div>
         </div>`;
       }).join("")}
     </div>` : "";
 
   const sectionsDetailHtml = report.sections.map(s => `
-    <div style="margin-bottom: 16px; padding: 12px 14px; background: ${severityBg[s.severity || "medium"]}; border-left: 4px solid ${severityColors[s.severity || "medium"]}; border-radius: 0 6px 6px 0;">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;">
-        <h3 style="font-size: 12px; font-weight: 700; color: #111; margin: 0;">${s.title}</h3>
-        <span style="font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 10px; color: white; background: ${severityColors[s.severity || "medium"]}; white-space: nowrap; margin-left: 8px;">${urgencyLabels[s.severity || "medium"]}</span>
-      </div>
+    <div style="margin-bottom: 16px; padding: 12px 14px; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 6px;">
+      <h3 style="font-size: 12px; font-weight: 700; color: #111; margin: 0 0 5px 0;">${s.title}</h3>
       <p style="font-size: 11.5px; color: #444; line-height: 1.65; margin: 0; white-space: pre-line;">${s.content}</p>
     </div>`).join("");
 
