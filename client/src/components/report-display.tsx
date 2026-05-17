@@ -1,6 +1,27 @@
 import React, { useState } from "react";
 import { Download, CheckSquare, Square, TrendingUp, Minus, TrendingDown, Ban, Link, RotateCcw } from "lucide-react";
 
+function MarkdownContent({ text, className }: { text: string; className?: string }) {
+  const lines = text.split("\n");
+  return (
+    <span className={className}>
+      {lines.map((line, li) => {
+        const parts = line.split(/(\*\*[^*]+\*\*)/g);
+        return (
+          <React.Fragment key={li}>
+            {parts.map((part, i) =>
+              part.startsWith("**") && part.endsWith("**")
+                ? <strong key={i} className="font-semibold text-white/90">{part.slice(2, -2)}</strong>
+                : <span key={i}>{part}</span>
+            )}
+            {li < lines.length - 1 && <br />}
+          </React.Fragment>
+        );
+      })}
+    </span>
+  );
+}
+
 export interface ReportSection {
   title: string;
   content: string;
@@ -341,7 +362,9 @@ export default function ReportDisplay({
       {report.summary && (
         <div className="hud-card rounded-md p-4">
           <p className="text-[10px] text-white/30 uppercase tracking-wider mb-2 font-mono">// BILAN_RAPIDE</p>
-          <p className="text-sm text-white/80 leading-relaxed whitespace-pre-line">{report.summary}</p>
+          <p className="text-sm text-white/75 leading-relaxed">
+            <MarkdownContent text={report.summary} />
+          </p>
         </div>
       )}
 
@@ -350,8 +373,12 @@ export default function ReportDisplay({
           <p className="text-[10px] text-white/30 uppercase tracking-wider font-mono">// ANALYSE_DÉTAILLÉE</p>
           {filteredSections.map((section, i) => (
             <div key={i} className="hud-card rounded-md p-4">
-              <h4 className="text-sm font-bold text-white/90 mb-2">{section.title}</h4>
-              <p className="text-xs text-white/60 leading-relaxed whitespace-pre-line">{section.content}</p>
+              <h4 className="text-sm font-bold text-white/90 mb-2">
+                <MarkdownContent text={section.title} />
+              </h4>
+              <p className="text-xs text-white/60 leading-relaxed">
+                <MarkdownContent text={section.content} />
+              </p>
             </div>
           ))}
         </div>
@@ -366,7 +393,9 @@ export default function ReportDisplay({
                 <span className="shrink-0 w-5 h-5 rounded-sm bg-white/[0.06] border border-white/10 text-white/40 text-[10px] font-mono font-bold flex items-center justify-center">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <span className="text-xs text-white/65 leading-relaxed">{rec}</span>
+                <span className="text-xs text-white/65 leading-relaxed">
+                  <MarkdownContent text={rec} />
+                </span>
               </li>
             ))}
           </ol>

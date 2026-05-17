@@ -1140,10 +1140,17 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                       <div className="w-16 h-16 border-2 border-[#CE1126]/20 rounded-full" />
                       <div className="absolute inset-0 w-16 h-16 border-2 border-transparent border-t-[#CE1126] rounded-full animate-spin" />
                     </div>
-                    <div className="text-center">
-                      <p className="text-sm font-mono text-white/70 mb-1 font-semibold">Génération de votre rapport<span className="terminal-cursor" /></p>
-                      <p className="text-xs text-white/30 font-mono">
-                        {elapsed > 0 ? `${elapsed}s écoulées` : "Démarrage…"}
+
+                    <div className="text-center w-full max-w-xs space-y-2">
+                      <p className="text-sm font-bold text-white/85 leading-snug">
+                        <TypewriterText text="Analyse du véhicule en cours…" active={generating || (report != null && !reportVisible)} speed={35} />
+                      </p>
+                      <p className="text-xs text-white/40 leading-relaxed">
+                        <TypewriterText
+                          text="Préparation de votre rapport avant achat à partir des informations du véhicule renseignées : points sensibles, risques connus, coût d'entretien et éléments à contrôler."
+                          active={generating || (report != null && !reportVisible)}
+                          speed={18}
+                        />
                       </p>
                     </div>
 
@@ -1159,37 +1166,6 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                         />
                       </div>
                       <p className="text-right text-[10px] font-mono text-white/20 mt-1">{loadingProgress}%</p>
-                    </div>
-
-                    {/* Phrases séquentielles avec effet machine à écrire */}
-                    <div className="w-full max-w-xs space-y-2.5">
-                      {[
-                        "Analyse des informations renseignées...",
-                        "Points sensibles...",
-                        "Risques et coûts d'entretien...",
-                        "Éléments à contrôler...",
-                      ].map((step, i) => {
-                        const done = loadingStep > i;
-                        const active = loadingStep === i;
-                        return (
-                          <div key={step} className={`flex items-center gap-3 transition-all duration-500 ${done ? "step-appear" : ""}`}>
-                            <span className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all duration-400 border ${done ? "bg-white/10 border-white/25" : active ? "border-[#CE1126]/60 bg-[#CE1126]/10" : "border-white/10 bg-transparent"}`}>
-                              {done
-                                ? <Check className="w-3 h-3 text-white/60" />
-                                : active
-                                  ? <span className="w-1.5 h-1.5 rounded-full bg-[#CE1126] animate-pulse" />
-                                  : <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
-                              }
-                            </span>
-                            <span className={`text-xs font-mono transition-colors duration-500 ${done ? "text-white/35 line-through" : active ? "text-white/80" : "text-white/20"}`}>
-                              {active
-                                ? <TypewriterText text={step} active={true} speed={28} />
-                                : step
-                              }
-                            </span>
-                          </div>
-                        );
-                      })}
                     </div>
                   </div>
                 ) : (
