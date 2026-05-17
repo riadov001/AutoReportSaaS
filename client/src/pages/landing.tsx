@@ -269,6 +269,8 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [guestEmail, setGuestEmail] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [showEstimate, setShowEstimate] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [report, setReport] = useState<GeneratedReport | null>(null);
   const [reportId, setReportId] = useState<string | undefined>();
   const [limitReached, setLimitReached] = useState(false);
@@ -324,13 +326,22 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
     return () => clearInterval(interval);
   }, [generating]);
 
-  // Animation des étapes de chargement
+  // Animation des phrases de chargement (4 phases, ~2s chacune)
   useEffect(() => {
-    if (!generating) { setLoadingStep(0); return; }
-    const t1 = setTimeout(() => setLoadingStep(1), 800);
-    const t2 = setTimeout(() => setLoadingStep(2), 2500);
-    const t3 = setTimeout(() => setLoadingStep(3), 4500);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    if (!generating) { setLoadingStep(0); setLoadingProgress(0); return; }
+    const t1 = setTimeout(() => setLoadingStep(1), 2000);
+    const t2 = setTimeout(() => setLoadingStep(2), 4200);
+    const t3 = setTimeout(() => setLoadingStep(3), 6400);
+    // Progress bar
+    const p1 = setTimeout(() => setLoadingProgress(12), 300);
+    const p2 = setTimeout(() => setLoadingProgress(30), 2200);
+    const p3 = setTimeout(() => setLoadingProgress(55), 4400);
+    const p4 = setTimeout(() => setLoadingProgress(78), 6600);
+    const p5 = setTimeout(() => setLoadingProgress(91), 7500);
+    return () => {
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+      clearTimeout(p1); clearTimeout(p2); clearTimeout(p3); clearTimeout(p4); clearTimeout(p5);
+    };
   }, [generating]);
 
   // Auto-scroll vers la zone rapport quand la génération commence
@@ -403,6 +414,12 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
   // Étape 2 : génération réelle après confirmation
   const handleConfirmGenerate = async () => {
     setShowConfirm(false);
+
+    // Afficher l'estimation 1 seconde avant l'écran de chargement
+    setShowEstimate(true);
+    await new Promise(r => setTimeout(r, 1000));
+    setShowEstimate(false);
+
     const builtIssue = [
       "Analyse pré-achat véhicule d'occasion",
       vehicleInfo.motorisation ? `Motorisation : ${vehicleInfo.motorisation}` : "",
@@ -412,10 +429,16 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
       vehicleInfo.usage.length ? `Usage : ${vehicleInfo.usage.join(" / ")}` : "",
       vehicleInfo.finition ? `Finition : ${vehicleInfo.finition}` : "",
     ].filter(Boolean).join(" | ");
+
     setGenerating(true);
     setLimitReached(false);
+
+    // Timer minimum 8 secondes — on attend le plus long entre le backend et 8s
+    const MIN_DURATION = 8000;
+    const minTimer = new Promise<void>(r => setTimeout(r, MIN_DURATION));
+
     try {
-      const res = await fetch("/api/reports/generate", {
+      const fetchPromise = fetch("/api/reports/generate", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -436,6 +459,14 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
           guestEmail: guestEmail.trim() || undefined,
         }),
       });
+
+      // Attendre les deux : la réponse backend ET le timer minimum
+      const [res] = await Promise.all([fetchPromise, minTimer]);
+
+      // Finir la progress bar
+      setLoadingProgress(100);
+      await new Promise(r => setTimeout(r, 250));
+
       if (res.status === 429) {
         const err = await res.json();
         setLimitReached(true);
@@ -504,6 +535,18 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
       <CookieConsent />
       {showContact && <ContactModal onClose={() => setShowContact(false)} />}
       {showLegal && <LegalModal onClose={() => setShowLegal(false)} />}
+
+      {/* ── ESTIMATION TEMPS ── */}
+      {showEstimate && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[300] animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="flex items-center gap-3 bg-[#0d0d14] border border-[#CE1126]/30 rounded-lg px-5 py-3 shadow-2xl">
+            <span className="w-2 h-2 rounded-full bg-[#CE1126] animate-pulse shrink-0" />
+            <p className="text-sm font-mono text-white/80">
+              Estimation&nbsp;: <span className="text-white font-bold">8 à 15 secondes</span>
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── POPUP CONFIRMATION ANALYSE ── */}
       {showConfirm && (
@@ -1076,13 +1119,34 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
                       <div className="absolute inset-0 w-16 h-16 border-2 border-transparent border-t-[#CE1126] rounded-full animate-spin" />
                     </div>
                     <div className="text-center">
-                      <p className="text-sm font-mono text-white/60 mb-1">Analyse en cours...</p>
+                      <p className="text-sm font-mono text-white/70 mb-1 font-semibold">Génération de votre rapport<span className="terminal-cursor" /></p>
                       <p className="text-xs text-white/30 font-mono">
-                        {elapsed > 0 ? `${elapsed}s — Interrogation du moteur IA` : "Interrogation du moteur IA"}
+                        {elapsed > 0 ? `${elapsed}s écoulées` : "Démarrage…"}
                       </p>
                     </div>
+
+                    {/* Progress bar */}
+                    <div className="w-full max-w-xs">
+                      <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-700 ease-out"
+                          style={{
+                            width: `${loadingProgress}%`,
+                            background: "linear-gradient(90deg, #CE1126, #ff6b35)",
+                          }}
+                        />
+                      </div>
+                      <p className="text-right text-[10px] font-mono text-white/20 mt-1">{loadingProgress}%</p>
+                    </div>
+
+                    {/* Phrases séquentielles */}
                     <div className="w-full max-w-xs space-y-2.5">
-                      {["Lecture des paramètres du véhicule", "Analyse des symptômes et historique", "Génération du rapport détaillé"].map((step, i) => {
+                      {[
+                        "Analyse des informations renseignées...",
+                        "Points sensibles...",
+                        "Risques et coûts d'entretien...",
+                        "Éléments à contrôler...",
+                      ].map((step, i) => {
                         const done = loadingStep > i;
                         const active = loadingStep === i;
                         return (
