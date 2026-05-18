@@ -778,9 +778,14 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       const plan = await storage.getSubscriptionPlan(planId);
       if (!plan || !plan.isActive) return res.status(404).json({ message: "Plan introuvable" });
 
-      const { getStripe } = await import('./stripeService');
-      const stripe = getStripe();
-      if (!stripe) return res.status(503).json({ message: "Stripe non configuré" });
+      const { getStripe, getStripeWithKey } = await import('./stripeService');
+      let stripe = getStripe();
+      if (!stripe) {
+        const settings = await storage.getLandingSettings().catch(() => null);
+        const dbKey = (settings as any)?.stripeSecretKey;
+        if (dbKey) stripe = getStripeWithKey(dbKey);
+      }
+      if (!stripe) return res.status(503).json({ message: "Stripe non configuré. Ajoutez STRIPE_SECRET_KEY dans les paramètres ou en variable d'environnement." });
 
       const baseUrl = req.headers['x-forwarded-proto']
         ? `${req.headers['x-forwarded-proto']}://${req.headers['x-forwarded-host'] || req.headers.host}`
@@ -849,8 +854,13 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
       const sub = await storage.getSubscriptionBySessionId(sessionId);
       if (!sub) return res.status(404).json({ message: "Abonnement introuvable" });
 
-      const { getStripe } = await import('./stripeService');
-      const stripe = getStripe();
+      const { getStripe, getStripeWithKey } = await import('./stripeService');
+      let stripe = getStripe();
+      if (!stripe) {
+        const settings = await storage.getLandingSettings().catch(() => null);
+        const dbKey = (settings as any)?.stripeSecretKey;
+        if (dbKey) stripe = getStripeWithKey(dbKey);
+      }
       if (stripe) {
         const session = await stripe.checkout.sessions.retrieve(sessionId);
         if (session.payment_status === 'paid' || session.status === 'complete') {

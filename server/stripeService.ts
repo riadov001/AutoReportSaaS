@@ -19,6 +19,10 @@ export function isStripeConfigured(): boolean {
   return !!(process.env.STRIPE_SECRET_KEY_PROD || process.env.STRIPE_SECRET_KEY);
 }
 
+export function getStripeWithKey(secretKey: string): Stripe {
+  return new Stripe(secretKey, { apiVersion: "2025-01-27.acacia" as any });
+}
+
 export interface CreateCheckoutOptions {
   invoiceId: string;
   invoiceNumber: string;

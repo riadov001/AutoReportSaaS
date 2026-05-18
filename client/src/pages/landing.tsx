@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,11 +9,24 @@ import {
   Zap, FileText, CheckCircle2, Mail, Phone, MapPin,
   Shield, Gauge, Brain, ChevronDown, X, Download, Send,
   Activity, Clock, Star, Lock, Cpu, Database, Code2,
-  Globe, Layers, Wind, Boxes, Trash2, Check, LogIn, ShieldCheck,
+  Globe, Layers, Wind, Boxes, Trash2, Check, LogIn, ShieldCheck, Loader2,
 } from "lucide-react";
 import { SiHostinger } from "react-icons/si";
 import type { GeneratedReport } from "@/components/report-display";
 import { saveGuestReport } from "@/lib/guestReportSync";
+
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description: string | null;
+  price: string;
+  currency: string;
+  period: string;
+  reportsIncluded: number;
+  stripePriceId: string | null;
+  isActive: boolean;
+  sortOrder: number;
+}
 
 const ReportDisplay = lazy(() => import("@/components/report-display"));
 
@@ -302,7 +316,36 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
   const [loadingStep, setLoadingStep] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [reportVisible, setReportVisible] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const reportSectionRef = useRef<HTMLDivElement>(null);
+
+  const { data: plans = [] } = useQuery<SubscriptionPlan[]>({ queryKey: ["/api/plans"] });
+
+  const handleCheckout = async (planId: string) => {
+    if (!isAuthenticated) {
+      localStorage.setItem("pendingPlanId", planId);
+      window.location.href = "/api/login?returnTo=/";
+      return;
+    }
+    setCheckoutLoading(planId);
+    try {
+      const res = await fetch("/api/subscriptions/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast({ variant: "destructive", title: "Erreur paiement", description: data.message || "Impossible de créer le paiement" });
+        return;
+      }
+      if (data.url) window.location.href = data.url;
+    } catch {
+      toast({ variant: "destructive", title: "Erreur", description: "Connexion impossible au service de paiement" });
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
 
   // Restaurer le formulaire si l'utilisateur revient après une auth, sinon depuis le brouillon
   useEffect(() => {
@@ -681,6 +724,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
             <AutoReportLogo />
             <nav className="hidden md:flex items-center gap-6 text-xs font-semibold uppercase tracking-wider text-white/40">
               <button onClick={() => scrollTo("features")} className="hover:text-white/80 transition-colors">Comment ça marche</button>
+              <button onClick={() => scrollTo("pricing")} className="hover:text-white/80 transition-colors">Tarifs</button>
               <button onClick={() => scrollTo("generator")} className="hover:text-white/80 transition-colors">Générer mon rapport</button>
               <button onClick={() => setShowContact(true)} className="hover:text-white/80 transition-colors" data-testid="button-nav-contact">Contact</button>
             </nav>
@@ -838,33 +882,85 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
           </div>
         </section>
 
-        {/* ── STATS ── */}
-        <section id="pricing" className="py-12 relative border-y border-white/[0.04]" style={{ background: "#060610" }}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="text-center mb-10">
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Un rapport complet à partir de <span style={{ color: "#CE1126" }}>0,49 €</span></h2>
-              <p className="text-sm text-white/40">Paiement unique · Aucun abonnement · Rapport disponible immédiatement</p>
+        {/* ── TARIFS / PLANS ── */}
+        <section id="pricing" className="py-20 relative border-y border-white/[0.04]" style={{ background: "#060610" }}>
+          <div className="absolute inset-0 hud-grid-bg pointer-events-none opacity-20" />
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-12">
+              <p className="text-[10px] font-mono text-[#CE1126] uppercase tracking-widest mb-2">// TARIFS</p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-3">Choisissez votre formule</h2>
+              <p className="text-sm text-white/40">1 rapport gratuit offert à l'inscription · Sans engagement pour les plans ponctuels</p>
             </div>
-            <div className="grid sm:grid-cols-3 gap-5 max-w-4xl mx-auto">
-              {[
-                { price: "0,49 €", qty: "1 rapport", desc: "Idéal pour évaluer rapidement un seul véhicule avant de vous déplacer.", highlight: false },
-                { price: "1,50 €", qty: "3 rapports", desc: "Comparez plusieurs véhicules avant de faire votre choix. Meilleur rapport qualité/prix.", highlight: true },
-                { price: "2,49 €", qty: "5 rapports", desc: "Pour les acheteurs exigeants qui veulent analyser un maximum de véhicules en toute tranquillité.", highlight: false },
-              ].map(({ price, qty, desc, highlight }) => (
-                <div key={qty} className={`hud-card rounded-md p-6 flex flex-col gap-3 ${highlight ? "border-[#CE1126]/40 bg-[#CE1126]/[0.04]" : ""}`}>
-                  {highlight && <span className="text-[10px] font-mono uppercase tracking-widest text-[#CE1126]">⭐ Recommandé</span>}
-                  <div className="text-3xl font-extrabold text-white">{price}</div>
-                  <div className="text-sm font-bold text-white/80">{qty}</div>
-                  <p className="text-xs text-white/40 leading-relaxed flex-1">{desc}</p>
-                  <button
-                    onClick={() => scrollTo("generator")}
-                    className={`mt-2 w-full py-2.5 rounded-md text-xs font-bold uppercase tracking-wider transition-colors ${highlight ? "bg-[#CE1126] hover:bg-[#b8101f] text-white neon-red-glow" : "border border-white/15 hover:border-white/30 text-white/60 hover:text-white"}`}
-                  >
-                    Choisir cette offre
-                  </button>
-                </div>
-              ))}
-            </div>
+
+            {plans.length === 0 ? (
+              <div className="grid sm:grid-cols-3 gap-5 max-w-4xl mx-auto">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="hud-card rounded-md p-6 animate-pulse h-64" />
+                ))}
+              </div>
+            ) : (
+              <div className={`grid gap-5 mx-auto ${plans.length === 1 ? "max-w-xs" : plans.length === 2 ? "sm:grid-cols-2 max-w-2xl" : "sm:grid-cols-3 max-w-4xl"}`}>
+                {plans.map((plan, idx) => {
+                  const isMid = plans.length >= 2 && idx === 1;
+                  const priceNum = parseFloat(plan.price);
+                  const suffix = plan.period === "monthly" ? "/mois" : plan.period === "yearly" ? "/an" : "";
+                  const periodBadge = plan.period === "one_time" ? "Paiement unique" : plan.period === "monthly" ? "Mensuel" : "Annuel";
+                  const isLoading = checkoutLoading === plan.id;
+
+                  return (
+                    <div key={plan.id} className={`hud-card rounded-md p-6 flex flex-col gap-3 relative ${isMid ? "border-[#CE1126]/40 bg-[#CE1126]/[0.04]" : ""}`}>
+                      {isMid && (
+                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#CE1126] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full whitespace-nowrap">
+                          ⭐ Recommandé
+                        </span>
+                      )}
+
+                      <div className="text-[10px] font-mono text-white/30 uppercase tracking-widest mt-1">{periodBadge}</div>
+
+                      <div className="flex items-end gap-1">
+                        <span className="text-3xl font-extrabold text-white">
+                          {priceNum === 0 ? "Gratuit" : `${priceNum.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €`}
+                        </span>
+                        {suffix && <span className="text-sm text-white/40 font-normal mb-0.5">{suffix}</span>}
+                      </div>
+
+                      <div className="text-sm font-bold text-white/90">{plan.name}</div>
+
+                      {plan.description && (
+                        <p className="text-xs text-white/40 leading-relaxed flex-1">{plan.description}</p>
+                      )}
+
+                      <div className="flex items-center gap-2 text-xs text-white/50 pt-1">
+                        <Check className="h-3.5 w-3.5 text-[#CE1126] shrink-0" />
+                        <span>{plan.reportsIncluded} rapport{plan.reportsIncluded > 1 ? "s" : ""} inclus</span>
+                      </div>
+
+                      <button
+                        onClick={() => handleCheckout(plan.id)}
+                        disabled={isLoading}
+                        className={`mt-2 w-full py-2.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          isMid
+                            ? "bg-[#CE1126] hover:bg-[#b8101f] text-white neon-red-glow"
+                            : "border border-white/15 hover:border-white/30 text-white/60 hover:text-white"
+                        }`}
+                      >
+                        {isLoading ? (
+                          <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Redirection…</>
+                        ) : isAuthenticated ? (
+                          "Choisir cette offre"
+                        ) : (
+                          <><LogIn className="h-3.5 w-3.5" /> Connexion pour souscrire</>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <p className="text-center text-[10px] font-mono text-white/20 mt-8">
+              Paiement sécurisé via Stripe · CB, Apple Pay, Google Pay · Remboursement 7 jours
+            </p>
           </div>
         </section>
 
