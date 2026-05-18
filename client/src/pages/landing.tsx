@@ -1265,13 +1265,13 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
 
                     <div className="text-center w-full max-w-xs space-y-2">
                       <p className="text-sm font-bold text-white/85 leading-snug">
-                        <TypewriterText text="Analyse du véhicule en cours…" active={generating || (report != null && !reportVisible)} speed={35} />
+                        <TypewriterText text="Analyse du véhicule en cours" active={generating || (report != null && !reportVisible)} speed={55} showDots={true} />
                       </p>
                       <p className="text-xs text-white/40 leading-relaxed">
                         <TypewriterText
                           text="Préparation de votre rapport avant achat à partir des informations du véhicule renseignées : points sensibles, risques connus, coût d'entretien et éléments à contrôler."
                           active={generating || (report != null && !reportVisible)}
-                          speed={18}
+                          speed={68}
                         />
                       </p>
                     </div>

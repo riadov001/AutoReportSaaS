@@ -52,6 +52,7 @@ import AdminClients from "@/pages/admin-clients";
 import AdminTeam from "@/pages/admin-team";
 
 import RapportPublic from "@/pages/rapport-public";
+import Teaser from "@/pages/teaser";
 import AdminPayments from "@/pages/admin-payments";
 import AdminBankConnection from "@/pages/admin-bank-connection";
 import PaymentSuccess from "@/pages/payment-success";
@@ -148,6 +149,7 @@ function Router() {
           <Route path="/payment/success" component={PaymentSuccess} />
           <Route path="/payment/cancel" component={PaymentCancel} />
           <Route path="/rapport/:id" component={RapportPublic} />
+          <Route path="/teaser" component={Teaser} />
           <Route>
             <Redirect to="/signin" />
           </Route>
@@ -274,6 +276,7 @@ function Router() {
               <Route path="/dashboard/invoices" component={DashboardInvoices} />
               <Route path="/dashboard/support" component={DashboardSupport} />
               <Route path="/rapport/:id" component={RapportPublic} />
+              <Route path="/teaser" component={Teaser} />
               <Route path="/">{() => <Landing />}</Route>
               <Route path="/login">
                 <Redirect to="/signin" />
