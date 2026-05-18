@@ -6056,7 +6056,7 @@ export async function registerRoutes(app: Express, server: Server): Promise<Serv
 
   app.get("/api/user/reports", isAuthenticated, async (req: any, res) => {
     try {
-      const reports = await storage.getAiReports({ userId: req.user.id });
+      const reports = await storage.getAiReports(req.user.id);
       res.json(reports.map(r => ({
         id: r.id,
         make: r.make,
