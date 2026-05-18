@@ -73,6 +73,20 @@ import PrivacyPolicy from "@/pages/privacy-policy";
 import Legal from "@/pages/legal";
 import { AutoReportLogo } from "@/components/autoreport-logo";
 import { lazy, Suspense } from "react";
+
+function DarkLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-screen" style={{ background: "#05050A" }}>
+      <div className="flex flex-col items-center gap-3">
+        <div className="relative w-10 h-10">
+          <div className="absolute inset-0 rounded-full border-2" style={{ borderColor: "rgba(206,17,38,0.2)" }} />
+          <div className="absolute inset-0 rounded-full border-2 border-transparent animate-spin" style={{ borderTopColor: "#CE1126" }} />
+        </div>
+        <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.2)" }}>Chargement</p>
+      </div>
+    </div>
+  );
+}
 const DashboardHome = lazy(() => import("@/pages/dashboard/DashboardHome"));
 const DashboardReports = lazy(() => import("@/pages/dashboard/MyReports"));
 const DashboardSubscriptions = lazy(() => import("@/pages/dashboard/Subscriptions"));
@@ -107,12 +121,7 @@ function Router() {
         <Route path="/facture/:token" component={PublicInvoiceView} />
         <Route path="/avis/:token" component={PublicReview} />
         <Route>
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-4 text-muted-foreground">Chargement...</p>
-            </div>
-          </div>
+          <DarkLoader />
         </Route>
       </Switch>
     );
@@ -253,7 +262,7 @@ function Router() {
     <>
       <div className="flex flex-col h-screen">
         <main className="flex-1 overflow-auto">
-          <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Chargement…</div>}>
+          <Suspense fallback={<DarkLoader />}>
             <Switch>
               <Route path="/privacy" component={PrivacyPolicy} />
               <Route path="/payment/checkout" component={PaymentCheckout} />
@@ -289,7 +298,7 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Router />
           <Toaster />

@@ -273,10 +273,12 @@ function ContactModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function TypewriterText({ text, active, speed = 28 }: { text: string; active: boolean; speed?: number }) {
+function TypewriterText({ text, active, speed = 28, showDots = false }: { text: string; active: boolean; speed?: number; showDots?: boolean }) {
   const [displayed, setDisplayed] = useState("");
+  const [dotCount, setDotCount] = useState(0);
+
   useEffect(() => {
-    if (!active) return;
+    if (!active) { setDisplayed(""); return; }
     setDisplayed("");
     let i = 0;
     const id = setInterval(() => {
@@ -286,11 +288,19 @@ function TypewriterText({ text, active, speed = 28 }: { text: string; active: bo
     }, speed);
     return () => clearInterval(id);
   }, [active, text, speed]);
+
+  useEffect(() => {
+    if (!showDots || !active) { setDotCount(0); return; }
+    const id = setInterval(() => setDotCount(n => (n + 1) % 4), 550);
+    return () => clearInterval(id);
+  }, [showDots, active]);
+
   const isTyping = active && displayed.length < text.length;
   return (
     <span>
       {active || displayed ? displayed : ""}
-      {isTyping && <span className="terminal-cursor" />}
+      {showDots && active && <span style={{ color: "#CE1126", opacity: 0.8 }}>{".".repeat(dotCount)}</span>}
+      {!showDots && isTyping && <span className="terminal-cursor" />}
     </span>
   );
 }
@@ -359,6 +369,18 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
         localStorage.removeItem(DRAFT_KEY);
         setTimeout(() => document.getElementById("generator")?.scrollIntoView({ behavior: "smooth" }), 400);
         return;
+      }
+      // Restaurer le dernier rapport si on revient sur la page
+      const sessionData = sessionStorage.getItem("autoreport_session_report");
+      if (sessionData) {
+        const { report: sr, reportId: srid, vehicleInfo: svi } = JSON.parse(sessionData);
+        if (sr) {
+          setReport(sr);
+          if (srid) setReportId(srid);
+          if (svi) setVehicleInfo(svi);
+          setTimeout(() => reportSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 500);
+          return;
+        }
       }
       const draft = localStorage.getItem(DRAFT_KEY);
       if (draft) {
@@ -543,6 +565,9 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
       const { _reportId: savedId, ...data } = raw;
       setReportId(savedId);
       setReport(data);
+      try {
+        sessionStorage.setItem("autoreport_session_report", JSON.stringify({ report: data, reportId: savedId, vehicleInfo }));
+      } catch {}
       if (isAuthenticated && savedId) {
         toast({
           title: "Rapport sauvegardé",
@@ -590,6 +615,7 @@ export default function Landing({ isAdmin = false }: { isAdmin?: boolean } = {})
     setElapsed(0);
     setVehicleInfo({ make: "", model: "", year: "", finition: "", motorisation: "", carburant: "", mileage: "", gearbox: "", usage: [], issue: "", puissance: "", prix: "", codePostal: "" });
     setGuestEmail("");
+    try { sessionStorage.removeItem("autoreport_session_report"); } catch {}
     setTimeout(() => {
       document.getElementById("generator")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);

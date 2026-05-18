@@ -64,6 +64,12 @@ export function useWebSocket() {
             queryClient.invalidateQueries({ queryKey: ["/api/chat/conversations", data.conversationId, "messages"] });
             queryClient.invalidateQueries({ queryKey: ["/api/chat/conversations"] });
             queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+          } else if (data.type === "report_generated") {
+            queryClient.invalidateQueries({ queryKey: ["/api/user/dashboard-stats"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/user/reports"] });
+          } else if (data.type === "subscription_updated") {
+            queryClient.invalidateQueries({ queryKey: ["/api/user/dashboard-stats"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/user/subscriptions"] });
           } else if (data.type === "notification") {
             queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
           }
